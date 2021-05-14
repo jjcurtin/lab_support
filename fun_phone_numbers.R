@@ -47,3 +47,17 @@ format_numbers <- function(numbers){
 
   return(formatted_numbers)
 }
+
+
+extract_countrycode <- function(number){
+# Takes a number string and extracts the country code (if exists)
+# or returns the US country code if no country code was provided
+
+}
+
+
+extract_number <- fuction(number){
+# takes a number string, strips off the country code and any other
+# formatting to return a single series of digits (still as character)
+
+}

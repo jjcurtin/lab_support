@@ -2,6 +2,8 @@
 
 # Useful online resources
 #   For android SMS" https://synctech.com.au/sms-backup-restore/fields-in-xml-backup-files/
+#   https://developer.android.com/reference/android/provider/CallLog - There are a few different sections (left-hand menu) relating to calls and SMS
+
 
 # Packages
 library(stringr)

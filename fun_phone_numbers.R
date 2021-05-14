@@ -59,7 +59,7 @@ extract_countrycode <- function(number){
 }
 
 
-extract_number <- fuction(number){
+extract_number <- function(number){
 # takes a number string, strips off the country code and any other
 # formatting to return a single series of digits (still as character)
 

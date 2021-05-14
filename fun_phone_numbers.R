@@ -1,6 +1,7 @@
 # Description:
 
-
+# Useful online resources
+#   For android SMS" https://synctech.com.au/sms-backup-restore/fields-in-xml-backup-files/
 
 # Packages
 library(stringr)

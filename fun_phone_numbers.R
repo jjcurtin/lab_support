@@ -64,3 +64,35 @@ extract_number <- function(number){
 # formatting to return a single series of digits (still as character)
 
 }
+
+
+
+
+kendra_cln_number <- function(number) {
+# Putting in if statements for now - not yet a working function - I am 
+# thinking we should return the clean numbers as a new variable and then
+# we can easily see which numbers were not caught/formatted by looking at
+# missing values in formatted column.
+  
+  # Remove spaces, parentheses, and dashes
+  if(str_detect(number, "[[:space:]-\\(\\)]")) {
+    number <- str_replace_all(number, "[[:space:]-\\(\\)]", "")
+  }
+  
+  # Remove +1 from US numbers
+  # check area codes don't start with a 0 or 1 in filter
+  if(str_detect(number, "^\\+1[2-9]") & nchar(number) == 12) {
+    number <- str_replace(number, "^\\+1", "")
+  }
+  
+  # remove 1 from US numbers with no +
+  if(str_detect(number, "^1[2-9]") & nchar(number) == 11) {
+    number <- str_replace(number, "^1", "")
+  }
+  
+  # remove + from US numbers (with no 1 or +1) 
+  if(str_detect(number, "^\\+[2-9]") & nchar(number) == 11) {
+    number <- str_replace(number, "^\\+", "")
+  }
+  
+}

@@ -83,7 +83,6 @@ count_places <- function(places, max_dist = 50) {
   for (i in 1:nrow(places)) {
     for (j in 1:nrow(places)) {
       dist <- distGeo(c(places$lon[i], places$lat[i]), c(places$lon[j], places$lat[j]))
-      # message(dist)
       if (dist <= max_dist) places$visits[i] <- places$visits[i] + 1
     }
   }
@@ -93,7 +92,7 @@ count_places <- function(places, max_dist = 50) {
 
 
 
-aggregate_places <- function(places, max_dist = 50){
+geomean_places <- function(places, max_dist = 50){
 # Takes a tibble of places, groups them sequentially into
 # into groups that differ by no more than max_dist meters
 # from the previous points in the group.  It then returns
@@ -121,7 +120,7 @@ aggregate_places <- function(places, max_dist = 50){
       }
     }
 
-    agg_places <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double())
+    agg_places <- tibble(most_recent_date = Date(), lat = double(), lon = double(), cnt_pts = double())
     for (i in 1:max_grp){
       places_grouped <- places %>%
         filter(place_grp == i)
@@ -132,28 +131,24 @@ aggregate_places <- function(places, max_dist = 50){
         w <- places_grouped$cnt_pts
         xy_new <- geomean(xy, w)
         agg_places <- agg_places %>%
-          add_row(date = places_grouped$date[1],
+          add_row(most_recent_date = max(places_grouped$date),
                               lat = xy_new[1,2],
                               lon = xy_new[1,1],
                               cnt_pts = sum(places_grouped$cnt_pts))
       }else {
         agg_places <- agg_places %>%
-          add_row(select(places_grouped, date, lat, lon, cnt_pts))
+          add_row(select(places_grouped, most_recent_date = date, lat, lon, cnt_pts))
       }
     }
-  } else  agg_places <- select(places, date, lat, lon, cnt_pts)
+  } else  agg_places <- select(places, most_recent_date = date, lat, lon, cnt_pts)
 
   return(agg_places)
 }
 
 
-points_to_places <- function(locations, max_dist = 50) {
+geomean_seq_pts <- function(locations, max_dist = 50) {
 # Use with single subid at a time
 
-# min_place_time <- 5 # min threshold to be considered visiting a place (minutes)
-# max_dist <- 50 # max threshold for a new point to be part of a place (m)
-# estimating 40 meters for a large house size or apartment
-# and an accuracy of around 20 meters for gps in the city (or better)
 # https://www.gps.gov/systems/gps/performance/accuracy/
 # https://geoawesomeness.com/how-accurate-is-your-smartphones-gps-in-an-urban-jungle/#:~:text=The%20results%20showed%20that%20an,as%20669%20feet%20(204m).
 # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0219890

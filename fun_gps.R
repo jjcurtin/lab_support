@@ -177,30 +177,29 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 
   while (row_i < nrow(locations)) { # iterate through each row, except the last
 
-    message(str_c("...checking row ", row_i))
+    message(str_c("Checking row ", row_i, " of ", nrow(locations)))
 
     # evaluate the row as:
     # point to be aggregated with previous row
-    if (row_i != 1 && # not first row # row_i != nrow(locations) && # not last row
+    if (row_i != 1 &&
         locations$dist_prev[row_i] < locations$dist_next[row_i] &&
         locations$dist_prev[row_i] <= max_dist) {
       agg_previous <- TRUE
-      message("aggregating row with previous")
+      message("...aggregating row with PREVIOUS")
     }
 
     # point to be aggregated with next row
-    if (# (!row_i >= nrow(locations)) &&
-      row_i != 1 &&
-      locations$dist_next[row_i] <= locations$dist_prev[row_i] &&
-      locations$dist_next[row_i] <= max_dist) {
+    if (row_i != 1 &&
+        locations$dist_next[row_i] <= locations$dist_prev[row_i] &&
+        locations$dist_next[row_i] <= max_dist) {
       agg_next <- TRUE
-      message("aggregating row with next")
+      message("...aggregating row with NEXT")
     }
 
     # neither
     if (!agg_previous && !agg_next) {
       skip <- TRUE
-      message("not aggregating row, leaving as is")
+      message("...SKIP")
     }
 
     # then operate on the observation accordingly...
@@ -226,11 +225,9 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
       # drop the now-aggregated point
       locations <- slice(locations, -(row_i - 1))
       row_i <- (row_i - 1) # account for the removal of the now-aggregated point
-      message(".... observation aggregated")
     }
 
     if (agg_next) {
-      message("aggregating with the next observation")
       points_to_aggregate <- matrix(cbind(locations$lon[row_i:(row_i + 1)],
                                           locations$lat[row_i:(row_i + 1)]),
                                     nrow = 2, ncol = 2)
@@ -246,11 +243,9 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
                                         locations$time_next[row_i + 1])
       # drop the now-aggregated point
       locations <- slice(locations, -(row_i + 1))
-      message("...observation aggregating")
     }
 
     if (skip) {
-      message("...leaving observation")
       row_i <- row_i + 1
     } else {
       # calculate new dists for updated point

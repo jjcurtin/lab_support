@@ -122,7 +122,12 @@ kendra_cln_number <- function(number) {
       } 
     }
     
-    if(!is.null(number_formatted)) {
+    # move all numbers already in proper format to formatted_numbers variable
+    if(str_detect(number, "^[2-9]") & nchar(number == 10)) {
+      number_formatted <- number
+    }
+    
+    if(!is.null(number_formatted)) { 
       return(number_formatted)
     }
   }

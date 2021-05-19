@@ -123,7 +123,7 @@ kendra_cln_number <- function(number) {
     }
     
     # move all numbers already in proper format to formatted_numbers variable
-    if(str_detect(number, "^[2-9]") & nchar(number == 10)) {
+    if(str_detect(number, "^[2-9][0-9]{9}$") & nchar(number == 10)) {
       number_formatted <- number
     }
     

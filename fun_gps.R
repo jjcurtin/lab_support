@@ -1,24 +1,25 @@
 # Functions to support working with location data
 
 # Required packages
-library(leaflet)
+library(leaflet) # leaflet() and other related functions
+library(geosphere)   # distGeo(), distmean()
 
 
-plot_places <- function(places) {
+plot_places <- function(places, labels = NULL) {
 # places is a tibble that has two required and one optional column:
 # lat (numeric), lon (numeric), and info(character).
 # Other columns are ignored.
 
-  if (!("info" %in% names(places))){
-    places$info <-as.character(1:nrow(places))
-  }
+  if (is.null(labels)) {
+    places$.labels <-as.character(1:nrow(places))
+  } else places[".labels"] <- places[labels]
 
   map <-  leaflet() %>%
     addTiles() %>%
     addCircleMarkers(data = places,
                      lng = ~lon, lat = ~lat,
                      radius = 1.5, color = "red", opacity = 1,
-                     popup = ~info) %>%
+                     popup = ~.labels) %>%
     addMeasure(position = "bottomleft",
                primaryLengthUnit = "meters",
                primaryAreaUnit = "sqmeters")
@@ -120,7 +121,7 @@ geomean_places <- function(places, max_dist = 50){
       }
     }
 
-    agg_places <- tibble(most_recent_date = Date(), lat = double(), lon = double(), cnt_pts = double())
+    avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double())
     for (i in 1:max_grp){
       places_grouped <- places %>%
         filter(place_grp == i)
@@ -130,19 +131,21 @@ geomean_places <- function(places, max_dist = 50){
           select(lon, lat)
         w <- places_grouped$cnt_pts
         xy_new <- geomean(xy, w)
-        agg_places <- agg_places %>%
-          add_row(most_recent_date = max(places_grouped$date),
+        avg_place <- avg_place %>%
+          add_row(date = max(places_grouped$date),  # most recent date
                               lat = xy_new[1,2],
                               lon = xy_new[1,1],
                               cnt_pts = sum(places_grouped$cnt_pts))
       }else {
-        agg_places <- agg_places %>%
-          add_row(select(places_grouped, most_recent_date = date, lat, lon, cnt_pts))
+        avg_place <- avg_place %>%
+          add_row(select(places_grouped, date, lat, lon, cnt_pts))
       }
     }
-  } else  agg_places <- select(places, most_recent_date = date, lat, lon, cnt_pts)
+  } else  avg_place <- select(places, date, lat, lon, cnt_pts)
 
-  return(agg_places)
+  #avg_place <- mutate(avg_place, info = format(date))
+
+  return(avg_place)
 }
 
 
@@ -295,4 +298,90 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 # }
 
 
+coords_to_address <- function(lat, lon) {
 
+# see also: http://code.google.com/apis/maps/documentation/geocoding/
+# addresses <- revgeocode(c(lon, lat), output = 'address')
+
+
+}
+
+addresses_to_coords <- function() {
+
+# JJC grabbed from web as model
+
+  # Geocoding script for large list of addresses.
+  # Shane Lynn 10/10/2013
+  #load up the ggmap library
+  # library(ggmap)
+  # # get the input data
+  # infile &lt;- "input"
+  # data &lt;- read.csv(paste0('./', infile, '.csv'))
+  # # get the address list, and append "Ireland" to the end to increase accuracy
+  # # (change or remove this if your address already include a country etc.)
+  # addresses = data$Address
+  # addresses = paste0(addresses, ", Ireland")
+  # #define a function that will process googles server responses for us.
+  # getGeoDetails &lt;- function(address){
+  #   #use the gecode function to query google servers
+  #   geo_reply = geocode(address, output='all', messaging=TRUE, override_limit=TRUE)
+  #   #now extract the bits that we need from the returned list
+  #   answer &lt;- data.frame(lat=NA, long=NA, accuracy=NA, formatted_address=NA, address_type=NA, status=NA)
+  #   answer$status &lt;- geo_reply$status
+  #   #if we are over the query limit - want to pause for an hour
+  #   while(geo_reply$status == "OVER_QUERY_LIMIT"){
+  #     print("OVER QUERY LIMIT - Pausing for 1 hour at:")
+  #     time &lt;- Sys.time()
+  #     print(as.character(time))
+  #     Sys.sleep(60*60)
+  #     geo_reply = geocode(address, output='all', messaging=TRUE, override_limit=TRUE)
+  #     answer$status &lt;- geo_reply$status
+  #   }
+  #   #return Na's if we didn't get a match:
+  #   if (geo_reply$status != "OK"){
+  #     return(answer)
+  #   }
+  #   #else, extract what we need from the Google server reply into a dataframe:
+  #   answer$lat &lt;- geo_reply$results[[1]]$geometry$location$lat
+  #   answer$long &lt;- geo_reply$results[[1]]$geometry$location$lng
+  #   if (length(geo_reply$results[[1]]$types) &gt; 0){
+  #     answer$accuracy &lt;- geo_reply$results[[1]]$types[[1]]
+  #   }
+  #   answer$address_type &lt;- paste(geo_reply$results[[1]]$types, collapse=',')
+  #   answer$formatted_address &lt;- geo_reply$results[[1]]$formatted_address
+  #   return(answer)
+  # }
+  # #initialise a dataframe to hold the results
+  # geocoded &lt;- data.frame()
+  # # find out where to start in the address list (if the script was interrupted before):
+  # startindex &lt;- 1
+  # #if a temp file exists - load it up and count the rows!
+  # tempfilename &lt;- paste0(infile, '_temp_geocoded.rds')
+  # if (file.exists(tempfilename)){
+  #   print("Found temp file - resuming from index:")
+  #   geocoded &lt;- readRDS(tempfilename)
+  #   startindex &lt;- nrow(geocoded)
+  #   print(startindex)
+  # }
+  # # Start the geocoding process - address by address. geocode() function takes care of query speed limit.
+  # for (ii in seq(startindex, length(addresses))){
+  #   print(paste("Working on index", ii, "of", length(addresses)))
+  #   #query the google geocoder - this will pause here if we are over the limit.
+  #   result = getGeoDetails(addresses[ii])
+  #   print(result$status)
+  #   result$index &lt;- ii
+  #   #append the answer to the results file.
+  #   geocoded &lt;- rbind(geocoded, result)
+  #   #save temporary results as we are going along
+  #   saveRDS(geocoded, tempfilename)
+  # }
+  # #now we add the latitude and longitude to the main data
+  # data$lat &lt;- geocoded$lat
+  # data$long &lt;- geocoded$long
+  # data$accuracy &lt;- geocoded$accuracy
+  # #finally write it all to the output files
+  # saveRDS(data, paste0("../data/", infile ,"_geocoded.rds"))
+  # write.table(data, file=paste0("../data/", infile ,"_geocoded.csv"), sep=",", row.names=FALSE)
+
+
+}

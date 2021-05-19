@@ -59,21 +59,14 @@ extract_countrycode <- function(number){
 }
 
 
-extract_number <- function(number){
-# takes a number string, strips off the country code and any other
-# formatting to return a single series of digits (still as character)
-
-}
-
-
-
-
-kendra_cln_number <- function(number) {
-# I am thinking we should return the clean numbers as a new variable and then
-# we can easily see which numbers were not caught/formatted by looking at
-# missing values in formatted column.
+extract_number <- function(number) {
+  # takes a number string, strips off the country code and any other
+  # formatting to return a single series of digits (still as character)
+  # Numbers not formatted will be returned as "Unknown" and will need to 
+  # be checked further.
   
-# Can use function with following code:
+  
+  # Can use function with following code:
   # logs$address_clean <- map(logs$address, kendra_cln_number)
   # logs <- logs %>% 
   #   mutate(address_clean = unlist(address_clean)) %>% 
@@ -123,7 +116,7 @@ kendra_cln_number <- function(number) {
     }
     
     # move all numbers already in proper format to formatted_numbers variable
-    if(str_detect(number, "^[2-9][0-9]{9}$") & nchar(number == 10)) {
+    if(str_detect(number, "^[2-9]") & nchar(number == 10)) {
       number_formatted <- number
     }
     
@@ -135,3 +128,5 @@ kendra_cln_number <- function(number) {
   return(as.character(NA))
  
 }
+
+

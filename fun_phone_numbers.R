@@ -62,7 +62,7 @@ extract_countrycode <- function(number){
 extract_number <- function(number) {
   # takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
-  # Numbers not formatted will be returned as "Unknown" and will need to 
+  # Numbers not formatted will be returned as "unknown" and will need to 
   # be checked further.
   
   
@@ -72,46 +72,54 @@ extract_number <- function(number) {
   #   mutate(address_clean = unlist(address_clean)) %>% 
   #   glimpse()
   
+  # using separate varaible to store formatted numbers so that numbers
+  # not caught by any of the cases are returned as "unknown" for further
+  # EDA/inspection.
   number_formatted <- NULL
  
   if(!is.na(number)) {
+    # exclude numbers with alphabetic characters from cleaning and
+    # return "unknown"
+    if(str_detect(number, "[[:alpha:]]")) {
+      return("unknown")
+    }
+    
     # Remove spaces, parentheses, and dashes 
-    # exlude numbers with alphabetic characters from cleaning spaces and dashes
-    if(str_detect(number, "[[:space:]-\\(\\)]") & !str_detect(number, "[[:alpha:]]")) {
-      number_formatted <- str_replace_all(number, "[[:space:]-\\(\\)]", "")
+    if(str_detect(number, "[[:space:]-\\(\\)]")) {
+      number_formatted <- str_remove_all(number, "[[:space:]-\\(\\)]")
     }
   
     # Remove +1 from US numbers
     # check area codes don't start with a 0 or 1 in filter
     if(str_detect(number, "^\\+1[2-9]") & nchar(number) == 12  & is.null(number_formatted)) {
-      number_formatted <- str_replace(number, "^\\+1", "")
+      number_formatted <- str_remove(number, "^\\+1")
     }
     # check formatted numbers
     if (!is.null(number_formatted)) {
       if(str_detect(number_formatted, "^\\+1[2-9]") & nchar(number_formatted) == 12) {
-        number_formatted <- str_replace(number_formatted, "^\\+1", "")
+        number_formatted <- str_remove(number_formatted, "^\\+1", "")
       } 
     }
   
     # remove 1 from US numbers with no +
     if(str_detect(number, "^1[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
-      number_formatted <- str_replace(number, "^1", "")
+      number_formatted <- str_remove(number, "^1")
     }
     # check formatted numbers
     if (!is.null(number_formatted)) {
       if(str_detect(number_formatted, "^1[2-9]") & nchar(number_formatted) == 11) {
-        number_formatted <- str_replace(number_formatted, "^1", "")
+        number_formatted <- str_remove(number_formatted, "^1")
       } 
     }
   
     # remove + from US numbers (with no 1 or +1) 
     if(str_detect(number, "^\\+[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
-       number_formatted <- str_replace(number, "^\\+", "")
+       number_formatted <- str_remove(number, "^\\+")
     }
     # check formatted numbers
     if (!is.null(number_formatted)) {
       if(str_detect(number_formatted, "^\\+[2-9]") & nchar(number_formatted) == 11) {
-        number_formatted <- str_replace(number_formatted,  "^\\+", "")
+        number_formatted <- str_remove(number_formatted,  "^\\+")
       } 
     }
     
@@ -122,7 +130,8 @@ extract_number <- function(number) {
     
     if(!is.null(number_formatted)) { 
       return(number_formatted)
-    }
+      # return all unformatted numbers as "unknown"
+    } else { return("unknown")}
   }
   
   return(as.character(NA))

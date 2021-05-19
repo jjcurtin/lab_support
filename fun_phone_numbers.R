@@ -59,6 +59,22 @@ extract_countrycode <- function(number){
 }
 
 
+check_area_code <- function(number) {
+  # This function can be called inside extract_number to perform 
+  # check that area code is a valid US code. It returns a boolean 
+  # value. This function will help validate area codes that are
+  # known US codes vs out of country codes with similar lengths.
+  
+  # initialize vector of US area codes
+  
+  # pull first 3 digits of number
+  
+  # check if area code is in vector of known US area codes
+  
+  # return TRUE or FALSE
+}
+
+
 extract_number <- function(number) {
   # takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)

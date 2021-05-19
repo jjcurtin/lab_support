@@ -69,30 +69,69 @@ extract_number <- function(number){
 
 
 kendra_cln_number <- function(number) {
-# Putting in if statements for now - not yet a working function - I am 
-# thinking we should return the clean numbers as a new variable and then
+# I am thinking we should return the clean numbers as a new variable and then
 # we can easily see which numbers were not caught/formatted by looking at
 # missing values in formatted column.
   
-  # Remove spaces, parentheses, and dashes
-  if(str_detect(number, "[[:space:]-\\(\\)]")) {
-    number <- str_replace_all(number, "[[:space:]-\\(\\)]", "")
+# Can use function with following code:
+  # logs$address_clean <- map(logs$address, kendra_cln_number)
+  # logs <- logs %>% 
+  #   mutate(address_clean = unlist(address_clean)) %>% 
+  #   glimpse()
+  
+  number_formatted <- NULL
+ 
+  if(!is.na(number)) {
+    # Remove spaces, parentheses, and dashes 
+    # exlude numbers with alphabetic characters from cleaning spaces and dashes
+    if(str_detect(number, "[[:space:]-\\(\\)]") & !str_detect(number, "[[:alpha:]]")) {
+      number_formatted <- str_replace_all(number, "[[:space:]-\\(\\)]", "")
+    }
+  
+    # Remove +1 from US numbers
+    # check area codes don't start with a 0 or 1 in filter
+    if(str_detect(number, "^\\+1[2-9]") & nchar(number) == 12  & is.null(number_formatted)) {
+      number_formatted <- str_replace(number, "^\\+1", "")
+    }
+    # check formatted numbers
+    if (!is.null(number_formatted)) {
+      if(str_detect(number_formatted, "^\\+1[2-9]") & nchar(number_formatted) == 12) {
+        number_formatted <- str_replace(number_formatted, "^\\+1", "")
+      } 
+    }
+  
+    # remove 1 from US numbers with no +
+    if(str_detect(number, "^1[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
+      number_formatted <- str_replace(number, "^1", "")
+    }
+    # check formatted numbers
+    if (!is.null(number_formatted)) {
+      if(str_detect(number_formatted, "^1[2-9]") & nchar(number_formatted) == 11) {
+        number_formatted <- str_replace(number_formatted, "^1", "")
+      } 
+    }
+  
+    # remove + from US numbers (with no 1 or +1) 
+    if(str_detect(number, "^\\+[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
+       number_formatted <- str_replace(number, "^\\+", "")
+    }
+    # check formatted numbers
+    if (!is.null(number_formatted)) {
+      if(str_detect(number_formatted, "^\\+[2-9]") & nchar(number_formatted) == 11) {
+        number_formatted <- str_replace(number_formatted,  "^\\+", "")
+      } 
+    }
+    
+    # move all numbers already in proper format to formatted_numbers variable
+    if(str_detect(number, "^[2-9]") & nchar(number == 10)) {
+      number_formatted <- number
+    }
+    
+    if(!is.null(number_formatted)) { 
+      return(number_formatted)
+    }
   }
   
-  # Remove +1 from US numbers
-  # check area codes don't start with a 0 or 1 in filter
-  if(str_detect(number, "^\\+1[2-9]") & nchar(number) == 12) {
-    number <- str_replace(number, "^\\+1", "")
-  }
-  
-  # remove 1 from US numbers with no +
-  if(str_detect(number, "^1[2-9]") & nchar(number) == 11) {
-    number <- str_replace(number, "^1", "")
-  }
-  
-  # remove + from US numbers (with no 1 or +1) 
-  if(str_detect(number, "^\\+[2-9]") & nchar(number) == 11) {
-    number <- str_replace(number, "^\\+", "")
-  }
-  
+  return(as.character(NA))
+ 
 }

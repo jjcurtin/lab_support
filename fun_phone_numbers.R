@@ -146,8 +146,6 @@ extract_number <- function(number) {
  
   if(!is.na(number)) {
     
-    ################### Format Numbers ##################
-    
     # exclude numbers with alphabetic characters from cleaning and
     # return "unknown"
     if(str_detect(number, "[[:alpha:]]")) {
@@ -203,24 +201,20 @@ extract_number <- function(number) {
       number_formatted <- "unknown"
     }
     
-    ################# Check Area Codes ################
-    
+    # check area codes
     if(!is.null(number_formatted)) {
       if(number_formatted != "unknown" & nchar(number_formatted) == 10) {
       us_number <- check_area_code(number_formatted)
 
-      if(us_number == FALSE) {
-        number_formatted <- "Non-US number"
+        if(us_number == FALSE) {
+          number_formatted <- "Non-US number"
+        }
       }
     }
-    }
-    
-    ################## Return Numbers #################
     
     return(number_formatted)
-  }
-  
-  return(as.character(NA))
+    
+  } else return(as.character(NA))
  
 }
 

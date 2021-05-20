@@ -91,7 +91,7 @@ check_area_code <- function(number) {
         872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917,
         918, 919, 920, 925, 928, 929, 930, 931, 934, 935, 936, 937, 938, 939, 940, 941,
         943, 945, 947, 948, 949, 951, 952, 954, 956, 959, 970, 971, 972, 973, 975, 978,
-        979, 980, 984, 985, 986, 989))
+        979, 980, 984, 985, 986, 989, 800))
   
   # pull first 3 digits of number
   code <- str_sub(number, 1, 3)
@@ -165,7 +165,7 @@ extract_number <- function(number) {
     # check formatted numbers
     if (!is.null(number_formatted)) {
       if(str_detect(number_formatted, "^\\+1[2-9]") & nchar(number_formatted) == 12) {
-        number_formatted <- str_remove(number_formatted, "^\\+1", "")
+        number_formatted <- str_remove(number_formatted, "^\\+1")
       } 
     }
   
@@ -199,11 +199,13 @@ extract_number <- function(number) {
     ################# Check Area Codes ################
     
     if(!is.null(number_formatted)) {
+      if(number_formatted != "unknown" & nchar(number_formatted) == 10) {
       us_number <- check_area_code(number_formatted)
 
       if(us_number == FALSE) {
         number_formatted <- "Non-US number"
       }
+    }
     }
     
     ################## Return Numbers #################

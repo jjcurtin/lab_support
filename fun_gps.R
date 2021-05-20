@@ -9,6 +9,7 @@ plot_places <- function(places, labels = NULL) {
 # places is a tibble that has two required and one optional column:
 # lat (numeric), lon (numeric), and info(character).
 # Other columns are ignored.
+# see https://rstudio.github.io/leaflet/ for more info on leaflet
 
   if (is.null(labels)) {
     places$.labels <-as.character(1:nrow(places))
@@ -28,19 +29,25 @@ plot_places <- function(places, labels = NULL) {
 }
 
 
-plot_tracks <- function(locs, gap = 5) {
-
+plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
+# locs is df with lat and lon at a minimum
+# gap is max mins between points before track is broken into different segments
+# overlay_points allows for points to be plotted on top of tracks
+# see https://rstudio.github.io/leaflet/ for more info on leaflet
   locs <- locs %>%
     arrange(time) %>%
-    mutate(time_next = difftime(lead(time), time, units = "mins"))
+    mutate(time_next = difftime(lead(time), time, units = "mins"),
+           label = as.character(row_number()))
 
   map <-  leaflet() %>%
-    addTiles(group = 'Color') %>% # Add default OpenStreetMap map tiles
-    addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = 'B&W') #B&W OSM tiles
-
+    addTiles() # Add default OpenStreetMap map tiles
+  
+    # more options and use of groups
+    # addTiles(group = 'Color') %>% # Add default OpenStreetMap map tiles
+    # addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = 'B&W') #B&W OSM tiles
 
   i <- 1
-  while(i < nrow(locs)) { # need at least two points left for a new track
+  while(i < nrow(locs)) { # need at least two points (current and next) for a new track
     track <- tibble(lat = double(), lon = double())  # make new empty track
 
     track <- track %>%
@@ -48,31 +55,44 @@ plot_tracks <- function(locs, gap = 5) {
 
     while(i < nrow(locs) &&
           !is.na(locs$time_next[i]) &&
-          locs$time_next[i] <= gap) {
+          locs$time_next[i] <= minutes(gap)) {
       i <- i + 1
       track <- track %>%
         add_row(lat = locs$lat[i], lon = locs$lon[i])
     }
+    
+    
+    map <- map %>%
+      addPolylines(data = track,
+                      lng = ~lon, lat = ~lat,
+                      color = "red", weight = 2,
+                      opacity = 1) # , group = 'tracks'
 
-    #display this track if it has at least 2 points
-    if(nrow(track) > 1){
-      map <- map %>%
-        addPolylines(data = track,
-                        lng = ~lon, lat = ~lat,
-                        color = "red", weight = 2,
-                        opacity = 1, group = 'tracks')
-    }
-
-    i <- i + 1  #advance to next trackpoint (first in next track)
+    i <- i + 1  # advance to next trackpoint (first in next track)
   }
-  map <- map %>%
-    addLayersControl(baseGroups = c('color', 'B&W'),
-                     overlayGroups = c('places', 'tracks'),
-                     options = layersControlOptions(collapsed = FALSE)) %>%
+  
+  # use of controls for overlaps and measurement
+  # map <- map %>%
+  #   addLayersControl(baseGroups = c('color', 'B&W'),
+  #                    overlayGroups = c('places', 'tracks'),
+  #                    options = layersControlOptions(collapsed = FALSE)) %>%
+  #   addMeasure(position = "bottomleft",
+  #              primaryLengthUnit = "meters",
+  #              primaryAreaUnit = "sqmeters")
+
+  if (overlay_points) {
+    map <- map %>% 
+      addCircleMarkers(data = locs,
+                     lng = ~lon, lat = ~lat,
+                     radius = .1, color = "blue", opacity = .5,
+                     popup = ~label)
+  }
+  
+  map <-  map %>% 
     addMeasure(position = "bottomleft",
                primaryLengthUnit = "meters",
                primaryAreaUnit = "sqmeters")
-
+  
   return(map)
 }
 

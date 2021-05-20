@@ -91,7 +91,9 @@ check_area_code <- function(number) {
         872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917,
         918, 919, 920, 925, 928, 929, 930, 931, 934, 935, 936, 937, 938, 939, 940, 941,
         943, 945, 947, 948, 949, 951, 952, 954, 956, 959, 970, 971, 972, 973, 975, 978,
-        979, 980, 984, 985, 986, 989, 800))
+        979, 980, 984, 985, 986, 989, 
+        # add North American toll free area codes
+        800, 833, 844, 855, 866, 877, 888))
   
   # pull first 3 digits of number
   code <- str_sub(number, 1, 3)
@@ -192,8 +194,13 @@ extract_number <- function(number) {
     }
     
     # move all numbers already in proper format to formatted_numbers variable
-    if(str_detect(number, "^[2-9]") & nchar(number == 10) & is.null(number_formatted)) {
+    if(str_detect(number, "^[2-9][0-9]{9}$") & is.null(number_formatted)) {
       number_formatted <- number
+    }
+    
+    # set all formatted numbers to unknown
+    if(is.null(number_formatted)) {
+      number_formatted <- "unknown"
     }
     
     ################# Check Area Codes ################
@@ -210,10 +217,7 @@ extract_number <- function(number) {
     
     ################## Return Numbers #################
     
-    if(!is.null(number_formatted)) { 
-      return(number_formatted)
-      # return all unformatted numbers as "unknown"
-    } else { return("unknown")}
+    return(number_formatted)
   }
   
   return(as.character(NA))

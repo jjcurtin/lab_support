@@ -66,16 +66,34 @@ check_area_code <- function(number) {
   # Returns true or false
   
   # initialize vector of US area codes
-  # full db of area codes at Z:/studydata/risk/analysis/meta/notes/area_code_db.csv
+  # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html   
+  # area_code_db.csv and area_code_codebook.xls in lab_support/data
   
   # only need to check NA once
-  if (str_length(number) != 10 | is.na(number)) stop()
+  if (str_length(number) != 10 | is.na(number)) {
+    stop("You entered the number ", number, 
+         ". This function expects a formatted number with 10 digits.")
+  }
   
-  if (str_detect(number, "\\+")) stop()
+  if (str_detect(number, "\\+")) {
+    stop("You entered the number ", number, 
+         ". This function expects a formatted number with no leading +.")
+  }
   
-  if (str_detect(number, "^1")) stop()
+  if (str_detect(number, "^1")) {
+    stop("You entered the number ", number, 
+         ". This function expects a formatted number with no country code.")
+  }
   
-  if (str_detect(number, "[[:alpha:]]")) stop()
+  if (str_detect(number, "[[:alpha:]]")) {
+    stop("You entered the number ", number, 
+         ". This function expects a formatted number with no text characters.")
+  }
+  
+  if (str_detect(number, "[[:punct:]]")) {
+    stop("You entered the number ", number, 
+         ". This function expects a formatted number with no punctuation.")
+  }
   
   us_codes <- 
     as.character(

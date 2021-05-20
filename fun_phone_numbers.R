@@ -105,33 +105,9 @@ check_area_code <- function(number) {
         # add North American toll free area codes
         800, 833, 844, 855, 866, 877, 888))
   
-  # pull first 3 digits of number
   code <- str_sub(number, 1, 3)
   
-  # check if area code is in vector of known US area codes
-  # store US area code matches in vector
-  matches <- character()
-  
-  match <- (code %in% us_codes)
-  
-  # for (i in seq_along(us_codes)) {
-  #   if(code == us_codes[i]) {
-  #     matches <- c(matches, us_codes[i])
-  #   }
-  # }
-  # 
-  # # return TRUE or FALSE 
-  # if(length(matches) == 0) {  
-  #   return(FALSE)
-  # }
-  # if(length(matches) == 1) {
-  #   return(TRUE)
-  # }
-  # if(length(matches) > 1) {
-  #   # Need to error out here since shouldn't match more than one area code.
-  #   warning("Area code matches ", length(matches), " US area codes.")
-  # }
-  return(match)
+  return(code %in% us_codes)
 }
 
 

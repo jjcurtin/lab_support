@@ -60,10 +60,10 @@ extract_countrycode <- function(number){
 
 
 check_area_code <- function(number) {
-  # This function can be called inside extract_number to perform a
-  # check that area code is a valid US code. It returns a boolean 
-  # value. This function will help validate area codes that are
-  # known US codes vs out of country codes with similar lengths.
+  # number is expected to be a 10 character string.  Function checks if the
+  # the first three characters of this number represent a valid US area code or
+  # North American toll free area code.  
+  # Returns true or false
   
   # initialize vector of US area codes
   # full db of area codes at Z:/studydata/risk/analysis/meta/notes/area_code_db.csv
@@ -73,6 +73,8 @@ check_area_code <- function(number) {
   if (str_detect(number, "\\+")) stop()
   
   if (str_detect(number, "^1")) stop()
+  
+  if (str_detect(number, "[[:alpha:]]")) stop()
   
   us_codes <- 
     as.character(

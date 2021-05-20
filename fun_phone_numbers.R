@@ -68,7 +68,8 @@ check_area_code <- function(number) {
   # initialize vector of US area codes
   # full db of area codes at Z:/studydata/risk/analysis/meta/notes/area_code_db.csv
   
-  if (str_length(number) != 10) stop()
+  # only need to check NA once
+  if (str_length(number) != 10 | is.na(number)) stop()
   
   if (str_detect(number, "\\+")) stop()
   
@@ -111,23 +112,26 @@ check_area_code <- function(number) {
   # store US area code matches in vector
   matches <- character()
   
-  for (i in seq_along(us_codes)) {
-    if(code == us_codes[i]) {
-      matches <- c(matches, us_codes[i])
-    }
-  }
-
-  # return TRUE or FALSE 
-  if(length(matches) == 0) {  
-    return(FALSE)
-  }
-  if(length(matches) == 1) {
-    return(TRUE)
-  }
-  if(length(matches) > 1) {
-    # Need to error out here since shouldn't match more than one area code.
-    warning("Area code matches ", length(matches), " US area codes.")
-  }
+  match <- (code %in% us_codes)
+  
+  # for (i in seq_along(us_codes)) {
+  #   if(code == us_codes[i]) {
+  #     matches <- c(matches, us_codes[i])
+  #   }
+  # }
+  # 
+  # # return TRUE or FALSE 
+  # if(length(matches) == 0) {  
+  #   return(FALSE)
+  # }
+  # if(length(matches) == 1) {
+  #   return(TRUE)
+  # }
+  # if(length(matches) > 1) {
+  #   # Need to error out here since shouldn't match more than one area code.
+  #   warning("Area code matches ", length(matches), " US area codes.")
+  # }
+  return(match)
 }
 
 

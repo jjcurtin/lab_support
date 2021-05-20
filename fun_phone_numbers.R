@@ -198,12 +198,13 @@ extract_number <- function(number) {
     
     ################# Check Area Codes ################
     
-    us_number <- check_area_code(number_formatted)
+    if(!is.null(number_formatted)) {
+      us_number <- check_area_code(number_formatted)
 
-    if(us_number == FALSE) {
-      number_formatted <- "Non-US number"
+      if(us_number == FALSE) {
+        number_formatted <- "Non-US number"
+      }
     }
-    
     
     ################## Return Numbers #################
     

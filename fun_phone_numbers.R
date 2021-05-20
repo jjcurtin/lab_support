@@ -67,6 +67,13 @@ check_area_code <- function(number) {
   
   # initialize vector of US area codes
   # full db of area codes at Z:/studydata/risk/analysis/meta/notes/area_code_db.csv
+  
+  if (str_length(number) != 10) stop()
+  
+  if (str_detect(number, "\\+")) stop()
+  
+  if (str_detect(number, "^1")) stop()
+  
   us_codes <- 
     as.character(
       c(201, 202, 203, 205, 206, 207, 208, 209, 210, 212, 213, 214, 215, 216, 217, 218,

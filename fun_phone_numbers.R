@@ -126,19 +126,26 @@ extract_number <- function(number) {
   # Numbers not formatted will be returned as "unknown" and will need to 
   # be checked further.
   
+  # Uncomment code below to test function with check_area_code
+  # test <- c("608 555-3636", "+17143227807", "+12226666444", "222 343-6666", "alphabet", "6086185323")
+  # test
+  # map(test, extract_number) %>%  unlist()
   
   # Can use function with following code:
-  # logs$address_clean <- map(logs$address, kendra_cln_number)
+  # logs$address_clean <- map(logs$address, extract_number)
   # logs <- logs %>% 
   #   mutate(address_clean = unlist(address_clean)) %>% 
   #   glimpse()
   
-  # using separate varaible to store formatted numbers so that numbers
+  # using separate variable to store formatted numbers so that numbers
   # not caught by any of the cases are returned as "unknown" for further
   # EDA/inspection.
   number_formatted <- NULL
  
   if(!is.na(number)) {
+    
+    ################### Format Numbers ##################
+    
     # exclude numbers with alphabetic characters from cleaning and
     # return "unknown"
     if(str_detect(number, "[[:alpha:]]")) {
@@ -185,9 +192,20 @@ extract_number <- function(number) {
     }
     
     # move all numbers already in proper format to formatted_numbers variable
-    if(str_detect(number, "^[2-9]") & nchar(number == 10)) {
+    if(str_detect(number, "^[2-9]") & nchar(number == 10) & is.null(number_formatted)) {
       number_formatted <- number
     }
+    
+    ################# Check Area Codes ################
+    
+    us_number <- check_area_code(number_formatted)
+
+    if(us_number == FALSE) {
+      number_formatted <- "Non-US number"
+    }
+    
+    
+    ################## Return Numbers #################
     
     if(!is.null(number_formatted)) { 
       return(number_formatted)

@@ -151,14 +151,25 @@ extract_number <- function(number) {
   # Pattern - characters
   # e.g., email address, amber alert
   # checked and returned before removing spaces, dashes, etc
-  # REPLACE WITH NARROWER PATTERNS IN THE NEXT FEW CODE BLOCKS
-  if (str_detect(number, "[[:alpha:]]")) return(number)
-
-  # HANDLE Pattern to match email.  characters & @ and "." in the suffix after @
-
-  # HANDLE amber alert
   
+  # pattern - email.  characters & @ and "." in the suffix after @
+  if (str_detect(number, "^[[:alnum:]._-]+@[[:alnum:].-]+.[:alpha:]$")) {
+    return(number)
+  }
   
+  # pattern - amber alert/commercial mobile alert system - relevant only for SMS
+  # (?i) is case-insensitive modifier
+  if (str_detect(number, "#CMAS") || str_detect(number, "(?i)alert")) {
+    return(number)
+  }
+  
+  # return other numbers containing letters with warning that it did not match
+  # a pre-set pattern
+  if (str_detect(number, "[[:alpha:]]")) { 
+    warning (number, " did not match any pre-defined pattern")
+    return(number)
+  }
+
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes 
   if(str_detect(number, "[[:space:]-\\(\\)]")) {
@@ -167,7 +178,7 @@ extract_number <- function(number) {
   }
   
   # will copy number to formatted number to allow detection of multiple pattern matches.
-  # Not needed yet but may be when numbers can match both US $ Non-US numbers
+  # Not needed yet but may be when numbers can match both US & Non-US numbers
   formatted_number <- NULL 
   
   # Pattern - US numbers with +1 country code

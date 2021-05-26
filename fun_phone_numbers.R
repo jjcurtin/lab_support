@@ -223,8 +223,6 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE *67
-  
   # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
   # 211: Community services and information
   # 311: Municipal government services, non-emergency number
@@ -251,8 +249,23 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE *69 - redial, *86 - voicemail for verizon phones,
+  # pattern - vertical service codes (https://en.wikipedia.org/wiki/Vertical_service_code)
   
+  
+  # pattern - *67 plus 10 digit phone number - blocks number
+  if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*67")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+  }
+  
+  # HANDLE - short codes (https://en.wikipedia.org/wiki/Short_code#United_States)
+  # Standard, interoperable short codes in the U.S. are five or six digits long,
+  # never start with 1, and only work in the U.S.
+  # JOHN - putting this as a temporary place holder to remind us to discuss 
+  # short codes.
+
   
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {

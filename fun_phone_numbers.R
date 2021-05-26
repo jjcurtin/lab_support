@@ -196,7 +196,7 @@ extract_number <- function(number) {
   }
   
   
-  # Pattern 5 - US numbers with + but no country code
+  # Pattern - US numbers with + but no country code
   if (nchar(number) == 11 && str_detect(number, "^\\+") && check_area_code(str_sub(number, 2, 11))) {
     
     if(is.null(formatted_number)) {
@@ -206,7 +206,17 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE 7 digit US numbers?
+  # Pattern - 7 digit US numbers with no area code
+  # This may eventually interact with non-US numbers?
+  # Can we get a list of all know US exchanges?
+  if (nchar(number) == 7) {
+    
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
   
   # HANDLE *67, etc
   

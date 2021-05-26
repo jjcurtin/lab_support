@@ -151,9 +151,14 @@ extract_number <- function(number) {
   # Pattern - characters
   # e.g., email address, amber alert
   # checked and returned before removing spaces, dashes, etc
+  # REPLACE WITH NARROWER PATTERNS IN THE NEXT FEW CODE BLOCKS
   if (str_detect(number, "[[:alpha:]]")) return(number)
 
+  # HANDLE Pattern to match email.  characters & @ and "." in the suffix after @
 
+  # HANDLE amber alert
+  
+  
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes 
   if(str_detect(number, "[[:space:]-\\(\\)]")) {
@@ -176,7 +181,7 @@ extract_number <- function(number) {
   }
 
   # Pattern - 10 digit US numbers
-  if (nchar(number) == 10 && check_area_code(number)) {
+  if (nchar(number) == 10 && !str_detect(number, "\\+") && check_area_code(number)) {
     
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -218,8 +223,9 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE *67, etc
+  # HANDLE *67
   
+  # HANDLE *69
   
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {

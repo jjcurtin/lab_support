@@ -52,7 +52,7 @@ format_numbers <- function(numbers){
 }
 
 
-extract_countrycode <- function(number){
+extract_country_code <- function(number){
 # Takes a number string and extracts the country code (if exists)
 # or returns the US country code if no country code was provided
 
@@ -132,89 +132,92 @@ check_area_code <- function(number) {
 extract_number <- function(number) {
   # takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
-  # Numbers not formatted will be returned as "unknown" and will need to 
-  # be checked further.
+
+  # numbers that match multiple patterns will generate error
+  # numbers that do not match any pattern are returned as is (but without
+  # spaces, dashes, and ()) along with a warning
   
   # Can use function with following code:
   # logs$address_clean <- map(logs$address, extract_number)
   # logs <- logs %>% 
   #   mutate(address_clean = unlist(address_clean)) %>% 
   #   glimpse()
+
   
-  # using separate variable to store formatted numbers so that numbers
-  # not caught by any of the cases are returned as "unknown" for further
-  # EDA/inspection.
-  number_formatted <- NULL
- 
-  if(!is.na(number)) {
-    
-    # exclude numbers with alphabetic characters from cleaning and
-    # return "not_formatted"
-    if(str_detect(number, "[[:alpha:]]")) {
-      return("not_formatted")
-    }
-    
-    # Remove spaces, parentheses, and dashes 
-    if(str_detect(number, "[[:space:]-\\(\\)]")) {
-      number_formatted <- str_remove_all(number, "[[:space:]-\\(\\)]")
-    }
+  # Pattern - NA
+  # return now to avoid need to check NA each time
+  if (is.na(number)) return(NA_character_)
   
-    # Remove +1 from US numbers
-    # check area codes don't start with a 0 or 1 in filter
-    if(str_detect(number, "^\\+1[2-9]") & nchar(number) == 12  & is.null(number_formatted)) {
-      number_formatted <- str_remove(number, "^\\+1")
-    }
-    # check formatted numbers
-    if (!is.null(number_formatted)) {
-      if(str_detect(number_formatted, "^\\+1[2-9]") & nchar(number_formatted) == 12) {
-        number_formatted <- str_remove(number_formatted, "^\\+1")
-      } 
-    }
+  # Pattern - characters
+  # e.g., email address, amber alert
+  # checked and returned before removing spaces, dashes, etc
+  if (str_detect(number, "[[:alpha:]]")) return(number)
+
+
+  # Now format before checking all other patterns
+  # Remove spaces, parentheses, and dashes 
+  if(str_detect(number, "[[:space:]-\\(\\)]")) {
+    
+    number <- str_remove_all(number, "[[:space:]-\\(\\)]")
+  }
   
-    # remove 1 from US numbers with no +
-    if(str_detect(number, "^1[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
-      number_formatted <- str_remove(number, "^1")
-    }
-    # check formatted numbers
-    if (!is.null(number_formatted)) {
-      if(str_detect(number_formatted, "^1[2-9]") & nchar(number_formatted) == 11) {
-        number_formatted <- str_remove(number_formatted, "^1")
-      } 
-    }
+  # will copy number to formatted number to allow detection of multiple pattern matches.
+  # Not needed yet but may be when numbers can match both US $ Non-US numbers
+  formatted_number <- NULL 
   
-    # remove + from US numbers (with no 1 or +1) 
-    if(str_detect(number, "^\\+[2-9]") & nchar(number) == 11 & is.null(number_formatted)) {
-       number_formatted <- str_remove(number, "^\\+")
-    }
-    # check formatted numbers
-    if (!is.null(number_formatted)) {
-      if(str_detect(number_formatted, "^\\+[2-9]") & nchar(number_formatted) == 11) {
-        number_formatted <- str_remove(number_formatted,  "^\\+")
-      } 
-    }
+  # Pattern - US numbers with +1 country code
+  if (nchar(number) == 12 && str_detect(number, "^\\+1") && check_area_code(str_sub(number, 3, 12))) {
     
-    # move all numbers already in proper format to formatted_numbers variable
-    if(str_detect(number, "^[2-9][0-9]{9}$") & is.null(number_formatted)) {
-      number_formatted <- number
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "^\\+1")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
     }
+  }
+
+  # Pattern - 10 digit US numbers
+  if (nchar(number) == 10 && check_area_code(number)) {
     
-    # set all formatted numbers to not_formatted
-    if(is.null(number_formatted)) {
-      number_formatted <- "not_formatted"
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
     }
+  }
+  
+  # Pattern - US numbers with 1 country code
+  if (nchar(number) == 11 && str_detect(number, "^1") && check_area_code(str_sub(number, 2, 11))) {
     
-    # check area codes
-    if(!is.null(number_formatted)) {
-      if(number_formatted != "not_formatted" & nchar(number_formatted) == 10) {
-      us_number <- check_area_code(number_formatted)
-      number_formatted <- ifelse(us_number == FALSE, "not_formatted", number_formatted)
-      }
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "^1")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
     }
+  }
+  
+  
+  # Pattern 5 - US numbers with + but no country code
+  if (nchar(number) == 11 && str_detect(number, "^\\+") && check_area_code(str_sub(number, 2, 11))) {
     
-    return(number_formatted)
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "^\\+")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+  
+  # HANDLE 7 digit US numbers?
+  
+  # HANDLE *67, etc
+  
+  
+  # generate warning if number did not match any format
+  if (is.null(formatted_number)) {
+    formatted_number <- number
+    warning (number, " did not match any pre-defined pattern")
+  }
     
-  } else return(as.character(NA))
- 
+  return(formatted_number)
 }
 
 

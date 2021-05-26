@@ -225,7 +225,34 @@ extract_number <- function(number) {
   
   # HANDLE *67
   
-  # HANDLE *69
+  # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
+  # 211: Community services and information
+  # 311: Municipal government services, non-emergency number
+  # 411: Directory assistance
+  # 511: Traffic information or police non-emergency services
+  # 611: Telephone company (telco) customer service and repair
+  # 711: TDD and Relay Services for the deaf and hard of hearing
+  # 811: Underground public utility location
+  # 911: Emergency services (police, fire, ambulance and rescue services)
+  if (nchar(number) == 3 && str_detect(number, "[2-9]1{2}")) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+  
+  # pattern - 988 (National suicide hotline)
+  if (number == "988") {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+  
+  # HANDLE *69 - redial, *86 - voicemail for verizon phones,
+  
   
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {

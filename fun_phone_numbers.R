@@ -289,7 +289,13 @@ extract_number <- function(number) {
     # pattern - (nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
     # (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))
 
+    
+    
+  # HANDLE - group messages
+  # These show up in my android logs as multiple numbers separated by ~
   
+    
+      
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
     formatted_number <- number

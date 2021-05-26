@@ -278,6 +278,7 @@ extract_number <- function(number) {
       formatted_number <- str_remove(number, "\\*67")
     } else {
       stop(number, " matches multiple pre-defined patterns")
+    }
   }
   
   # HANDLE - short codes (https://en.wikipedia.org/wiki/Short_code#United_States)

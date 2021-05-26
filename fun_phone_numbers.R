@@ -250,7 +250,16 @@ extract_number <- function(number) {
   }
   
   # pattern - vertical service codes (https://en.wikipedia.org/wiki/Vertical_service_code)
-  
+  # JOHN - many of these may not be relevant for cell phones, I am only checking 
+  # for ones that seem likely to occur, but we can use the resource above if
+  # we see more slipping through.
+  if(number %in% c("*69", "*86", "*61", "*63", "*66", "*70", "*82")) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }   
+  }
   
   # pattern - *67 plus 10 digit phone number - blocks number
   if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
@@ -263,8 +272,11 @@ extract_number <- function(number) {
   # HANDLE - short codes (https://en.wikipedia.org/wiki/Short_code#United_States)
   # Standard, interoperable short codes in the U.S. are five or six digits long,
   # never start with 1, and only work in the U.S.
+  # I confirmed they also don't start with a 0 (min value = 20000)
   # JOHN - putting this as a temporary place holder to remind us to discuss 
-  # short codes.
+  # short codes. 
+    # pattern - (nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
+    # (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))
 
   
   # generate warning if number did not match any format

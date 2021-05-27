@@ -97,7 +97,9 @@ check_area_code <- function(number) {
         943, 945, 947, 948, 949, 951, 952, 954, 956, 959, 970, 971, 972, 973, 975, 978,
         979, 980, 984, 985, 986, 989,
         # add North American toll free area codes
-        800, 833, 844, 855, 866, 877, 888))
+        800, 833, 844, 855, 866, 877, 888,
+        # add Canadian area codes
+        403)
 
   code <- str_sub(number, 1, 3)
 

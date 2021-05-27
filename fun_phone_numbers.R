@@ -120,6 +120,7 @@ extract_number <- function(number) {
   # Can use function in tidy pipeline with following code:
   # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
 
+  orig_number <- number  # used when no pattern match to retain unformatted form
 
   # Pattern - NA
   # return now to avoid need to check NA each time
@@ -140,12 +141,7 @@ extract_number <- function(number) {
     return(number)
   }
 
-  # return other numbers containing letters with warning that it did not match
-  # a pre-set pattern
-  if (str_detect(number, "[[:alpha:]]")) {
-    warning (number, " did not match any pre-defined pattern")
-    return(number)
-  }
+
 
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes
@@ -305,8 +301,8 @@ extract_number <- function(number) {
 
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
-    formatted_number <- number
-    warning (number, " did not match any pre-defined pattern")
+    formatted_number <- orig_number
+    warning (orig_number, " did not match any pre-defined pattern")
   }
 
   return(formatted_number)

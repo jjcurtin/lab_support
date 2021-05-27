@@ -124,6 +124,7 @@ extract_number <- function(number) {
 
   orig_number <- number  # used when no pattern match to retain unformatted form
 
+  # FIRST HANDLE NUMBERS WITH NA OR TEXT
   # Pattern - NA
   # return now to avoid need to check NA each time
   if (is.na(number)) return(NA_character_)
@@ -143,7 +144,10 @@ extract_number <- function(number) {
     return(number)
   }
 
-
+  # pattern - Verizon Wireless
+  if (str_detect(number, "Verizon Wireless")) {
+    return(number)
+  }
 
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes
@@ -270,15 +274,6 @@ extract_number <- function(number) {
 
   # pattern - 800050001020.  Likely Verizon Wireless Automated number
   if (number == "800050001020") {
-    if(is.null(formatted_number)) {
-      formatted_number <- number
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-
-  # pattern - Verizon Wireless
-  if (number == "Verizon Wireless") {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {

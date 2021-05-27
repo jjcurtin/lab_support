@@ -291,6 +291,16 @@ extract_number <- function(number) {
     }
   }
 
+  # pattern - 7726
+  # FTC reporting number for SPAM
+  if (number == "7726") {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+
 
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~

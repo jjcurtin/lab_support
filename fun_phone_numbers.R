@@ -38,40 +38,40 @@ extract_country_code <- function(number){
 check_area_code <- function(number) {
   # number is expected to be a 10 character string.  Function checks if the
   # the first three characters of this number represent a valid US area code or
-  # North American toll free area code.  
+  # North American toll free area code.
   # Returns true or false
-  
+
   # initialize vector of US area codes
-  # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html   
+  # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html
   # area_code_db.csv and area_code_codebook.xls in lab_support/data
-  
+
   # only need to check NA once
   if (str_length(number) != 10 | is.na(number)) {
-    stop("You entered the number ", number, 
+    stop("You entered the number ", number,
          ". This function expects a formatted number with 10 digits.")
   }
-  
+
   if (str_detect(number, "\\+")) {
-    stop("You entered the number ", number, 
+    stop("You entered the number ", number,
          ". This function expects a formatted number with no leading +.")
   }
-  
+
   if (str_detect(number, "^1")) {
-    stop("You entered the number ", number, 
+    stop("You entered the number ", number,
          ". This function expects a formatted number with no country code.")
   }
-  
+
   if (str_detect(number, "[[:alpha:]]")) {
-    stop("You entered the number ", number, 
+    stop("You entered the number ", number,
          ". This function expects a formatted number with no text characters.")
   }
-  
+
   if (str_detect(number, "[[:punct:]]")) {
-    stop("You entered the number ", number, 
+    stop("You entered the number ", number,
          ". This function expects a formatted number with no punctuation.")
   }
-  
-  us_codes <- 
+
+  us_codes <-
     as.character(
       c(201, 202, 203, 205, 206, 207, 208, 209, 210, 212, 213, 214, 215, 216, 217, 218,
         219, 220, 223, 224, 225, 227, 228, 229, 231, 234, 239, 240, 248, 251, 252, 253,
@@ -95,12 +95,12 @@ check_area_code <- function(number) {
         872, 878, 901, 903, 904, 906, 907, 908, 909, 910, 912, 913, 914, 915, 916, 917,
         918, 919, 920, 925, 928, 929, 930, 931, 934, 935, 936, 937, 938, 939, 940, 941,
         943, 945, 947, 948, 949, 951, 952, 954, 956, 959, 970, 971, 972, 973, 975, 978,
-        979, 980, 984, 985, 986, 989, 
+        979, 980, 984, 985, 986, 989,
         # add North American toll free area codes
         800, 833, 844, 855, 866, 877, 888))
-  
+
   code <- str_sub(number, 1, 3)
-  
+
   return(code %in% us_codes)
 }
 
@@ -114,51 +114,51 @@ extract_number <- function(number) {
   # Numbers that match multiple patterns will generate error.
   # Numbers that do not match any pattern are returned as is (but without
   # spaces, dashes, and ()) along with a warning
-  
+
   # Can use function in tidy pipeline with following code:
   # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
 
-  
+
   # Pattern - NA
   # return now to avoid need to check NA each time
   if (is.na(number)) return(NA_character_)
-  
+
   # Pattern - characters
   # e.g., email address, amber alert
   # checked and returned before removing spaces, dashes, etc
-  
+
   # pattern - email.  characters & @ and "." in the suffix after @
   if (str_detect(number, "^[[:alnum:]._-]+@[[:alnum:].-]+.[:alpha:]$")) {
     return(number)
   }
-  
+
   # pattern - amber alert/commercial mobile alert system - relevant only for SMS
   # (?i) is case-insensitive modifier
   if (str_detect(number, "#CMAS") || str_detect(number, "(?i)alert")) {
     return(number)
   }
-  
+
   # return other numbers containing letters with warning that it did not match
   # a pre-set pattern
-  if (str_detect(number, "[[:alpha:]]")) { 
+  if (str_detect(number, "[[:alpha:]]")) {
     warning (number, " did not match any pre-defined pattern")
     return(number)
   }
 
   # Now format before checking all other patterns
-  # Remove spaces, parentheses, and dashes 
+  # Remove spaces, parentheses, and dashes
   if(str_detect(number, "[[:space:]-\\(\\)]")) {
-    
+
     number <- str_remove_all(number, "[[:space:]-\\(\\)]")
   }
-  
+
   # will copy number to formatted number to allow detection of multiple pattern matches.
   # Not needed yet but may be when numbers can match both US & Non-US numbers
-  formatted_number <- NULL 
-  
+  formatted_number <- NULL
+
   # Pattern - US numbers with +1 country code
   if (nchar(number) == 12 && str_detect(number, "^\\+1") && check_area_code(str_sub(number, 3, 12))) {
-    
+
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "^\\+1")
     } else {
@@ -168,47 +168,47 @@ extract_number <- function(number) {
 
   # Pattern - 10 digit US numbers
   if (nchar(number) == 10 && !str_detect(number, "\\+") && check_area_code(number)) {
-    
+
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # Pattern - US numbers with 1 country code
   if (nchar(number) == 11 && str_detect(number, "^1") && check_area_code(str_sub(number, 2, 11))) {
-    
+
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "^1")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
-  
+
+
   # Pattern - US numbers with + but no country code
   if (nchar(number) == 11 && str_detect(number, "^\\+") && check_area_code(str_sub(number, 2, 11))) {
-    
+
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "^\\+")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # Pattern - 7 digit US numbers with no area code
   # This may eventually interact with non-US numbers?
   # Can we get a list of all know US exchanges?
   if (nchar(number) == 7) {
-    
+
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
   # 211: Community services and information
   # 311: Municipal government services, non-emergency number
@@ -225,7 +225,7 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # pattern - 988 (National suicide hotline)
   if (number == "988") {
     if(is.null(formatted_number)) {
@@ -234,9 +234,9 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # pattern - vertical service codes (https://en.wikipedia.org/wiki/Vertical_service_code)
-  # JOHN - many of these may not be relevant for cell phones, I am only checking 
+  # JOHN - many of these may not be relevant for cell phones, I am only checking
   # for ones that seem likely to occur, but we can use the resource above if
   # we see more slipping through.
   if(number %in% c("*69", "*86", "*61", "*63", "*66", "*70", "*82")) {
@@ -244,9 +244,9 @@ extract_number <- function(number) {
       formatted_number <- number
     } else {
       stop(number, " matches multiple pre-defined patterns")
-    }   
+    }
   }
-  
+
   # pattern - *67 plus 10 digit phone number - blocks number
   if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
     if(is.null(formatted_number)) {
@@ -255,11 +255,11 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
-  
+
+
   # pattern - short codes.  5-6 digits, first digit is 2 or greater
   # https://en.wikipedia.org/wiki/Short_code#United_States
-  if ((nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
+  if ((nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) ||
       (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))) {
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -267,17 +267,35 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-    
+
+  # pattern - 800050001020.  Likely Verizon Wireless Automated number
+  if (number == "800050001020") {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+
+  # pattern - Verizon Wireless
+  if (number == "Verizon Wireless") {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
-  
-      
+
+
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
     formatted_number <- number
     warning (number, " did not match any pre-defined pattern")
   }
-    
+
   return(formatted_number)
 }
 

@@ -138,10 +138,7 @@ extract_number <- function(number) {
   # spaces, dashes, and ()) along with a warning
   
   # Can use function with following code:
-  # logs$address_clean <- map(logs$address, extract_number)
-  # logs <- logs %>% 
-  #   mutate(address_clean = unlist(address_clean)) %>% 
-  #   glimpse()
+  # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
 
   
   # Pattern - NA

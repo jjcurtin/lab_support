@@ -1,14 +1,15 @@
-# Description:
+# Description-----------------------------------------
 
 # Useful online resources
 #   For android SMS" https://synctech.com.au/sms-backup-restore/fields-in-xml-backup-files/
 #   https://developer.android.com/reference/android/provider/CallLog - There are a few different sections (left-hand menu) relating to calls and SMS
 
 
-# Packages
+# Packages------------------------------------------
 library(stringr)
 
 
+# Functions --------------------------------------
 format_numbers <- function(numbers){
   # formats a simple number character string something easier
   # to read for participant.
@@ -33,7 +34,6 @@ extract_country_code <- function(number){
 # or returns the US country code if no country code was provided
 
 }
-
 
 check_area_code <- function(number) {
   # number is expected to be a 10 character string.  Function checks if the
@@ -103,6 +103,8 @@ check_area_code <- function(number) {
   
   return(code %in% us_codes)
 }
+
+
 
 
 extract_number <- function(number) {
@@ -278,5 +280,7 @@ extract_number <- function(number) {
     
   return(formatted_number)
 }
+
+
 
 

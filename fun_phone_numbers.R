@@ -1,38 +1,15 @@
-# Description:
+# Description-----------------------------------------
 
 # Useful online resources
 #   For android SMS" https://synctech.com.au/sms-backup-restore/fields-in-xml-backup-files/
 #   https://developer.android.com/reference/android/provider/CallLog - There are a few different sections (left-hand menu) relating to calls and SMS
 
 
-# Packages
+# Packages------------------------------------------
 library(stringr)
 
 
-
-
-clean_numbers <- function(raw_numbers){
-  # does appropriate processing of sms or voice call numbers
-  # SHOULD BE UPDATED TO WORK ON A SINGLE NUMBER RATHER THAN VECTOR BY JOHN
-  # NEEDS UPDATING BY KENDRA OR JOHN
-  # WILL NOT HANDLE NON US COUNTRY CODES
-
-  numbers <- raw_numbers %>%
-    str_remove("^1") %>% # 16082176221
-    str_remove("^\\+1") %>%   # US country codes
-    str_remove_all("[\\(\\) ]") %>%
-    str_remove_all("-")
-
-  # if(any(str_detect(numbers, "^\\+"))) {
-  #   stop("Unprocessed country code detected")
-  # }
-
-  # numbers <- if_else(str_detect(numbers, "^\\([0-9]{3}\\) "),
-  #                   str_replace_all(numbers, "[\\(\\) ]", ""),
-  #                   numbers)
-  return(numbers)
-}
-
+# Functions --------------------------------------
 format_numbers <- function(numbers){
   # formats a simple number character string something easier
   # to read for participant.
@@ -57,7 +34,6 @@ extract_country_code <- function(number){
 # or returns the US country code if no country code was provided
 
 }
-
 
 check_area_code <- function(number) {
   # number is expected to be a 10 character string.  Function checks if the
@@ -129,15 +105,17 @@ check_area_code <- function(number) {
 }
 
 
+
+
 extract_number <- function(number) {
-  # takes a number string, strips off the country code and any other
+  # Takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
 
-  # numbers that match multiple patterns will generate error
-  # numbers that do not match any pattern are returned as is (but without
+  # Numbers that match multiple patterns will generate error.
+  # Numbers that do not match any pattern are returned as is (but without
   # spaces, dashes, and ()) along with a warning
   
-  # Can use function with following code:
+  # Can use function in tidy pipeline with following code:
   # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
 
   
@@ -278,21 +256,21 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE - short codes (https://en.wikipedia.org/wiki/Short_code#United_States)
-  # Standard, interoperable short codes in the U.S. are five or six digits long,
-  # never start with 1, and only work in the U.S.
-  # I confirmed they also don't start with a 0 (min value = 20000)
-  # JOHN - putting this as a temporary place holder to remind us to discuss 
-  # short codes. 
-    # pattern - (nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
-    # (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))
-
-    
+  
+  # pattern - short codes.  5-6 digits, first digit is 2 or greater
+  # https://en.wikipedia.org/wiki/Short_code#United_States
+  if ((nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
+      (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
     
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
   
-    
       
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
@@ -302,5 +280,7 @@ extract_number <- function(number) {
     
   return(formatted_number)
 }
+
+
 
 

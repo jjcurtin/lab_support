@@ -106,14 +106,14 @@ check_area_code <- function(number) {
 
 
 extract_number <- function(number) {
-  # takes a number string, strips off the country code and any other
+  # Takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
 
-  # numbers that match multiple patterns will generate error
-  # numbers that do not match any pattern are returned as is (but without
+  # Numbers that match multiple patterns will generate error.
+  # Numbers that do not match any pattern are returned as is (but without
   # spaces, dashes, and ()) along with a warning
   
-  # Can use function with following code:
+  # Can use function in tidy pipeline with following code:
   # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
 
   
@@ -254,21 +254,21 @@ extract_number <- function(number) {
     }
   }
   
-  # HANDLE - short codes (https://en.wikipedia.org/wiki/Short_code#United_States)
-  # Standard, interoperable short codes in the U.S. are five or six digits long,
-  # never start with 1, and only work in the U.S.
-  # I confirmed they also don't start with a 0 (min value = 20000)
-  # JOHN - putting this as a temporary place holder to remind us to discuss 
-  # short codes. 
-    # pattern - (nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
-    # (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))
-
-    
+  
+  # pattern - short codes.  5-6 digits, first digit is 2 or greater
+  # https://en.wikipedia.org/wiki/Short_code#United_States
+  if ((nchar(number) == 5 && str_detect(number, "[2-9][0-9]{4}")) || 
+      (nchar(number) == 6 && str_detect(number, "[2-9][0-9]{5}"))) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
     
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
   
-    
       
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {

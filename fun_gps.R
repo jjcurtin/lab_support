@@ -41,7 +41,7 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
 
   map <-  leaflet() %>%
     addTiles() # Add default OpenStreetMap map tiles
-  
+
     # more options and use of groups
     # addTiles(group = 'Color') %>% # Add default OpenStreetMap map tiles
     # addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = 'B&W') #B&W OSM tiles
@@ -60,8 +60,8 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
       track <- track %>%
         add_row(lat = locs$lat[i], lon = locs$lon[i])
     }
-    
-    
+
+
     map <- map %>%
       addPolylines(data = track,
                       lng = ~lon, lat = ~lat,
@@ -70,7 +70,7 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
 
     i <- i + 1  # advance to next trackpoint (first in next track)
   }
-  
+
   # use of controls for overlaps and measurement
   # map <- map %>%
   #   addLayersControl(baseGroups = c('color', 'B&W'),
@@ -81,18 +81,18 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
   #              primaryAreaUnit = "sqmeters")
 
   if (overlay_points) {
-    map <- map %>% 
+    map <- map %>%
       addCircleMarkers(data = locs,
                      lng = ~lon, lat = ~lat,
                      radius = .1, color = "blue", opacity = .5,
                      popup = ~label)
   }
-  
-  map <-  map %>% 
+
+  map <-  map %>%
     addMeasure(position = "bottomleft",
                primaryLengthUnit = "meters",
                primaryAreaUnit = "sqmeters")
-  
+
   return(map)
 }
 
@@ -290,7 +290,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
   }
 
   locations <- locations %>%
-    select(-lon_next, -lat_next, -lon_prev, -lat_prev, dist_next, -dist_prev) %>%
+    select(-lon_next, -lat_next, -lon_prev, -lat_prev, -dist_prev) %>%
     mutate(time_next = difftime(lead(time), time, units = "mins"))
 
   return(locations)

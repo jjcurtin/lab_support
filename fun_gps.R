@@ -161,7 +161,12 @@ geomean_places <- function(places, max_dist = 50){
           add_row(select(places_grouped, date, lat, lon, cnt_pts))
       }
     }
-  } else  avg_place <- select(places, date, lat, lon, cnt_pts)
+    # add subid
+    avg_place <- avg_place %>%
+      mutate(subid = places$subid[[1]]) %>%
+      relocate(subid)
+
+  } else  avg_place <- select(subid, places, date, lat, lon, cnt_pts)
 
   #avg_place <- mutate(avg_place, info = format(date))
 

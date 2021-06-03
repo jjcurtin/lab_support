@@ -1,50 +1,54 @@
-modelPower <- function(pc=NULL, pa=NULL, N=NULL, alpha=0.05, power=NULL, f2=NULL, peta2=NULL, dR2=NULL, R2=NULL)
-{
-  #SET UP EFFECT SIZE##################
-  nEffs = 0
-  if (!is.null(f2))
-  {
-    EffTxt = sprintf('f2 =    %.3f\n', f2)
-    nEffs = nEffs+1
-  }
-  if(!is.null(peta2))
-  {
-    EffTxt = sprintf('pEta2 = %.3f\n', peta2)
-    f2 = peta2/(1-peta2)
-    nEffs = nEffs+1
-  }
-  if(!is.null(dR2) & !is.null(R2))
-  {
-    EffTxt = sprintf('dR2 =   %.3f; R2 =  %.3f\n', dR2,R2)
-    f2 = dR2/(1-R2)
-    nEffs = nEffs+1
-  }
-  if (nEffs!=1)
-  {
-    stop('Must specify either f2, peta2, or both dR2 and R2')
-  }
+library(pwr)
+library(dplyr)
 
-  #SET UP U and V if needed##############
-  u = pa-pc
-  if(!is.null(N))
-  {
-    v = N-pa
-  }
-  else
-  {
-    v=NULL
+model_power <- function(pc = NULL, pa = NULL, N = NULL, alpha = 0.05, power = NULL, 
+                        f2 = NULL, partial_eta2 = NULL, delta_R2 = NULL, R2 = NULL) {
+  
+
+  # check that effect sizes were specified correctly
+  if (sum(sapply(list(f2, partial_eta2, delta_R2), is.null)) != 2) {
+    stop("Must specify exactly one of f2, partial_eta2, or delta_R2")
   }
   
-  #CONDUCT POWER ANALYSIS###########################
-  results=pwr.f2.test(u=u, v=v, f2=f2 , sig.level = alpha, power=power)
+  if (!is.null(delta_R2) & is.null(R2)) stop("Must specify R2 if providing delta_R2")
   
   
-  cat('Results from Power Analysis\n\n')
-  cat(EffTxt)
-  cat(sprintf('pa =     %i \n', pa))
-  cat(sprintf('pc =     %i \n', pc))
-  cat(sprintf('alpha = %.3f \n\n', results$sig.level))
+  # calculate f2 effect size based on effect size that was provided
+  if (!is.null(partial_eta2)) {
+    f2 <- partial_eta2/(1 - partial_eta2)
+  } else partial_eta2 <- NA
   
-  cat(sprintf('N = %.3f \n', results$v+pa))
-  cat(sprintf('power = %.3f \n', results$power))
+  if (!is.null(delta_R2)) {
+    f2 <- delta_R2/(1 - R2)
+  } else {
+    delta_R2 <- NA
+    R2 <- NA
+  }
+  
+
+  # set up u and v if needed
+  u <- pa - pc
+  
+  if (!is.null(N)) {
+    v <- N - pa
+  } else {
+    v <- NULL
+  }
+  
+  
+  # conduct power analysis
+  results <- list()
+  results$pwr <- pwr.f2.test(u = u, v = v, f2 = f2 , sig.level = alpha, power = power)
+  
+  results$summary <- tibble(pa = pa,
+                            pc = pc,
+                            f2 = f2,
+                            partial_eta2 = partial_eta2,
+                            delta_R2 = delta_R2,
+                            R2 = R2,
+                            alpha = alpha,
+                            N = v + pa,
+                            power = results$pwr$power)
+  
+  return(results)
 } 

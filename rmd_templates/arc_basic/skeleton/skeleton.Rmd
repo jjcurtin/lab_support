@@ -29,7 +29,7 @@ library(here)  # establish project directory consistently as working directory
 ```
 
 Packages for script
-```{r, packages_script}
+```{r, packages_script, message=FALSE, warning=FALSE}
 
 # for data wrangling
 library(tidyverse)  # always need this

@@ -9,11 +9,27 @@ output:
     code_folding: show
 ---
 
-Packages and Source
-```{r, message=FALSE, warning=FALSE}
-# for project based workflow
+### Set up Environment
+
+Absolute paths
+```{r, paths}
+
+path_admin <- "P:/administration"
+path_lab_support <- "P:/toolboxes/lab_support"
+```
+
+Packages for lab workflow 
+```{r, packages_workflow, message=FALSE, warning=FALSE}
+
 library(conflicted) # detect and warn about function conflicts
-library(here)  # establish project directory consistently as working director
+# conflict_prefer("filter", "dplyr")
+# conflict_prefer("select", "dplyr")
+
+library(here)  # establish project directory consistently as working directory
+```
+
+Packages for script
+```{r, packages_script}
 
 # for data wrangling
 library(tidyverse)  # always need this
@@ -25,7 +41,17 @@ theme_set(theme_bw()) # or theme_set(theme_classic())
 library(kableExtra)
 ```
 
+Source for script
+```{r, source_script, message=FALSE, warning=FALSE}
+
+source(here(path_lab_support, "get_credentials.R"))
+```
+
+
+### First Code Section
+
 Limit output to 300px
 ```{r, attr.output='style="max-height: 300px;"'}
+
 1:1000
 ```

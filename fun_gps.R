@@ -188,10 +188,10 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
   locations <- locations %>%
     mutate(cnt_pts = 1,
            time_next = difftime(lead(time), time, units = "mins"),
-           lon_next = lead(lon),
-           lat_next = lead(lat),
-           lon_prev = lag(lon),
-           lat_prev = lag(lat)) %>%
+           lon_next = dplyr::lead(lon),
+           lat_next = dplyr::lead(lat),
+           lon_prev = dplyr::lag(lon),
+           lat_prev = dplyr::lag(lat)) %>%
     rowwise() %>%
     mutate(dist_next = distGeo(c(lon, lat),   # in meters
                                c(lon_next, lat_next)),
@@ -281,10 +281,10 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
     } else {
       # calculate new dists for updated point
       locations <- locations %>%
-        mutate(lon_next = lead(lon),
-               lat_next = lead(lat),
-               lon_prev = lag(lon),
-               lat_prev = lag(lat)) %>%
+        mutate(lon_next = dplyr::lead(lon),
+               lat_next = dplyr::lead(lat),
+               lon_prev = dplyr::lag(lon),
+               lat_prev = dplyr::lag(lat)) %>%
         rowwise() %>%
         mutate(dist_next = distGeo(c(lon, lat), c(lon_next, lat_next)),
                dist_prev = distGeo(c(lon, lat), c(lon_prev, lat_prev))) %>%

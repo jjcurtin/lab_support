@@ -9,7 +9,7 @@ get_credentials <- function(resourcename, filename){
 # Returns a list with these credentials to use in other functions
 
   credentials <- read_csv(filename, col_types = cols()) %>%
-    filter(resource == resourcename)
+    dplyr::filter(resource == resourcename)
 
   return(credentials)
 }

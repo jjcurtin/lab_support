@@ -3,7 +3,10 @@
 # Required packages
 library(leaflet) # leaflet() and other related functions
 library(geosphere)   # distGeo(), distmean()
-
+library(stringr)
+library(httr)
+library(tidyr)
+library(dplyr)
 
 plot_places <- function(places, labels = NULL) {
 # places is a tibble that has two required and one optional column:
@@ -323,15 +326,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 # }
 
 
-coords_to_address <- function(lat, lon) {
-
-# see also: http://code.google.com/apis/maps/documentation/geocoding/
-# addresses <- revgeocode(c(lon, lat), output = 'address')
-
-
-}
-
-addresses_to_coords <- function() {
+loolup_coords <- function() {
 
 # JJC grabbed from web as model
 
@@ -409,4 +404,114 @@ addresses_to_coords <- function() {
   # write.table(data, file=paste0("../data/", infile ,"_geocoded.csv"), sep=",", row.names=FALSE)
 
 
+}
+
+
+lookup_address <- function(longitude, latitude, provider = "photon", api = NULL) {
+
+  #check inputs
+  if (missing(longitude)) stop("Must provide longitude")
+  if (missing(latitude)) stop("Must provide latitude")
+
+  provider <- tolower(provider)
+  if (!(provider %in% c("photon", "google"))) stop("provider must be photon or google")
+  if (provider == "google" && is.null(api)) stop("Must provide api if provider == google")
+
+  # functions
+  get_response <- function(url, provider){
+    response <- httr::GET(url)
+
+    if (response$status_code != 200L) {
+      stop("Error: status_code = ", response$status_code)
+    } else {
+      response <- httr::content(response)
+    }
+  }
+
+  format_response <- function(response, provider) {
+
+    if (provider == "photon") {
+
+      if (length(response$features) > 1) {
+        warning ("Multiple addresses found for lon = ",
+                 response$features[[1]]$geometry$coordinates[[1]],
+                 " and lat = ", response$features[[1]]$geometry$coordinates[[2]],
+                 ". Using first address.")
+      }
+      housenumber <- tryCatch(response$features[[1]]$properties$housenumber,
+                              error = function(e) NA_character_)
+      street <- tryCatch(response$features[[1]]$properties$street,
+                         error = function(e) NA_character_)
+      city <- tryCatch(response$features[[1]]$properties$city,
+                       error = function(e) NA_character_)
+      zip <- tryCatch(response$features[[1]]$properties$postcode,
+                      error = function(e) NA_character_)
+      state <- tryCatch(response$features[[1]]$properties$state,
+                        error = function(e) NA_character_)
+      country <- tryCatch(response$features[[1]]$properties$country,
+                          error = function(e) NA_character_)
+
+      if (is.null(housenumber)) housenumber <- NA_character_
+      if (is.null(street)) street <- NA_character_
+      if (is.null(city)) city <- NA_character_
+      if (is.null(zip)) zip <- NA_character_
+      if (is.null(state)) state <- NA_character_
+      if (is.null(country)) country <- NA_character_
+
+      df <- tibble(housenumber, street, city, state, zip, country)
+      df <- df %>%
+        mutate(formatted_address = paste0(housenumber, " ", street, ", ", city, ", ", state, " ", zip, ', ', country),
+               formatted_address = str_remove_all(formatted_address, "NA, "),
+               formatted_address = str_remove_all(formatted_address, "NA "))
+    }
+
+    if (provider == "google") {
+
+      if (length(response$results) > 1) {
+        warning ("Multiple addresses found for lon = ",
+                 response$results[[1]]$geometry$location$lng,
+                 " and lat = ", response$results[[1]]$geometry$location$lat,
+                 ". Using first address.")
+      }
+
+      housenumber <- NA_character_
+      street  <- NA_character_
+      city  <- NA_character_
+      zip  <- NA_character_
+      state  <- NA_character_
+      country <- NA_character_
+
+      for (i in seq_along(response$results[[1]]$address_components)){
+
+        type <- response$results[[1]]$address_components[[i]]$types[[1]]
+        value <- response$results[[1]]$address_components[[i]]$long_name
+        if (type == "street_number") housenumber <- value
+        if (type == "route") street <- value
+        if (type == "locality") city <- value
+        if (type == "postal_code") zip <- value
+        if (type == "administrative_area_level_1") state <- value
+        if (type == "country") country <- value
+
+      }
+      df <- tibble(housenumber, street, city, state, zip, country)
+      df$formatted_address <- response$results[[1]]$formatted_address
+      df$google_place_id <- response$results[[1]]$place_id
+    }
+
+    return(df)
+  }
+
+  # format url for provider
+  if (provider == "photon") {
+    url <- str_c("https://photon.komoot.io/reverse?lon=", longitude, "&lat=", latitude)
+  } else {
+    url <- str_c("https://maps.googleapis.com/maps/api/geocode/json?latlng=",
+                 latitude, ",", longitude, "&key=", api)
+  }
+
+  df <- url %>%
+    get_response(provider) %>%
+    format_response(provider)
+
+  return(df)
 }

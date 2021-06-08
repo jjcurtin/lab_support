@@ -147,7 +147,7 @@ geomean_places <- function(places, max_dist = 50){
     avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double())
     for (i in 1:max_grp){
       places_grouped <- places %>%
-        filter(place_grp == i)
+        dplyr::filter(place_grp == i)
 
       if (nrow(places_grouped) > 1) {
         xy <- places_grouped %>%
@@ -326,7 +326,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 # }
 
 
-loolup_coords <- function() {
+lookup_coords <- function() {
 
 # JJC grabbed from web as model
 

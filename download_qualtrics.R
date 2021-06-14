@@ -64,12 +64,14 @@ read_survey_data <- function(FileName) {
 # It is not intended to be called directly
 
   #first row contains header, which are the variable names we want
-  VarNames = read.csv(FileName, nrows=1)
-  VarNames = names(VarNames)
+  VarNames <- read.csv(FileName, nrows = 1)
+  VarNames <- names(VarNames)
 
   #read data but skip first 3 rows of header info
-  survey_data = read.csv(FileName,header=FALSE, skip = 3, as.is=TRUE)
-  names(survey_data) = VarNames
+  survey_data <- read.csv(FileName,header = FALSE,
+                         skip = 3,
+                         as.is = TRUE)
+  names(survey_data) <- VarNames
 
 
   #HANDLE Surveys with No data?

@@ -56,7 +56,7 @@ check_area_code <- function(number) {
          ". This function expects a formatted number with no leading +.")
   }
 
-  if (str_detect(number, "^1")) {
+  if (str_length(number) == 11 && str_detect(number, "^1")) {
     stop("You entered the number ", number,
          ". This function expects a formatted number with no country code.")
   }
@@ -171,7 +171,7 @@ extract_number <- function(number) {
   }
 
   # Pattern - 10 digit US numbers
-  if (nchar(number) == 10 && !str_detect(number, "[:punct:]") && check_area_code(number)) {
+  if (nchar(number) == 10 && !str_detect(number, "[[:punct:][:alpha:]]") && check_area_code(number)) {
 
     if(is.null(formatted_number)) {
       formatted_number <- number

@@ -171,7 +171,7 @@ extract_number <- function(number) {
   }
 
   # Pattern - 10 digit US numbers
-  if (nchar(number) == 10 && !str_detect(number, "\\+") && check_area_code(number)) {
+  if (nchar(number) == 10 && !str_detect(number, "[:punct:]") && check_area_code(number)) {
 
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -181,7 +181,8 @@ extract_number <- function(number) {
   }
 
   # Pattern - US numbers with 1 country code
-  if (nchar(number) == 11 && str_detect(number, "^1") && check_area_code(str_sub(number, 2, 11))) {
+  if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[:punct:]")
+      && check_area_code(str_sub(number, 2, 11))) {
 
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "^1")
@@ -281,9 +282,9 @@ extract_number <- function(number) {
     }
   }
 
-  # pattern - *22899
-  # possible service number for Verizon
-  if (number == "*22899") {
+  # pattern - *22899, *228
+  # service number for Verizon
+  if (number == "*22899" | number == "*228") {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {
@@ -304,6 +305,7 @@ extract_number <- function(number) {
 
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
+  # I think these show up in IOS separated by ;
 
 
   # generate warning if number did not match any format

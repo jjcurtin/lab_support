@@ -56,7 +56,7 @@ check_area_code <- function(number) {
          ". This function expects a formatted number with no leading +.")
   }
 
-  if (str_detect(number, "^1")) {
+  if (str_length(number) == 11 && str_detect(number, "^1")) {
     stop("You entered the number ", number,
          ". This function expects a formatted number with no country code.")
   }
@@ -99,7 +99,15 @@ check_area_code <- function(number) {
         # North American toll free area codes
         800, 833, 844, 855, 866, 877, 888,
         # Canadian area codes
-        403,
+        587, 780, 825, 403, 250, 604, 236, 778, 204, 431, 506, 709, 867, 249, 343, 416, 
+        519, 647, 905, 365, 548, 705, 226, 289, 613, 807, 437, 902, 782, 438, 418, 450, 
+        367, 579, 873, 514, 581, 819, 306, 639,
+        # United States territories (Puerto Rico, Guam, etc.)
+        340, 670, 671, 684, 787, 939,
+        # Carribean area codes (from Carribean nations with +1 international code)
+        # https://en.wikipedia.org/wiki/List_of_country_calling_codes#Zone_1:_North_American_Numbering_Plan
+        242, 246, 264, 268, 284, 345, 441, 473, 649, 658, 876, 664, 721, 758, 767, 784, 
+        809, 829, 849, 868, 869,
         # Personal communication services
         500, 521, 522, 523, 524, 533, 544, 566, 577, 588))
 

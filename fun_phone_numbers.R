@@ -147,6 +147,17 @@ extract_number <- function(number, print_warning = FALSE) {
   if (str_detect(number, "^[[:alnum:]._-]+@[[:alnum:].-]+.[:alpha:]$")) {
     return(number)
   }
+  
+  # pattern - names or numbers with no numbers
+  if (str_detect(number, "[[:alpha:]]") && !str_detect(number, "[0-9]")) {
+    return(number)
+  }
+  
+  # pattern - Verizon Wireless
+  # JOHN - I think this should be encompassed in above pattern, remove?
+  if (str_detect(number, "Verizon Wireless")) {
+    return(number)
+  }
 
   # pattern - amber alert/commercial mobile alert system - relevant only for SMS
   # (?i) is case-insensitive modifier
@@ -154,34 +165,37 @@ extract_number <- function(number, print_warning = FALSE) {
     return(number)
   }
 
-  # pattern - Verizon Wireless
-  if (str_detect(number, "Verizon Wireless")) {
-    return(number)
-  }
-
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes
-  if(str_detect(number, "[[:space:]-\\(\\)]")) {
+  if(str_detect(number, "[[:space:]-\\(\\).+]")) {
 
-    number <- str_remove_all(number, "[[:space:]-\\(\\)]")
+    number <- str_remove_all(number, "[[:space:]-\\(\\).+]")
   }
+  
+  # remove invisible unicode left to right character
+  # special case seen in IOS
+  if(str_detect(number, "^\u200E")) {
+    number <- str_remove(number, "\u200E")
+  } 
 
   # will copy number to formatted number to allow detection of multiple pattern matches.
   # Not needed yet but may be when numbers can match both US & Non-US numbers
   formatted_number <- NULL
 
-  # Pattern - US numbers with +1 country code
-  if (nchar(number) == 12 && str_detect(number, "^\\+1") && check_area_code(str_sub(number, 3, 12))) {
+  # US numbers - removes US country code and returns 10 digit number
+  # Pattern - US numbers with 1 country code
+  if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:]*#]")
+      && check_area_code(str_sub(number, 2, 11))) {
 
     if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^\\+1")
+      formatted_number <- str_remove(number, "1")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
 
-  # Pattern - 10 digit US numbers
-  if (nchar(number) == 10 && !str_detect(number, "\\+") && check_area_code(number)) {
+  # Pattern - 10 digit US numbers with valid area code
+  if (nchar(number) == 10 && !str_detect(number, "[[:alpha:]*#]") && check_area_code(number)) {
 
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -189,27 +203,8 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-
-  # Pattern - US numbers with 1 country code
-  if (nchar(number) == 11 && str_detect(number, "^1") && check_area_code(str_sub(number, 2, 11))) {
-
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^1")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-
-
-  # Pattern - US numbers with + but no country code
-  if (nchar(number) == 11 && str_detect(number, "^\\+") && check_area_code(str_sub(number, 2, 11))) {
-
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^\\+")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
+  
+  # HANDLE - Check country codes?
 
   # Pattern - 7 digit US numbers with no area code
   # This may eventually interact with non-US numbers?
@@ -269,6 +264,15 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+  
+  # pattern - *67 plus 10 digit number plus country code 1
+  if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
+    if(is.na(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*671")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
 
   # pattern - short codes.  5-6 digits, first digit is 2 or greater
@@ -291,9 +295,9 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
-  # pattern - *22899
-  # possible service number for Verizon
-  if (number == "*22899") {
+  # pattern - *22899, *228, *611
+  # possible service numbers for Verizon
+  if (number == "*22899" | number == "*228" | number == "*611") {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {
@@ -311,9 +315,20 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
+  # pattern - string with IBTU, JBTU, or KBTU
+  # Indicates IOS calls made with facebook messenger
+  if (str_detect(number, "IBTU") | str_detect(number, "JBTU") | str_detect(number, "KBTU")) {
+    if (is.na(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
+  
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
+  # I think these are in IOS data as being separated by ;
 
 
   # generate warning if number did not match any format

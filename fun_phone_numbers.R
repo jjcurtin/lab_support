@@ -111,16 +111,18 @@ check_area_code <- function(number) {
 
 
 
-extract_number <- function(number) {
+extract_number <- function(number, print_warning = FALSE) {
   # Takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
 
   # Numbers that match multiple patterns will generate error.
   # Numbers that do not match any pattern are returned as is (but without
-  # spaces, dashes, and ()) along with a warning
+  # spaces, dashes, and ()) 
+  
+  # To print warnings for unmatched numbers set print_warning = TRUE
 
   # Can use function in tidy pipeline with following code:
-  # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
+  # logs <- logs %>% mutate(clean_numbers = purrr::map_chr(numbers, extract_number))
 
   orig_number <- number  # used when no pattern match to retain unformatted form
 
@@ -309,7 +311,7 @@ extract_number <- function(number) {
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
     formatted_number <- orig_number
-    warning (orig_number, " did not match any pre-defined pattern")
+    if (print_warning) warning (orig_number, " did not match any pre-defined pattern")
   }
 
   return(formatted_number)

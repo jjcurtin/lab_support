@@ -181,7 +181,22 @@ extract_number <- function(number, print_warning = FALSE) {
   # will copy number to formatted number to allow detection of multiple pattern matches.
   # Not needed yet but may be when numbers can match both US & Non-US numbers
   formatted_number <- NULL
-
+  
+  # Remove 00 standard prefix for international dialing (from outside US)
+  # HANDLE - think through if this affects anything else
+  if (str_detect(number, "^00")) {
+    number <- str_remove(number, "00")
+  }
+  
+  # Remove 011 prefix needed for international dialing in North America
+  if (str_detect(number, "^011")) {
+    number <- str_remove(number, "011")
+  }
+  # May also show as 11
+  if (str_detect(number, "^11")) {
+    number <- str_remove(number, "11")
+  }
+  
   # US numbers - removes US country code and returns 10 digit number
   # Pattern - US numbers with 1 country code
   if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:]*#]")

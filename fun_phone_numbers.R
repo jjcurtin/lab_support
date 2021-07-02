@@ -127,13 +127,21 @@ check_country_code <- function(number) {
   
   #  Iran
   #  Country code 98
-  #  pattern - 8 numbers plus country code 98 
-  if (str_detect(number, "^98") && nchar(number) == 10 && 
+  #  pattern - 10 numbers plus country code 98 and valid area code
+  if (str_detect(number, "^98") && nchar(number) == 12 && 
       !str_detect(number, "[[:alpha:]*#]")) {
+    # check area code
+    check_code <- (str_sub(number(2, 3) %in% c("11", "13", "17", "21", "23", "24", "25", 
+                                               "26", "28", "31", "34", "35", "38", "41",
+                                               "44", "45", "51", "54", "56", "58", "61",
+                                               "66", "71", "74", "76", "77", "81", "83",
+                                               "84", "86", "87")))
     
-    if(is.null(match)) {
-      match <- TRUE
-    } else stop(number, " matches multiple pre-defined patterns")
+    if(check_code) {
+      if (is.null(match)) {
+        match <- TRUE
+      } else stop(number, " matches multiple pre-defined patterns")
+    }
   }
   
   # Russia

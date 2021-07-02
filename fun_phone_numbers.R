@@ -10,24 +10,12 @@ library(stringr)
 
 
 # Functions --------------------------------------
-format_numbers <- function(numbers){
-  # formats a simple number character string something easier
-  # to read for participant.
-  # SHOULD EVENTUALLY BE UPDATED FOR NON-US NUMBERS AND TO WORK ON SINGLE NUMBER
-  # RATHER THAN VECTOR
-  # SHOULD CHECK FOR COUNTRY CODE AND NUMBER LENGTH EVENTUALLY AS NEEDED
-
-  # if 10 digit US number
-  formatted_numbers <- str_c("(",
-                             str_sub(numbers, 1, 3),
-                             ") ",
-                             str_sub(numbers, 4, 6),
-                             "-",
-                             str_sub(numbers, 7, 10))
-
-  return(formatted_numbers)
+check_country_code <- function(number) {
+  # Function checks if a number is a valid international number.
+  # Number is expected to be a character string with no symbols
+  # Returns true or false
+  
 }
-
 
 extract_country_code <- function(number){
 # Takes a number string and extracts the country code (if exists)
@@ -40,10 +28,6 @@ check_area_code <- function(number) {
   # the first three characters of this number represent a valid US area code or
   # North American toll free area code.
   # Returns true or false
-
-  # initialize vector of US area codes
-  # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html
-  # area_code_db.csv and area_code_codebook.xls in lab_support/data
 
   # only need to check NA once
   if (str_length(number) != 10 | is.na(number)) {
@@ -71,6 +55,10 @@ check_area_code <- function(number) {
          ". This function expects a formatted number with no punctuation.")
   }
 
+  # initialize vector of US area codes
+  # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html
+  # area_code_db.csv and area_code_codebook.xls in lab_support/data
+  
   us_codes <-
     as.character(
       c(201, 202, 203, 205, 206, 207, 208, 209, 210, 212, 213, 214, 215, 216, 217, 218,
@@ -214,19 +202,24 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
   
-  # HANDLE - Check country codes?
-
-  # Pattern - 7 digit US numbers with no area code
-  # This may eventually interact with non-US numbers?
-  # Can we get a list of all know US exchanges?
-  if (nchar(number) == 7) {
-
+  # pattern - *67 plus 10 digit US phone number - blocks number
+  if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
     if(is.null(formatted_number)) {
-      formatted_number <- number
+      formatted_number <- str_remove(number, "\\*67")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+  
+  # pattern - *67 plus 10 digit US number plus country code 1
+  if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
+    if(is.na(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*671")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+  
 
   # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
   # 211: Community services and information
@@ -265,25 +258,6 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-
-  # pattern - *67 plus 10 digit phone number - blocks number
-  if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "\\*67")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-  
-  # pattern - *67 plus 10 digit number plus country code 1
-  if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
-    if(is.na(formatted_number)) {
-      formatted_number <- str_remove(number, "\\*671")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-
 
   # pattern - short codes.  5-6 digits, first digit is 2 or greater
   # https://en.wikipedia.org/wiki/Short_code#United_States
@@ -340,10 +314,29 @@ extract_number <- function(number, print_warning = FALSE) {
   # These show up in my android logs as multiple numbers separated by ~
   # I think these are in IOS data as being separated by ;
 
+  # HANDLE - Check non-US country codes
+  if (check_country_code(number)) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+    
+  # Pattern - 7 digit US numbers with no area code
+  # This may eventually interact with non-US numbers?
+  # Can we get a list of all know US exchanges?
+  if (nchar(number) == 7) {
+    if(is.null(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
-  # generate warning if number did not match any format
   if (is.null(formatted_number)) {
     formatted_number <- orig_number
+    # generate warning if number did not match any format
     if (print_warning) warning (orig_number, " did not match any pre-defined pattern")
   }
 

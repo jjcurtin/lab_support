@@ -63,6 +63,7 @@ check_country_code <- function(number) {
   #  pattern - 10 digits plus country code 91 with valid area code
   if (nchar(number) == 12 && str_detect(number, "^91") && !str_detect(number, "[[:alpha:]*#]")) {
     # check area code - code can be 2, 3, or 4 digits
+    # FIX: these area codes are for landlines, there are no specific area codes on mobile phones
     code_2_digits <- str_sub(number, 3, 4) %in% c ("79", "80", "44", "11", "40", "33", "22",
                                                    "11", "20") 
     code_3_digits <- str_sub(number, 3, 5) %in% c("080", "562", "145", "144", "183", "265",
@@ -74,11 +75,11 @@ check_country_code <- function(number) {
                                                   "8572", "6432", "5642", "5619", "8252",
                                                   "2974", "1362", "1582", "7462")
     
-    if(code_2_digits | code_3_digits | code_4_digits) {
+    # if(code_2_digits | code_3_digits | code_4_digits) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
-    }
+    # }
   }
   
   #  Cambodia
@@ -181,6 +182,17 @@ check_country_code <- function(number) {
       !str_detect(number, "[[:alpha:]*#]")) {
     # area codes very complex, will add later 
     # https://en.wikipedia.org/wiki/List_of_dialling_codes_in_Germany#017
+    if(is.null(match)) {
+      match <- TRUE
+    } else stop(number, " matches multiple pre-defined patterns")
+  }
+  
+  #  Norway
+  #  Country code 47
+  #  pattern - 8 digit number plus country code 47
+  if (nchar(number) == 8 && str_detect(number, "^47") && 
+      !str_detect(number, "[[:alpha:]*#]")) {
+   # 1-2 digit area codes plus mobile codes to add in 
     if(is.null(match)) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")

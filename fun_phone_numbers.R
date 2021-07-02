@@ -56,7 +56,7 @@ check_area_code <- function(number) {
          ". This function expects a formatted number with no leading +.")
   }
 
-  if (str_detect(number, "^1")) {
+  if (str_length(number) == 11 && str_detect(number, "^1")) {
     stop("You entered the number ", number,
          ". This function expects a formatted number with no country code.")
   }
@@ -99,7 +99,15 @@ check_area_code <- function(number) {
         # North American toll free area codes
         800, 833, 844, 855, 866, 877, 888,
         # Canadian area codes
-        403,
+        587, 780, 825, 403, 250, 604, 236, 778, 204, 431, 506, 709, 867, 249, 343, 416, 
+        519, 647, 905, 365, 548, 705, 226, 289, 613, 807, 437, 902, 782, 438, 418, 450, 
+        367, 579, 873, 514, 581, 819, 306, 639,
+        # United States territories (Puerto Rico, Guam, etc.)
+        340, 670, 671, 684, 787, 939,
+        # Carribean area codes (from Carribean nations with +1 international code)
+        # https://en.wikipedia.org/wiki/List_of_country_calling_codes#Zone_1:_North_American_Numbering_Plan
+        242, 246, 264, 268, 284, 345, 441, 473, 649, 658, 876, 664, 721, 758, 767, 784, 
+        809, 829, 849, 868, 869,
         # Personal communication services
         500, 521, 522, 523, 524, 533, 544, 566, 577, 588))
 
@@ -111,16 +119,18 @@ check_area_code <- function(number) {
 
 
 
-extract_number <- function(number) {
+extract_number <- function(number, print_warning = FALSE) {
   # Takes a number string, strips off the country code and any other
   # formatting to return a single series of digits (still as character)
 
   # Numbers that match multiple patterns will generate error.
   # Numbers that do not match any pattern are returned as is (but without
-  # spaces, dashes, and ()) along with a warning
+  # spaces, dashes, and ()) 
+  
+  # To print warnings for unmatched numbers set print_warning = TRUE
 
   # Can use function in tidy pipeline with following code:
-  # logs <- logs %>% mutate(clean_numbers = map_chr(numbers, extract_number))
+  # logs <- logs %>% mutate(clean_numbers = purrr::map_chr(numbers, extract_number))
 
   orig_number <- number  # used when no pattern match to retain unformatted form
 
@@ -137,6 +147,17 @@ extract_number <- function(number) {
   if (str_detect(number, "^[[:alnum:]._-]+@[[:alnum:].-]+.[:alpha:]$")) {
     return(number)
   }
+  
+  # pattern - names or numbers with no numbers
+  if (str_detect(number, "[[:alpha:]]") && !str_detect(number, "[0-9]")) {
+    return(number)
+  }
+  
+  # pattern - Verizon Wireless
+  # JOHN - I think this should be encompassed in above pattern, remove?
+  if (str_detect(number, "Verizon Wireless")) {
+    return(number)
+  }
 
   # pattern - amber alert/commercial mobile alert system - relevant only for SMS
   # (?i) is case-insensitive modifier
@@ -144,34 +165,52 @@ extract_number <- function(number) {
     return(number)
   }
 
-  # pattern - Verizon Wireless
-  if (str_detect(number, "Verizon Wireless")) {
-    return(number)
-  }
-
   # Now format before checking all other patterns
   # Remove spaces, parentheses, and dashes
-  if(str_detect(number, "[[:space:]-\\(\\)]")) {
+  if(str_detect(number, "[[:space:]-\\(\\).+]")) {
 
-    number <- str_remove_all(number, "[[:space:]-\\(\\)]")
+    number <- str_remove_all(number, "[[:space:]-\\(\\).+]")
   }
+  
+  # remove invisible unicode left to right character
+  # special case seen in IOS
+  if(str_detect(number, "^\u200E")) {
+    number <- str_remove(number, "\u200E")
+  } 
 
   # will copy number to formatted number to allow detection of multiple pattern matches.
   # Not needed yet but may be when numbers can match both US & Non-US numbers
   formatted_number <- NULL
-
-  # Pattern - US numbers with +1 country code
-  if (nchar(number) == 12 && str_detect(number, "^\\+1") && check_area_code(str_sub(number, 3, 12))) {
+  
+  # Remove 00 standard prefix for international dialing (from outside US)
+  # HANDLE - think through if this affects anything else
+  if (str_detect(number, "^00")) {
+    number <- str_remove(number, "00")
+  }
+  
+  # Remove 011 prefix needed for international dialing in North America
+  if (str_detect(number, "^011")) {
+    number <- str_remove(number, "011")
+  }
+  # May also show as 11
+  if (str_detect(number, "^11")) {
+    number <- str_remove(number, "11")
+  }
+  
+  # US numbers - removes US country code and returns 10 digit number
+  # Pattern - US numbers with 1 country code
+  if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:]*#]")
+      && check_area_code(str_sub(number, 2, 11))) {
 
     if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^\\+1")
+      formatted_number <- str_remove(number, "1")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
 
-  # Pattern - 10 digit US numbers
-  if (nchar(number) == 10 && !str_detect(number, "\\+") && check_area_code(number)) {
+  # Pattern - 10 digit US numbers with valid area code
+  if (nchar(number) == 10 && !str_detect(number, "[[:alpha:]*#]") && check_area_code(number)) {
 
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -179,27 +218,8 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-
-  # Pattern - US numbers with 1 country code
-  if (nchar(number) == 11 && str_detect(number, "^1") && check_area_code(str_sub(number, 2, 11))) {
-
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^1")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-
-
-  # Pattern - US numbers with + but no country code
-  if (nchar(number) == 11 && str_detect(number, "^\\+") && check_area_code(str_sub(number, 2, 11))) {
-
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "^\\+")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
+  
+  # HANDLE - Check country codes?
 
   # Pattern - 7 digit US numbers with no area code
   # This may eventually interact with non-US numbers?
@@ -259,6 +279,15 @@ extract_number <- function(number) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+  
+  # pattern - *67 plus 10 digit number plus country code 1
+  if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
+    if(is.na(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*671")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
 
   # pattern - short codes.  5-6 digits, first digit is 2 or greater
@@ -281,9 +310,9 @@ extract_number <- function(number) {
     }
   }
 
-  # pattern - *22899
-  # possible service number for Verizon
-  if (number == "*22899") {
+  # pattern - *22899, *228, *611
+  # possible service numbers for Verizon
+  if (number == "*22899" | number == "*228" | number == "*611") {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {
@@ -301,15 +330,26 @@ extract_number <- function(number) {
     }
   }
 
+  # pattern - string with IBTU, JBTU, or KBTU
+  # Indicates IOS calls made with facebook messenger
+  if (str_detect(number, "IBTU") | str_detect(number, "JBTU") | str_detect(number, "KBTU")) {
+    if (is.na(formatted_number)) {
+      formatted_number <- number
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
+  
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
+  # I think these are in IOS data as being separated by ;
 
 
   # generate warning if number did not match any format
   if (is.null(formatted_number)) {
     formatted_number <- orig_number
-    warning (orig_number, " did not match any pre-defined pattern")
+    if (print_warning) warning (orig_number, " did not match any pre-defined pattern")
   }
 
   return(formatted_number)

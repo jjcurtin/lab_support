@@ -153,11 +153,6 @@ extract_number <- function(number, print_warning = FALSE) {
     return(number)
   }
   
-  # pattern - Verizon Wireless
-  # JOHN - I think this should be encompassed in above pattern, remove?
-  if (str_detect(number, "Verizon Wireless")) {
-    return(number)
-  }
 
   # pattern - amber alert/commercial mobile alert system - relevant only for SMS
   # (?i) is case-insensitive modifier

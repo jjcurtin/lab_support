@@ -111,7 +111,7 @@ check_country_code <- function(number) {
   ## Europe
   #  UK
   #  Country code 44
-  #  pattern - 9 or 10 numbers plus country code 44 and has valid area code
+  #  pattern - 9 or 10 numbers plus country code 44 
   #  all UK mobile phones are 10 digits, but landlines may be 9 or 10 digits
   if (str_detect(number, "^44") && (nchar(number) == 12 | nchar(number) == 11) && 
       !str_detect(number, "[[:alpha:]*#]")) {
@@ -119,6 +119,17 @@ check_country_code <- function(number) {
     # Geographic area codes start with a 1 or 2, mobile phones start with 7
     # can also start with 3, 5, or 8 though
     # length of number and country code is likely sufficient check for now
+    
+    if(is.null(match)) {
+      match <- TRUE
+    } else stop(number, " matches multiple pre-defined patterns")
+  }
+  
+  #  Iran
+  #  Country code 98
+  #  pattern - 8 numbers plus country code 98 
+  if (str_detect(number, "^98") && nchar(number) == 10 && 
+      !str_detect(number, "[[:alpha:]*#]")) {
     
     if(is.null(match)) {
       match <- TRUE
@@ -178,9 +189,11 @@ check_country_code <- function(number) {
   #  Germany
   #  Country code 49
   #  pattern - 10 - 11 digit number plus country code 49
-  if ((nchar(number) == 13 | nchar(number) == 12) && str_detect(number, "^49") && 
-      !str_detect(number, "[[:alpha:]*#]")) {
-    # area codes very complex, will add later 
+  #  FIX: this pattern is for landlines only - "There used to be no fixed lengths for either area codes 
+  #  or subscriber telephone numbers, meaning that some subscriber numbers may be as short as two digits."
+  
+  if (str_detect(number, "^49") && !str_detect(number, "[[:alpha:]*#]")) {
+    # area codes very complex, will add here 
     # https://en.wikipedia.org/wiki/List_of_dialling_codes_in_Germany#017
     if(is.null(match)) {
       match <- TRUE

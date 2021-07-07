@@ -277,7 +277,7 @@ extract_number <- function(number, print_warning = FALSE) {
   
   # pattern - *67 plus 10 digit number plus country code 1
   if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
-    if(is.na(formatted_number)) {
+    if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "\\*671")
     } else {
       stop(number, " matches multiple pre-defined patterns")

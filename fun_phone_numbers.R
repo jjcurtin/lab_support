@@ -200,7 +200,7 @@ check_country_code <- function(number) {
   #  FIX: this pattern is for landlines only - "There used to be no fixed lengths for either area codes 
   #  or subscriber telephone numbers, meaning that some subscriber numbers may be as short as two digits."
   
-  if (str_detect(number, "^49") && !str_detect(number, "[[:alpha:]*#]")) {
+  if ((nchar(number) == 12 || nchar(number) == 13) && str_detect(number, "^49") && !str_detect(number, "[[:alpha:]*#]")) {
     # area codes very complex, will add here 
     # https://en.wikipedia.org/wiki/List_of_dialling_codes_in_Germany#017
     if(is.null(match)) {
@@ -586,7 +586,7 @@ extract_number <- function(number, print_warning = FALSE) {
   
 
   # HANDLE - Check non-US country codes
-  if (!str_detect(number, "[[:alpha:]*#]") && check_country_code(number)) {
+  if (str_detect(number, "[0-9]") && check_country_code(number)) {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {

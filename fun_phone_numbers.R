@@ -263,6 +263,19 @@ check_country_code <- function(number) {
     }
   }
   
+  # Palestine
+  # Country code 970 or 972
+  # pattern 8 or 9 numbers plus 970 or 972 country code
+  if ((nchar(number) == 11 || nchar(number) == 12) && 
+      (str_detect(number, "^970") || str_detect(number, "^972")) && 
+      !str_detect(number, "[[:alpha:]*#]")) {
+    # add area code or more specific checks here
+    
+    if(is.null(match)) {
+      match <- TRUE
+    } else stop(number, " matches multiple pre-defined patterns")
+  }
+  
   ## Central America
   
   ## South America

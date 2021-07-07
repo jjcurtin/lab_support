@@ -572,7 +572,7 @@ extract_number <- function(number, print_warning = FALSE) {
   # pattern - string with IBTU, JBTU, or KBTU
   # Indicates IOS calls made with facebook messenger
   if (str_detect(number, "IBTU") | str_detect(number, "JBTU") | str_detect(number, "KBTU")) {
-    if (is.na(formatted_number)) {
+    if (is.null(formatted_number)) {
       formatted_number <- number
     } else {
       stop(number, " matches multiple pre-defined patterns")

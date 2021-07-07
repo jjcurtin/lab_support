@@ -495,6 +495,15 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
   
+  # pattern - *67 plus 7 digit US phone number - blocks number
+  if (nchar(number) == 10 && str_detect(number, "^\\*67")) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*67")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+  
 
   # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
   # 211: Community services and information

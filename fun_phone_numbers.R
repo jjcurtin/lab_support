@@ -283,6 +283,15 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+  
+  # pattern - *67 plus 7 digit number 
+  if (nchar(number) == 10 && str_detect(number, "^\\*67")) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*67")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
 
   # pattern - short codes.  5-6 digits, first digit is 2 or greater

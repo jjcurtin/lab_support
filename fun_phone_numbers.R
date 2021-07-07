@@ -586,7 +586,7 @@ extract_number <- function(number, print_warning = FALSE) {
   
 
   # HANDLE - Check non-US country codes
-  if (check_country_code(number)) {
+  if (!str_detect(number, "[[:alpha:]*#]") && check_country_code(number)) {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {

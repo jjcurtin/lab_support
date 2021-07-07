@@ -216,7 +216,7 @@ check_country_code <- function(number) {
   #  Norway
   #  Country code 47
   #  pattern - 8 digit number plus country code 47
-  if (nchar(number) == 8 && str_detect(number, "^47") && 
+  if (nchar(number) == 10 && str_detect(number, "^47") && 
       !str_detect(number, "[[:alpha:]*#]")) {
    # 1-2 digit area codes plus mobile codes to add in 
     if(is.null(match)) {

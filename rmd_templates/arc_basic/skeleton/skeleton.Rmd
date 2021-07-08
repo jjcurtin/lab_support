@@ -1,5 +1,5 @@
 ---
-title: "ARC - Basic Template (last update: 2021-06-05)"
+title: "ARC - Basic Template (last update: 2021-07-08)"
 author: "John Curtin"
 date: "`r lubridate::today()`"
 output: 
@@ -7,6 +7,8 @@ output:
     toc: true 
     toc_depth: 4
     code_folding: show
+editor_options: 
+  chunk_output_type: console
 ---
 
 ### Set up Environment

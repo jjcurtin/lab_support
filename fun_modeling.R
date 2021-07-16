@@ -28,7 +28,7 @@ skim_all <- skim_with(numeric = sfl(skew = skew_na, kurtosis = kurt_na))
 
 
 
-# Somewhat unformated printing of text responses for categorical variabes.
+# Somewhat unformated printing of text responses for categorical variables.
 # Used primarily to confirm that responses are valid and tidy
 print_responses <- function(name, column){
   unique(column) %>%

@@ -1,0 +1,23 @@
+---
+title: "Programming/Analysis Notes and Best Practices"
+author: "John Curtin"
+date: "`r lubridate::today()`"
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 4
+---
+
+### General Programming Tips
+
+
+### Functions
+
+
+### Dates and Time
+
+* `write_csv()` and `vroom_write()` save ddtm variables in UTC timezone regardless
+of the timezone for the variable in the tibble.  It appends a "Z" on the end of the
+time to indicate that it is in UTC.  These times will read back into R correctly
+but the timezone will be UTC.  Change back to appropriate timezone using `with_tz()`
+in a `mutate()`

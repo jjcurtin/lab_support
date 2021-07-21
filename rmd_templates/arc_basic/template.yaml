@@ -1,4 +1,4 @@
-name: ARC - Basic Template (2021-05-31)
+name: ARC - Analysis Template (2021-07-21)
 description: >
-  ARC template for html output using basic/core chunks
+  ARC template for analyses using html output
 create_dir: false

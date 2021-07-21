@@ -1,5 +1,5 @@
 ---
-title: "ARC - Basic Template (last update: 2021-07-08)"
+title: "ARC - Analysis Template (last update: 2021-07-21)"
 author: "John Curtin"
 date: "`r lubridate::today()`"
 output: 
@@ -9,6 +9,14 @@ output:
     code_folding: show
 editor_options: 
   chunk_output_type: console
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = dplyr::if_else(Sys.info()[["sysname"]] == "Windows",
+      "P:/studydata/", 
+      "/Volumes/private/studydata/")
+    )
+  })
 ---
 
 ### Set up Environment
@@ -16,8 +24,19 @@ editor_options:
 Absolute paths
 ```{r, paths}
 
-path_admin <- "P:/administration"
-path_lab_support <- "P:/toolboxes/lab_support"
+switch (Sys.info()[['sysname']],
+        # PC paths
+        Windows = {
+          path_raw <- "P:/studydata/risk/data_raw"
+          path_shared <- "P:/studydata/risk/data_processed/shared"
+          path_lab_support <- "P:/toolboxes/lab_support"},
+
+        # IOS paths
+        Darwin = {
+          path_raw <- "/Volumes/private/studydata/risk/data_raw"
+          path_shared <- "/Volumes/private/studydata/risk/data_processed/shared"
+          path_lab_support <- "/Volumes/toolboxes/lab_support"}
+        )
 ```
 
 Packages for lab workflow 

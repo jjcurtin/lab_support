@@ -472,7 +472,7 @@ extract_number <- function(number, print_warning = FALSE) {
   
   # US numbers - removes US country code and returns 10 digit number
   # Pattern - US numbers with 1 country code
-  if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:]*#]")
+  if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:][:punct:]]")
       && check_area_code(str_sub(number, 2, 11))) {
 
     if(is.null(formatted_number)) {
@@ -483,7 +483,7 @@ extract_number <- function(number, print_warning = FALSE) {
   }
 
   # Pattern - 10 digit US numbers with valid area code
-  if (nchar(number) == 10 && !str_detect(number, "[[:alpha:]*#]") && check_area_code(number)) {
+  if (nchar(number) == 10 && !str_detect(number, "[[:alpha:][:punct:]]") && check_area_code(number)) {
 
     if(is.null(formatted_number)) {
       formatted_number <- number
@@ -615,7 +615,8 @@ extract_number <- function(number, print_warning = FALSE) {
   
 
   # HANDLE - Check non-US country codes
-  if (str_detect(number, "[0-9]") && check_country_code(number)) {
+  if (str_detect(number, "[0-9]") && !str_detect(number, "[[:alpha:][:punct:]]") &&
+      check_country_code(number)) {
     if(is.null(formatted_number)) {
       formatted_number <- number
     } else {

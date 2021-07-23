@@ -558,32 +558,8 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
-  # pattern - *67 plus 10 digit phone number - blocks number
-  if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "\\*67")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-  
-  # pattern - *67 plus 10 digit number plus country code 1
-  if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "\\*671")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
-  
-  # pattern - *67 plus 7 digit number 
-  if (nchar(number) == 10 && str_detect(number, "^\\*67")) {
-    if(is.null(formatted_number)) {
-      formatted_number <- str_remove(number, "\\*67")
-    } else {
-      stop(number, " matches multiple pre-defined patterns")
-    }
-  }
+
+
 
   # pattern - short codes.  5-6 digits, first digit is 2 or greater
   # https://en.wikipedia.org/wiki/Short_code#United_States

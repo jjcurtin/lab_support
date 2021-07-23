@@ -1,5 +1,5 @@
 ---
-title: "ARC - Analysis Template (last update: 2021-07-21)"
+title: "ARC - Analysis Template (last update: 2021-07-23)"
 author: "John Curtin"
 date: "`r lubridate::today()`"
 output: 
@@ -20,6 +20,11 @@ knit: (function(input, ...) {
 ---
 
 ### Set up Environment
+
+Chunk Defaults
+```{r defaults, include=FALSE}
+knitr::opts_chunk$set(attr.output='style="max-height: 500px;"')
+```
 
 Absolute paths
 ```{r, paths}

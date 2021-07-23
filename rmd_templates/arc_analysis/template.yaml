@@ -1,0 +1,4 @@
+name: ARC - Analysis Template (2021-07-21)
+description: >
+  ARC template for analyses using html output
+create_dir: false

@@ -1,0 +1,78 @@
+---
+title: "ARC - Analysis Template (last update: 2021-07-21)"
+author: "John Curtin"
+date: "`r lubridate::today()`"
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 4
+    code_folding: show
+editor_options: 
+  chunk_output_type: console
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = dplyr::if_else(Sys.info()[["sysname"]] == "Windows",
+      "P:/studydata/", 
+      "/Volumes/private/studydata/")
+    )
+  })
+---
+
+### Set up Environment
+
+Absolute paths
+```{r, paths}
+
+switch (Sys.info()[['sysname']],
+        # PC paths
+        Windows = {
+          path_raw <- "P:/studydata/risk/data_raw"
+          path_shared <- "P:/studydata/risk/data_processed/shared"
+          path_lab_support <- "P:/toolboxes/lab_support"},
+
+        # IOS paths
+        Darwin = {
+          path_raw <- "/Volumes/private/studydata/risk/data_raw"
+          path_shared <- "/Volumes/private/studydata/risk/data_processed/shared"
+          path_lab_support <- "/Volumes/toolboxes/lab_support"}
+        )
+```
+
+Packages for lab workflow 
+```{r, packages_workflow, message=FALSE, warning=FALSE}
+
+library(conflicted) # detect and warn about function conflicts
+# conflict_prefer("filter", "dplyr")
+# conflict_prefer("select", "dplyr")
+
+library(here)  # establish project directory consistently as working directory
+```
+
+Packages for script
+```{r, packages_script, message=FALSE, warning=FALSE}
+
+# for data wrangling
+library(tidyverse)  # always need this
+library(janitor) # cleaning and EDA
+
+# for plots and tables
+library(ggplot2)
+theme_set(theme_bw()) # or theme_set(theme_classic())
+library(kableExtra)
+```
+
+Source for script
+```{r, source_script, message=FALSE, warning=FALSE}
+
+source(here(path_lab_support, "get_credentials.R"))
+```
+
+
+### First Code Section
+
+Limit output to 300px
+```{r, attr.output='style="max-height: 300px;"'}
+
+1:1000
+```

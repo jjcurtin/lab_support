@@ -7,7 +7,8 @@ library(httr)
 
 download_qualtrics <- function(survey_id, use_labels = TRUE,
                         api_token,
-                        root_url = "https://uwmadison.co1.qualtrics.com") {
+                        root_url = "https://uwmadison.co1.qualtrics.com",
+                        display_progress = TRUE) {
 # download_qualtrics() exports a qualtrics survey you own and imports the survey
 # directly into R.
 # NOTE:  This function is a simplified version of code
@@ -45,7 +46,7 @@ download_qualtrics <- function(survey_id, use_labels = TRUE,
   check_url <- str_c(root_url, id)
 
   # Download, unzip and return file path
-  survey_path <- download_qualtrics_export(check_url, api_token)
+  survey_path <- download_qualtrics_export(check_url, api_token, display_progress)
 
   # Read data
   survey_data <- read_survey_data(survey_path) %>%
@@ -315,7 +316,7 @@ checkForWarnings <- function(resp) {
 
 
 
-download_qualtrics_export <- function(check_url, api_token) {
+download_qualtrics_export <- function(check_url, api_token, display_progress) {
 # Download response export
 # check_url url provided by qualtrics API that shows the download percentage completneness
 # This is a support function for download_qualtrics.
@@ -324,22 +325,24 @@ download_qualtrics_export <- function(check_url, api_token) {
   # Construct header
   headers = constructHeader(api_token)
 
-  # Create a progress bar and monitor when export is ready
-  pbar = utils::txtProgressBar(min=0,max=100,style = 3)
+  if (display_progress) {
+    # Create a progress bar and monitor when export is ready
+    pbar = utils::txtProgressBar(min=0,max=100,style = 3)
 
-  # While download is in progress
-  progress = 0
-  while(progress < 100) {
-    # Get percentage complete
-    CU = qualtrics_api_request(api_token,"GET", URL = check_url)
-    progress = CU$result$percentComplete
+    # While download is in progress
+    progress = 0
+    while(progress < 100) {
+      # Get percentage complete
+      CU = qualtrics_api_request(api_token,"GET", URL = check_url)
+      progress = CU$result$percentComplete
 
-    # Set progress
-    utils::setTxtProgressBar(pbar, progress)
+      # Set progress
+      utils::setTxtProgressBar(pbar, progress)
+    }
+
+    # Kill progress bar
+    close(pbar)
   }
-
-  # Kill progress bar
-  close(pbar)
 
   # Download file
   f = tryCatch({

@@ -1,0 +1,73 @@
+---
+title: "RISK2 Study Manual"
+date: "`r lubridate::today()`"
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 4
+    code_folding: show
+editor_options: 
+  chunk_output_type: console
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = dplyr::if_else(Sys.info()[["sysname"]] == "Windows",
+      "P:/", 
+      "/Volumes/private/")
+    )
+  })
+---
+
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+
+normal text
+
+*italics*
+
+**bold**
+
+***bold italics***
+
+Unordered List
+
+* list 1
+* list item 2
+  * second level item
+  
+
+Ordered list
+
+1. Item 1
+2. Item 2
+
+
+[ARC website](https://arc.psych.wisc.edu/)
+
+This is a paragraph of text.
+This is still the same paragraph despite the return.
+
+This, however, is a new paragraph.
+
+
+A friend once said:
+
+> It's always better to give
+> than to receive.
+
+
+
+A link to [Heading 1]
+
+<!--A comment that will not be visible in the document-->
+
+
+
+Simple table 
+
+First Header  | Second Header
+------------- | -------------
+Content Cell  | Content Cell
+Content Cell  | Content Cell

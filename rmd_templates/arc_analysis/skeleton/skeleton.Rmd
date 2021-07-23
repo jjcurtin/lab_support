@@ -44,6 +44,11 @@ switch (Sys.info()[['sysname']],
         )
 ```
 
+Relative paths
+```{r}
+
+```
+
 Packages for lab workflow 
 ```{r, packages_workflow, message=FALSE, warning=FALSE}
 
@@ -75,9 +80,3 @@ source(here(path_lab_support, "get_credentials.R"))
 
 
 ### First Code Section
-
-Limit output to 300px
-```{r, attr.output='style="max-height: 300px;"'}
-
-1:1000
-```

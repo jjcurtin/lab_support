@@ -482,6 +482,7 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
+
   # Pattern - 10 digit US numbers with valid area code
   if (nchar(number) == 10 && !str_detect(number, "[[:alpha:][:punct:]]") && check_area_code(number)) {
 
@@ -491,6 +492,7 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+
   
   # pattern - *67 plus 10 digit US phone number - blocks number
   if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
@@ -581,6 +583,7 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
+
   # pattern - *22899, *228, *611
   # possible service numbers for Verizon
   if (number == "*22899" | number == "*228" | number == "*611") {
@@ -614,8 +617,9 @@ extract_number <- function(number, print_warning = FALSE) {
   
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
+
   # I think these are in IOS data as being separated by ;
-  
+ 
 
   # HANDLE - Check non-US country codes
   if (str_detect(number, "[0-9]") && !str_detect(number, "[[:alpha:][:punct:]]") &&

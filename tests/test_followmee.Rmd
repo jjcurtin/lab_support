@@ -42,10 +42,10 @@ conflict_prefer("select", "dplyr")
 library(here)  # establish project directory consistently as working directory
 ```
 
-FIX: NEED TO UPDATE TO Production copy when done
+Source
 ```{r}
-source("~/github/lab_support/fun_followmee.R")
-source("~/github/lab_support/get_credentials.R")
+source(here(path_lab_support, "fun_followmee.R"))
+source(here(path_lab_support, "get_credentials.R"))
 ```
 
 

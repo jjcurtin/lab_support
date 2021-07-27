@@ -59,7 +59,7 @@ get_followmee_deviceid("Susan's Android", creds)
 
 # Call get_followmee directly to get new data for a subid
 first_points <- "Susan's Android" %>% 
-  get_followmee_data(creds, n_days = 7) %>%   # override default for now until Susan checks
+  get_followmee_data(creds) %>%
   glimpse()
 
 # if data were previously obtained and saved for a subid, 

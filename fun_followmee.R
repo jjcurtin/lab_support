@@ -49,7 +49,7 @@ get_followmee_deviceid <- function(subid, creds) {
   return(device_id)
 }
 
-get_followmee_data <- function(subid, creds, n_days = 14) {
+get_followmee_data <- function(subid, creds, n_days = 7) {
 # Gets up to past 14 days (n_days) of location data. 
 # Use get_credentials() in lab_support to obtain creds.
   

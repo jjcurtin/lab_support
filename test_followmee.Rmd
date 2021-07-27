@@ -1,0 +1,92 @@
+---
+title: "Test FollowMee Functions"
+author: "John Curtin"
+date: "`r lubridate::today()`"
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 4
+editor_options: 
+  chunk_output_type: console
+
+---
+
+Run live in console.  No need to knit
+
+
+### Set up Environment
+
+Chunk Defaults
+```{r defaults, include=FALSE}
+knitr::opts_chunk$set(attr.output='style="max-height: 500px;"')
+```
+
+Absolute paths
+```{r, paths}
+
+switch (Sys.info()[['sysname']],
+        # PC paths
+        Windows = {
+          path_admin <- "P:/administration"
+          path_lab_support <- "P:/toolboxes/lab_support"},
+
+        # IOS paths
+        Darwin = {
+          path_admin <- "/Volumes/private/administration"
+          path_lab_support <- "/Volumes/toolboxes/lab_support"}
+        )
+```
+
+Relative paths
+```{r}
+
+```
+
+Packages for lab workflow 
+```{r, packages_workflow, message=FALSE, warning=FALSE}
+
+library(conflicted) # detect and warn about function conflicts
+conflict_prefer("filter", "dplyr")
+conflict_prefer("select", "dplyr")
+
+library(here)  # establish project directory consistently as working directory
+```
+
+Packages for script
+```{r, packages_script, message=FALSE, warning=FALSE}
+
+# for data wrangling
+library(tidyverse)  # always need this
+library(janitor) # cleaning and EDA
+
+# for plots and tables
+# library(ggplot2)
+# theme_set(theme_bw()) # or theme_set(theme_classic())
+# library(kableExtra)
+```
+
+FIX: NEED TO UPDATE TO Production copy when done
+```{r}
+source("~/github/lab_support/fun_followmee.R")
+source("~/github/lab_support/get_credentials.R")
+```
+
+
+### Test Code
+
+
+
+```{r}
+# Login creds
+creds <- get_credentials("followmee_snezana", here(path_admin, "credentials.csv"))
+
+get_followmee_devices(creds$username, creds$key)
+
+device_id <- get_followmee_device_id("Kasey VA Phone", creds$username, creds$key)
+
+date_start <- "2021-07-22"
+date_end <- "2021-07-26"
+points <- get_followmee_period(device_id, creds$username, creds$key, date_start, date_end)
+```
+
+

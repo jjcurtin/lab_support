@@ -1,5 +1,5 @@
 ---
-title: "Test FollowMee Functions"
+title: "Test FollowMee Functions for Snezana"
 author: "John Curtin"
 date: "`r lubridate::today()`"
 output: 
@@ -15,11 +15,6 @@ Run live in console.  No need to knit
 
 
 ### Set up Environment
-
-Chunk Defaults
-```{r defaults, include=FALSE}
-knitr::opts_chunk$set(attr.output='style="max-height: 500px;"')
-```
 
 Absolute paths
 ```{r, paths}
@@ -37,11 +32,6 @@ switch (Sys.info()[['sysname']],
         )
 ```
 
-Relative paths
-```{r}
-
-```
-
 Packages for lab workflow 
 ```{r, packages_workflow, message=FALSE, warning=FALSE}
 
@@ -50,19 +40,6 @@ conflict_prefer("filter", "dplyr")
 conflict_prefer("select", "dplyr")
 
 library(here)  # establish project directory consistently as working directory
-```
-
-Packages for script
-```{r, packages_script, message=FALSE, warning=FALSE}
-
-# for data wrangling
-library(tidyverse)  # always need this
-library(janitor) # cleaning and EDA
-
-# for plots and tables
-# library(ggplot2)
-# theme_set(theme_bw()) # or theme_set(theme_classic())
-# library(kableExtra)
 ```
 
 FIX: NEED TO UPDATE TO Production copy when done
@@ -74,19 +51,19 @@ source("~/github/lab_support/get_credentials.R")
 
 ### Test Code
 
-
-
 ```{r}
-# Login creds
 creds <- get_credentials("followmee_snezana", here(path_admin, "credentials.csv"))
 
-get_followmee_devices(creds$username, creds$key)
+get_followmee_devices(creds)
+get_followmee_deviceid("Susan's Android", creds)
 
-device_id <- get_followmee_device_id("Kasey VA Phone", creds$username, creds$key)
+# Call get_followmee directly to get new data for a subid
+first_points <- "Susan's Android" %>% 
+  get_followmee_data(creds, n_days = 7)  # override default for now until Susan checks
 
-date_start <- "2021-07-22"
-date_end <- "2021-07-26"
-points <- get_followmee_period(device_id, creds$username, creds$key, date_start, date_end)
+# if data were previously obtained and saved for a subid, 
+# read those data from disk and then pass those data to update_followmee_data()
+updated_points <- update_followmee_data(new_points, creds)
 ```
 
 

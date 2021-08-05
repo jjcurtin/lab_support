@@ -114,7 +114,7 @@ Filter points to past month
 ```{r, gps_month}
 
 gps <- updated_points %>% 
-  select(subid, time = date, lat, lon) %>% 
+  select(subid, time = date, lat, lon) %>%                              #JOHN do we need to use any speed/accuracy info or is it enough as is?
   # mutate(time = round(as.numeric(time)),                              #ALREADY FORMATTED CORRECTLY UNNEEDED
   #        time = as_datetime(time),
   #        lat = as.numeric(lat),

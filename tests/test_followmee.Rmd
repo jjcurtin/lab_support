@@ -23,12 +23,14 @@ switch (Sys.info()[['sysname']],
         # PC paths
         Windows = {
           path_admin <- "P:/administration"
-          path_lab_support <- "P:/toolboxes/lab_support"},
+          path_lab_support <- "P:/toolboxes/lab_support"
+          path_out <- "P:/studydata/snezana/raw_data"},                       #are we going to be saving these CSV this way?
 
         # IOS paths
         Darwin = {
           path_admin <- "/Volumes/private/administration"
-          path_lab_support <- "/Volumes/toolboxes/lab_support"}
+          path_lab_support <- "/Volumes/toolboxes/lab_support"
+          path_out <- "/Volumes/private/studydata/snezana/raw_data"}
         )
 ```
 
@@ -113,7 +115,7 @@ Filter points to past month
 
 gps <- updated_points %>% 
   select(subid, time = date, lat, lon) %>% 
-  # mutate(time = round(as.numeric(time)),
+  # mutate(time = round(as.numeric(time)),                              #ALREADY FORMATTED CORRECTLY UNNEEDED
   #        time = as_datetime(time),
   #        lat = as.numeric(lat),
   #        lon = as.numeric(lon)) %>% 
@@ -122,7 +124,7 @@ gps <- updated_points %>%
 start_date <- gps %>% slice_min(time) %>% pull(time)
 end_date <- start_date + months(1)
   
-#this relies on fun_star and survey results; will need to modify for Snezana
+                                                                         #this relied on fun_star and survey results; will need to modify for Snezana
 places_past<- tibble()
 #places_past <- get_context(the_subid, login_creds)$places  
   
@@ -227,9 +229,9 @@ nrow(places_day)  # unique places per day
 
 nrow(places_freq) # unique places visited on >= 2 days
 
-places_freq_new %>% # plot some columns for unique new places visited on >= 2 days
-  select(subid, date, formatted_address, cnt_pts, dist_context) %>%                       #JOHN failing on dist_context since we have no context
-  print(n = Inf)
+# places_freq_new %>% # plot some columns for unique new places visited on >= 2 days
+#   select(subid, date, formatted_address, cnt_pts, dist_context) %>%                       #JOHN failing on dist_context since we have no context
+#   print(n = Inf)
 
 places_freq_new %>% 
   select(subid, date, formatted_address, cnt_pts) %>%   

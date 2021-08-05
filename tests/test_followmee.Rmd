@@ -23,12 +23,14 @@ switch (Sys.info()[['sysname']],
         # PC paths
         Windows = {
           path_admin <- "P:/administration"
-          path_lab_support <- "P:/toolboxes/lab_support"},
+          path_lab_support <- "P:/toolboxes/lab_support"
+          path_out <- "P:/studydata/snezana/raw_data"},                       #are we going to be saving these CSV this way?
 
         # IOS paths
         Darwin = {
           path_admin <- "/Volumes/private/administration"
-          path_lab_support <- "/Volumes/toolboxes/lab_support"}
+          path_lab_support <- "/Volumes/toolboxes/lab_support"
+          path_out <- "/Volumes/private/studydata/snezana/raw_data"}
         )
 ```
 
@@ -46,6 +48,7 @@ Source
 ```{r}
 source(here(path_lab_support, "fun_followmee.R"))
 source(here(path_lab_support, "get_credentials.R"))
+source(here(path_lab_support, "fun_gps.R"))
 ```
 
 
@@ -69,3 +72,186 @@ updated_points <- update_followmee_data(first_points, creds) %>%
 ```
 
 
+```{r}
+
+# STAR gps colnames
+"user_guid"
+"subid"
+"gps_id"
+"latitude"
+"longitude"
+"create_date"
+"device_data"
+
+
+#followmee gps colnames
+"subid"
+"date"
+"lat"
+"lon"
+"type"
+"speed_mph"
+"direction"
+"altitude_ft"
+"accuracy"
+"date_chr"  
+```
+
+
+
+### Process Places
+
+Settings for frequent place identification
+```{r, place_settings}
+max_dist_points <- 30 # meters
+max_dist_places <- 50 # meters
+
+min_time <- minutes(5) 
+```
+
+
+Filter points to past month        
+```{r, gps_month}
+
+gps <- updated_points %>% 
+  select(subid, time = date, lat, lon) %>%                              #JOHN do we need to use any speed/accuracy info or is it enough as is?
+  # mutate(time = round(as.numeric(time)),                              #ALREADY FORMATTED CORRECTLY UNNEEDED
+  #        time = as_datetime(time),
+  #        lat = as.numeric(lat),
+  #        lon = as.numeric(lon)) %>% 
+  arrange(time)
+
+start_date <- gps %>% slice_min(time) %>% pull(time)
+end_date <- start_date + months(1)
+  
+                                                                         #this relied on fun_star and survey results; will need to modify for Snezana
+places_past<- tibble()
+#places_past <- get_context(the_subid, login_creds)$places  
+  
+```
+
+
+Combine points into places.  Sequential points that are within `max_dist_points` 
+are combined by weighted mean using `geomean()`.  This can take up to an hour.
+
+```{r, places, message=FALSE}
+tic()
+places <- gps_month %>%
+  geomean_seq_pts(max_dist = max_dist_points) # averages sequential close points
+toc()
+# write_rds(places, here("places_1006_tmp.rds"))   # TEMP FOR DEVELOPMENT
+# places <- read_rds(here("places_1006_tmp.rds"))
+```
+
+Average places (points with `time_next` >= `min_time`) by day such that places that 
+are close to each other and visited in same day are collapsed into one entry by 
+weighted `geomean()`.  
+
+This stabilizes nearby places based on sequential points that are sometimes not connected
+by `geomean_seq_pts()`.  But it also takes advantage of places visited multiple times
+in a day (not sequential points) as we move toward the most stable estimate of 
+locations for frequent places
+```{r, places_day}
+places <- places %>%
+  dplyr::filter(time_next > min_time) %>% 
+  mutate(loc_tz = tz_lookup_coords(lat, lon, method = "fast", warn = FALSE))
+
+# to define start and end of day for each date in the participant's modal tz
+tz_mode <- places %>% 
+  count(loc_tz) %>% 
+  arrange(desc(n)) %>% 
+  slice(1) %>% 
+  pull(loc_tz)
+
+places <- places %>% 
+    mutate(time = with_tz(time, tzone = tz_mode),
+           date = as_date(time, tz = tz_mode),
+           label = format(time, format = "%m-%d %H:%M")) # useful for labels with plot_places()
+
+dates <- places %>% 
+  distinct(date) %>% 
+  pull(date)
+
+places_day <- foreach(i = 1:length(dates), .combine = "rbind") %do% {
+  places %>% 
+    dplyr::filter(date == dates[i]) %>% 
+    geomean_places(max_dist = max_dist_places) # average close places (within max_dist_places) within each day
+}
+```
+
+Now select places that were visited on at least 2 days in the past month and
+get weighted average of their location to make even more stable
+```{r, places_freq}
+places_freq <- places_day %>% 
+  count_places() %>%   # count how many days place visited (each place present only once per day)
+  dplyr::filter(visits >= 2) %>% 
+  geomean_places(max_dist = max_dist_places) # average close (within max_dist_places) frequent (>=2) places
+
+days_chr <- c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+places_freq <- places_freq %>% 
+  mutate(label = str_c(days_chr[wday(date)], ", ", date)) # useful for labels with plot_places()
+```
+
+Now delete frequent places that we have context or that have been queried
+2x already.
+```{r, places_freq_new}
+if (nrow(places_past) != 0) {
+  places_freq_new <- places_freq %>% 
+    bind_cols(map2_dfr(places_freq$lon, places_freq$lat, 
+                       find_nearest_context, context = places_past)) %>% 
+    dplyr::filter(dist_context > max_dist_places)
+} else {
+  places_freq_new <- places_freq 
+}
+```
+
+Get addresses for frequent, new, places
+```{r, get_addresses}
+api_key <-  get_credentials("google_api", here(path_admin, "credentials.csv"))$key
+
+places_freq_new <-  places_freq_new %>% 
+  bind_cols(map2_dfr(.$lon, .$lat, lookup_address, "google", api_key)) %>% 
+  arrange(desc(date))
+```
+
+
+### EDA
+
+Review unique places per day and unique frequent places
+```{r, eda}
+nrow(gps) # points overall
+
+nrow(gps_month) # points in past month
+
+nrow(places) # total places (time_next > min_time)
+
+nrow(places_day)  # unique places per day 
+
+nrow(places_freq) # unique places visited on >= 2 days
+
+# places_freq_new %>% # plot some columns for unique new places visited on >= 2 days
+#   select(subid, date, formatted_address, cnt_pts, dist_context) %>%                       #JOHN failing on dist_context since we have no context
+#   print(n = Inf)
+
+places_freq_new %>% 
+  select(subid, date, formatted_address, cnt_pts) %>%   
+  print(n = Inf)
+
+```
+
+
+Review map of frequent new places
+```{r, map_places, fig.width = 8, fig.height = 8}
+places_freq_new %>% plot_places(labels = "label")  # date is most recent date visited
+```
+
+
+### Save `places_freq_new` in knits
+
+```{r, save}
+places_freq_new %>% 
+  write_csv(here(path_out, str_c("places_freq_new_", the_subid, ".csv")))
+
+# log out
+rm(login_creds)
+```

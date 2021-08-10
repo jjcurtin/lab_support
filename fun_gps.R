@@ -121,6 +121,9 @@ geomean_places <- function(places, max_dist = 50){
 # a weighted mean of the the location for each group
 # It assumes columns named subid, date, lat, lon, cnt_pts, duration
 
+  places <- places %>%
+    mutate(duration = as.numeric(duration))
+  
   if (nrow(places) > 1) {
     places <- mutate(places, place_grp = NA)
     max_grp <- 0
@@ -144,7 +147,7 @@ geomean_places <- function(places, max_dist = 50){
     }
 
     avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double(), duration = double())
-    for (i in 1:max_grp){
+    for (i in 1:max_grp) {
       places_grouped <- places %>%
         dplyr::filter(place_grp == i)
 
@@ -165,6 +168,7 @@ geomean_places <- function(places, max_dist = 50){
           add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
       } 
     }
+    
     # add subid
     avg_place <- avg_place %>%
       mutate(subid = places$subid[[1]]) %>%

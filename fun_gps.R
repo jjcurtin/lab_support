@@ -15,7 +15,7 @@ plot_places <- function(places, labels = NULL) {
 # see https://rstudio.github.io/leaflet/ for more info on leaflet
 
   if (is.null(labels)) {
-    places$.labels <-as.character(1:nrow(places))
+    places$.labels <- as.character(1:nrow(places))
   } else places[".labels"] <- places[labels]
 
   map <-  leaflet() %>%

@@ -119,9 +119,9 @@ geomean_places <- function(places, max_dist = 50){
 # into groups that differ by no more than max_dist meters
 # from the previous points in the group.  It then returns
 # a weighted mean of the the location for each group
-# It assumes columns named date, lat, lon, cnt_pts, duration
+# It assumes columns named subid, date, lat, lon, cnt_pts, duration
 
-  if (nrow(places) > 1){
+  if (nrow(places) > 1) {
     places <- mutate(places, place_grp = NA)
     max_grp <- 0
 
@@ -158,9 +158,9 @@ geomean_places <- function(places, max_dist = 50){
                   lat = xy_new[1,2],
                   lon = xy_new[1,1],
                   cnt_pts = sum(places_grouped$cnt_pts),
-                  duration = sum(places_grouped$duration)
+                  duration = sum(places_grouped$duration))
                             
-      }else {
+      } else {
         avg_place <- avg_place %>%
           add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
       } 
@@ -170,7 +170,7 @@ geomean_places <- function(places, max_dist = 50){
       mutate(subid = places$subid[[1]]) %>%
       relocate(subid)
 
-  } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts)
+  } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts, duration)
  
   return(avg_place)
 }

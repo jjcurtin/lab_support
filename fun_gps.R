@@ -128,7 +128,7 @@ geomean_places <- function(places, max_dist = 50){
     places <- mutate(places, place_grp = NA)
     max_grp <- 0
 
-    for(i in 1:(nrow(places) - 1)){
+    for(i in 1:(nrow(places))){
 
       if (is.na(places$place_grp[i])) {
         max_grp <- max_grp + 1
@@ -138,10 +138,13 @@ geomean_places <- function(places, max_dist = 50){
         current_grp <- places$place_grp[i]
       }
 
-      for (j in (i + 1):nrow(places)){
-        if(distGeo(c(places$lon[i], places$lat[i]),
-                   c(places$lon[j], places$lat[j])) <= max_dist){
-          places$place_grp[j] <- current_grp
+      # check i place against later rows if exist
+      if (i < nrow(places)) {
+        for (j in (i + 1):nrow(places)){
+          if(distGeo(c(places$lon[i], places$lat[i]),
+                     c(places$lon[j], places$lat[j])) <= max_dist){
+            places$place_grp[j] <- current_grp
+          }
         }
       }
     }

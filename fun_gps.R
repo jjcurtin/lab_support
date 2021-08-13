@@ -123,7 +123,7 @@ geomean_places <- function(places, max_dist = 50){
 
   places <- places %>%
     mutate(duration = as.numeric(duration))
-  
+
   if (nrow(places) > 1) {
     places <- mutate(places, place_grp = NA)
     max_grp <- 0
@@ -165,20 +165,20 @@ geomean_places <- function(places, max_dist = 50){
                   lon = xy_new[1,1],
                   cnt_pts = sum(places_grouped$cnt_pts),
                   duration = sum(places_grouped$duration))
-                            
+
       } else {
         avg_place <- avg_place %>%
           add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
-      } 
+      }
     }
-    
+
     # add subid
     avg_place <- avg_place %>%
       mutate(subid = places$subid[[1]]) %>%
       relocate(subid)
 
   } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts, duration)
- 
+
   return(avg_place)
 }
 

@@ -15,7 +15,7 @@ plot_places <- function(places, labels = NULL) {
 # see https://rstudio.github.io/leaflet/ for more info on leaflet
 
   if (is.null(labels)) {
-    places$.labels <-as.character(1:nrow(places))
+    places$.labels <- as.character(1:nrow(places))
   } else places[".labels"] <- places[labels]
 
   map <-  leaflet() %>%
@@ -114,19 +114,21 @@ count_places <- function(places, max_dist = 50) {
 }
 
 
-
-
 geomean_places <- function(places, max_dist = 50){
-# Takes a tibble of places, groups them sequentially into
+# Takes a tibble of places from a single subject and groups them sequentially into
 # into groups that differ by no more than max_dist meters
 # from the previous points in the group.  It then returns
-# a weight mean of the the location for each group
+# a weighted mean of the the location for each group
+# It assumes columns named subid, date, lat, lon, cnt_pts, duration
 
-  if (nrow(places) > 1){
+  places <- places %>%
+    mutate(duration = as.numeric(duration))
+
+  if (nrow(places) > 1) {
     places <- mutate(places, place_grp = NA)
     max_grp <- 0
 
-    for(i in 1:(nrow(places) - 1)){
+    for(i in 1:(nrow(places))){
 
       if (is.na(places$place_grp[i])) {
         max_grp <- max_grp + 1
@@ -136,16 +138,19 @@ geomean_places <- function(places, max_dist = 50){
         current_grp <- places$place_grp[i]
       }
 
-      for (j in (i + 1):nrow(places)){
-        if(distGeo(c(places$lon[i], places$lat[i]),
-                   c(places$lon[j], places$lat[j])) <= max_dist){
-          places$place_grp[j] <- current_grp
+      # check i place against later rows if exist
+      if (i < nrow(places)) {
+        for (j in (i + 1):nrow(places)){
+          if(distGeo(c(places$lon[i], places$lat[i]),
+                     c(places$lon[j], places$lat[j])) <= max_dist){
+            places$place_grp[j] <- current_grp
+          }
         }
       }
     }
 
-    avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double())
-    for (i in 1:max_grp){
+    avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double(), duration = double())
+    for (i in 1:max_grp) {
       places_grouped <- places %>%
         dplyr::filter(place_grp == i)
 
@@ -156,22 +161,22 @@ geomean_places <- function(places, max_dist = 50){
         xy_new <- geomean(xy, w)
         avg_place <- avg_place %>%
           add_row(date = max(places_grouped$date),  # most recent date
-                              lat = xy_new[1,2],
-                              lon = xy_new[1,1],
-                              cnt_pts = sum(places_grouped$cnt_pts))
-      }else {
+                  lat = xy_new[1,2],
+                  lon = xy_new[1,1],
+                  cnt_pts = sum(places_grouped$cnt_pts),
+                  duration = sum(places_grouped$duration))
+
+      } else {
         avg_place <- avg_place %>%
-          add_row(select(places_grouped, date, lat, lon, cnt_pts))
+          add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
       }
     }
+
     # add subid
     avg_place <- avg_place %>%
       mutate(subid = places$subid[[1]]) %>%
       relocate(subid)
-
-  } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts)
-
-  #avg_place <- mutate(avg_place, info = format(date))
+  } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts, duration)
 
   return(avg_place)
 }

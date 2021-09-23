@@ -1,0 +1,302 @@
+---
+title: "Post-CHTC Processing"
+author: "Kendra Wyant"
+date: "`r lubridate::today()`"
+output: 
+  html_document:
+    toc: true 
+    toc_depth: 4
+    code_folding: show
+editor_options: 
+  chunk_output_type: console
+---
+
+### Setup
+
+Chunk Defaults
+```{r defaults, include=FALSE}
+knitr::opts_chunk$set(attr.output='style="max-height: 500px;"')
+
+options(tibble.width = Inf)
+options(tibble.print_max = Inf)
+```
+
+Absolute paths
+```{r, paths}
+switch (Sys.info()[['sysname']],
+        # PC paths
+        Windows = { path_lab_support <- "P:/toolboxes/lab_support" },
+        # IOS paths
+        Darwin = { path_lab_support <- "/Volumes/toolboxes/lab_support" }
+        )
+```
+
+Relative paths
+```{r}
+path_out <- "out"
+path_results <- "results"
+path_err <- "err"
+path_jobs <- "../input/jobs.csv"
+```
+
+Packages for lab workflow 
+```{r, packages_workflow, message=FALSE, warning=FALSE}
+library(conflicted) 
+ conflict_prefer("filter", "dplyr")
+ conflict_prefer("select", "dplyr")
+
+library(here)  
+```
+
+Packages for script
+```{r, packages_script, message=FALSE, warning=FALSE}
+library(tidyverse)  
+library(janitor) 
+library(lubridate)
+library(ggplot2)
+library(kableExtra)
+
+theme_set(theme_classic()) 
+```
+
+Source for script
+```{r, source_script, message=FALSE, warning=FALSE}
+source(here(path_lab_support, "print_kbl.R"))
+```
+
+### Notes
+This script aggregates all CHTC results, runs checks on jobs and hyperparameters, 
+and summarizes model performance across all folds.   
+
+Inputs:  
+
+Returned CHTC files   
+
+- meta_output.zip  
+- meta_results.zip    
+- meta_output.zip   
+
+Jobs input file   
+
+- jobs.csv   
+
+Output:   
+
+- results_aggregate.csv   
+
+### Unzip and check jobs
+
+unzip and rename chtc folders
+```{r}
+unzip(zipfile = "meta_output.zip")
+invisible(file.rename("meta_output", "out"))
+unzip(zipfile = "meta_results.zip")
+invisible(file.rename("meta_results", "results"))
+unzip(zipfile = "meta_error.zip")
+invisible(file.rename("meta_error", "err"))
+```
+
+
+check all error files are blank (0 kb)
+```{r}
+err_files <- map_df(list.files(path_err, full.names = TRUE), file.info)
+tabyl(err_files$size)
+```
+
+check all output files are blank (0 kb)
+```{r}
+out_files <- map_df(list.files(path_out, full.names = TRUE), file.info)
+tabyl(out_files$size)
+```
+
+
+
+### Aggregate all result CSVs
+
+read in all CSVs
+```{r}
+result_files <- list.files(path_results, full.names = TRUE)
+results <- vroom::vroom(result_files, col_types = vroom::cols()) %>% 
+  glimpse()
+```
+
+
+check for missing jobs
+```{r}
+jobs <- vroom::vroom(path_jobs, col_types = vroom::cols())
+
+missing_job_nums <- enframe(seq(1:nrow(jobs)), name = NULL, value = "job_num") %>% 
+  filter(!job_num %in% results$job_num)
+```
+
+`r nrow(results)` results from `r nrow(jobs)` jobs.      
+
+```{r}
+if (nrow(missing_job_nums) > 0) {
+  print(str_c("missing jobs: ", str_c(as.character(missing_job_nums$job_num), collapse=", ")))
+  } else print(str_c("No missing jobs"))
+```
+
+
+
+### Average metrics across folds 
+100 models per configuration with a 10 x 10-fold design    
+Note: In testing using only 1 x 10-fold (10 models per configuration)    
+
+NOTE: glmnet algorithms will have 50-100 x's the # of jobs due to tuning lambda 
+within a single job
+
+```{r}
+results_aggregate <- results %>% 
+  group_by(algorithm, feature_set, hp1, hp2, hp3, resample) %>% 
+  summarize(across(c(accuracy, bal_accuracy, sens, spec, roc_auc),
+                   mean),
+            n_jobs = n(), .groups = "drop") 
+```
+
+
+`r nrow(results_aggregate)` unique model configurations.    
+   
+
+```{r}
+results_aggregate %>% 
+  print_kbl(digits = 4)
+```
+
+
+### Plot hyperparameters
+
+```{r fig.width = 10}
+# glmnet
+if (nrow(subset(results_aggregate, algorithm == "glmnet")) != 0){
+  results_aggregate %>%
+    filter(algorithm == "glmnet") %>% 
+    mutate(hp1 = factor(hp1, ordered = TRUE),
+           resample = case_when(resample == "none" ~ "none_19",
+                                TRUE ~ resample)) %>% 
+    separate(resample, c("resample", "under_ratio"), "_") %>% 
+    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+    ggplot(mapping = aes(x = log(hp2), 
+                     y = bal_accuracy, 
+                     group = hp1, 
+                     color = hp1)) +
+      geom_line() +
+      facet_grid(under_ratio ~ resample) +
+      scale_color_discrete(name = "mixture (alpha)") +
+      labs(title = "glmnet", x = "penalty (lambda)", y = "balanced accuracy")
+}
+
+
+# random forest
+if (nrow(subset(results_aggregate, algorithm == "random_forest")) != 0) {
+  results_aggregate %>%
+    filter(algorithm == "random_forest") %>% 
+    mutate(hp2 = factor(hp2, ordered = TRUE),
+          resample = case_when(resample == "none" ~ "none_19",
+                                TRUE ~ resample)) %>% 
+    separate(resample, c("resample", "under_ratio"), "_") %>% 
+    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+    ggplot(mapping = aes(x = hp1, 
+                     y = bal_accuracy, 
+                     group = hp2, 
+                     color = hp2)) +
+      geom_line() +
+      facet_grid(under_ratio ~ resample) +
+      scale_color_discrete(name = "min n") +
+      labs(title = "random forest", x = "mtry", y = "balanced accuracy")
+}
+
+# knn
+if (nrow(subset(results_aggregate, algorithm == "knn")) != 0) {
+  results_aggregate %>%
+    filter(algorithm == "knn") %>%
+    mutate(resample = case_when(resample == "none" ~ "none_19",
+                                TRUE ~ resample)) %>% 
+    separate(resample, c("resample", "under_ratio"), "_") %>% 
+    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+    ggplot(mapping = aes(x = hp1, 
+                     y = bal_accuracy)) +
+      geom_line() +
+      facet_grid(under_ratio ~ resample) +
+      labs(title = "knn", x = "neighbors", y = "balanced accuracy")
+}
+```
+
+
+### Pull best model performance
+
+Highest balanced accuracy is `r round(max(results_aggregate$bal_accuracy), 2)`
+```{r}
+if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet") {
+  results_aggregate %>% 
+    slice_max(bal_accuracy) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else {
+  results_aggregate %>% 
+    slice_max(bal_accuracy) %>% 
+    glimpse()
+  }
+```
+
+highest ROC AUC is `r round(max(results_aggregate$roc_auc), 2)`
+```{r}
+# pull best AUC model if different than best balanced accuracy model
+if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
+  results_aggregate %>% 
+    slice_max(roc_auc) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else if (slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
+  results_aggregate %>% 
+    slice_max(roc_auc) %>% 
+    glimpse()
+  }
+```
+
+
+```{r}
+# Print fits for model with highest balanced accuracy (for repeated single models - not glmnet)
+if (slice_max(results_aggregate, bal_accuracy)$algorithm != "glmnet") {
+  (best_model_bal_accuracy <- results %>% 
+    select(-job_num) %>%
+    inner_join(results_aggregate %>% 
+                 slice_max(bal_accuracy) %>% 
+                 select(-c(accuracy:n_jobs)),
+               by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample")) %>% 
+    arrange(n_fold, n_repeat)) %>% 
+    print_kbl(height = "100%", caption = "Fits for model with highest balanced accuracy") 
+}
+```
+
+
+```{r}
+# Fits for model with highest ROC AUC (if different configuration and not glmnet)
+if (slice_max(results_aggregate, bal_accuracy)$algorithm != "glmnet" & slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
+  results %>% 
+    select(-job_num) %>% 
+    inner_join(results_aggregate %>% 
+                 slice_max(roc_auc) %>% 
+                 select(-c(accuracy:n_jobs)),
+               by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample")) %>% 
+    arrange(n_fold, n_repeat) %>% 
+    print_kbl(height = "100%", caption = "Fits for model with highest roc")
+}
+```
+
+
+### Plot/visualize model performance 
+
+FIX: How to plot observed vs predicted outcomes with just performance metrics? 
+Refit best model?    
+
+
+
+### Write out aggregated model configurations
+
+Save configuration summaries
+```{r}
+write_csv(results_aggregate, "results_aggregate.csv") %>% 
+  glimpse()
+```
+

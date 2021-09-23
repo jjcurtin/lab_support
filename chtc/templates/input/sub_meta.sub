@@ -1,0 +1,24 @@
+# sub_meta.sub
+universe = vanilla
+requirements = (OpSysMajorVer == 7)
+
+executable = execute_meta.sh
+arguments = $(Process)
+
+log = meta_$(Cluster).log
+error = meta_error/$(Cluster)_$(Process).err
+output = meta_output/$(Cluster)_$(Process).out
+
+should_transfer_files = YES
+when_to_transfer_output = ON_EXIT
+transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, tidymodels.tar.gz, fun_chtc_meta.R, fit_chtc_meta.R, data_trn.csv, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz
+#on_exit_hold = exitcode != 0
+
+materialize_max_idle = 2000
+
+request_cpus = 1
+request_memory = 1100MB
+request_disk = 700000KB
++wantFlocking = false
++wantGlideIn = false
+

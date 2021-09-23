@@ -16,7 +16,10 @@ suppressPackageStartupMessages({
 
 
 # JC general notes.  Need to make assumption about outcome name or else pass it in as string
-# Can also have a function that takes all results and selects best model configuration
+
+
+# Can also have a Rmd script that takes all results and selects best model configuration 
+# and also displays hyperparameter plots
 
 
 

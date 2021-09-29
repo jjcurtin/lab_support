@@ -125,17 +125,17 @@ build_recipe <- function(d, job) {
   # control for unbalanced outcome variable
   if (resample == "down") {
     rec <- rec %>% 
-      themis::step_downsample(y, under_ratio = under_ratio) 
+      themis::step_downsample(y, under_ratio = under_ratio, seed = 10) 
   } else if (resample == "smote") {
     if (under_ratio != 1) { over_ratio <- under_ratio / (under_ratio + 1)
     } else over_ratio <- under_ratio
     rec <- rec %>% 
-      themis::step_smote(y, over_ratio = over_ratio) 
+      themis::step_smote(y, over_ratio = over_ratio, seed = 10) 
   } else if (resample == "up") {
     if (under_ratio != 1) { over_ratio <- under_ratio / (under_ratio + 1)
     } else over_ratio <- under_ratio
     rec <- rec %>% 
-      themis::step_upsample(y, over_ratio = over_ratio)
+      themis::step_upsample(y, over_ratio = over_ratio, seed = 10)
   }
   
   # algorithm specific steps

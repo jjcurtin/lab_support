@@ -24,7 +24,7 @@ hp1_knn <- seq(5, 75, length.out = 15) # neighbors
 
 # set paths -------------------- 
 path_jobs <- "P:/studydata/risk/chtc/meta/jobs" 
-path_templates <- "templates"
+path_templates <- "../lab_support/chtc/templates"
 path_data <- "P:/studydata/risk/data_processed/meta/features"
 path_lab_support <- "../lab_support/"
 
@@ -113,4 +113,4 @@ file.copy(from = file.path(path_templates, "post_chtc_processing.Rmd"),
 
 # update queue on submit file -----------------
 queue <- str_c("queue ", nrow(jobs))
-write(queue, file.path(path_jobs, name_job, "input/sub_meta.sub"), append = TRUE)
+write(queue, file.path(path_jobs, name_job, "input/meta.sub"), append = TRUE)

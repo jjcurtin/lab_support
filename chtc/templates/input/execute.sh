@@ -1,5 +1,5 @@
 #!/bin/bash
-# execute_meta.sh
+# execute.sh
 
 #untar R installation
 tar -xzf R402.tar.gz
@@ -13,4 +13,4 @@ export RHOME=$(pwd)/R
 export R_LIBS=$PWD/packages
 
 #run R script, passing in args
-Rscript fit_chtc_meta.R $1
+Rscript fit_chtc.R $1

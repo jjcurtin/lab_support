@@ -21,7 +21,7 @@ options(tibble.width = Inf)
 options(tibble.print_max = Inf)
 ```
 
-Absolute paths
+Absolute paths - for print_kbl function
 ```{r, paths}
 switch (Sys.info()[['sysname']],
         # PC paths
@@ -33,9 +33,9 @@ switch (Sys.info()[['sysname']],
 
 Relative paths
 ```{r}
-path_out <- "out"
+path_output <- "output"
 path_results <- "results"
-path_err <- "err"
+path_error <- "error"
 path_jobs <- "../input/jobs.csv"
 ```
 
@@ -68,13 +68,16 @@ source(here(path_lab_support, "print_kbl.R"))
 This script aggregates all CHTC results, runs checks on jobs and hyperparameters, 
 and summarizes model performance across all folds.   
 
+
+**Should be run from jobs output folder to not break any relative paths**    
+
 Inputs:  
 
 Returned CHTC files   
 
-- meta_output.zip  
-- meta_results.zip    
-- meta_output.zip   
+- output.zip  
+- results.zip    
+- output.zip   
 
 Jobs input file   
 
@@ -88,24 +91,21 @@ Output:
 
 unzip and rename chtc folders
 ```{r}
-unzip(zipfile = "meta_output.zip")
-invisible(file.rename("meta_output", "out"))
-unzip(zipfile = "meta_results.zip")
-invisible(file.rename("meta_results", "results"))
-unzip(zipfile = "meta_error.zip")
-invisible(file.rename("meta_error", "err"))
+unzip(zipfile = "output.zip")
+unzip(zipfile = "results.zip")
+unzip(zipfile = "error.zip")
 ```
 
 
 check all error files are blank (0 kb)
 ```{r}
-err_files <- map_df(list.files(path_err, full.names = TRUE), file.info)
+err_files <- map_df(list.files(path_error, full.names = TRUE), file.info)
 tabyl(err_files$size)
 ```
 
 check all output files are blank (0 kb)
 ```{r}
-out_files <- map_df(list.files(path_out, full.names = TRUE), file.info)
+out_files <- map_df(list.files(path_output, full.names = TRUE), file.info)
 tabyl(out_files$size)
 ```
 

@@ -85,6 +85,8 @@ make_splits <- function(d, job) {
 
 # JC FUNCTION NOTE.  I dont think this one can be generic. Lets discuss
 # KW: updated outcome variable to y (still assumes binary yes/no outcome)
+# feature sets are specific to the meta study. 
+# Consider renaming to build_recipe_meta?
 
 build_recipe <- function(d, job) {
   
@@ -121,6 +123,10 @@ build_recipe <- function(d, job) {
     rec <- rec %>%
       step_rm(contains("context"))
   } 
+  
+  # FIX: Add if statement for baseline ID only models and baseline meta only models
+  
+  
   
   # control for unbalanced outcome variable
   if (resample == "down") {

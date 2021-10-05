@@ -1,7 +1,8 @@
 # setup chtc jobs & associated files/folders
 # the first two sections should be changed for each job
 
-# NOTE: this script assumes lab_support on the p drive contains chtc.R
+# NOTE: this script should be run from a project on the repo (i.e., RISK or RISK2) 
+# for the relative paths to access local copy of lab_support to work
 
 # CHANGE GLOBAL JOB PARAMETERS -------------------
 data_trn <- "period_720_lead_0.csv"
@@ -25,7 +26,7 @@ hp1_knn <- seq(5, 75, length.out = 15) # neighbors
 path_jobs <- "P:/studydata/risk/chtc/meta/jobs" 
 path_templates <- "templates"
 path_data <- "P:/studydata/risk/data_processed/meta/features"
-path_lab_support <- "P:/toolboxes/lab_support/"
+path_lab_support <- "../lab_support/"
 
 # load libraries & source files ------------------
 library(tidyverse)

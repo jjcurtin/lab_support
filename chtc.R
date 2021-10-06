@@ -21,8 +21,170 @@ suppressPackageStartupMessages({
 
 
 # Can also have a Rmd script that takes all results and selects best model configuration 
-# and also displays hyperparameter plots
+# and also displays hyperparameter plots 
 
+
+# KW: I am thinking this function could be called from within a script in a study-level CHTC 
+# folder. All that would need to be done would be defining the parameters and calling this 
+# function. The reason I think the script should be in a study folder is that the parameters 
+# and paths will always be changing. A template example of this script will be in lab_support. 
+
+# hyperparameters are set to NULL by default so that only the supplied hyperparameters are used
+make_jobs <- function(data_trn, name_job, feature_set, algorithm, resample, cv_type,
+                      path_jobs, path_data, hp_1_glmnet = NULL, hp1_knn = NULL,
+                      hp1_rf = NULL, hp2_rf = NULL, hp3_rf = NULL) {
+  # relative paths should work from any repo project if a local copy of lab_support exists
+  path_templates <- "../lab_support/chtc/templates"
+  path_lab_support <- "../lab_support/"
+  
+  # create jobs tibble for K-fold ---------------
+  if (cv_type != "boot") {
+    
+    # Get repeats and folds from cv_type
+    cv_repeats <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
+    }
+    
+    cv_folds <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][4])
+    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+    }
+    
+    
+    for (i in algorithm) {
+      if (i == "glmnet") { 
+        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
+                                n_fold = NA_integer_,
+                                algorithm = "glmnet",
+                                feature_set,
+                                hp1 = hp1_glmnet,
+                                hp2 = NA_integer_,
+                                hp3 = NA_integer_,
+                                resample,
+                                cv_type)
+      } else if (i == "random_forest") {
+        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
+                                n_fold = 1:cv_folds,
+                                algorithm = "random_forest",
+                                feature_set,
+                                hp1 = hp1_rf,
+                                hp2 = hp2_rf,
+                                hp3 = hp3_rf,
+                                resample,
+                                cv_type)
+      } else if (i == "knn") {
+        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
+                                n_fold = 1:cv_folds,
+                                algorithm = "knn",
+                                feature_set,
+                                hp1 = hp1_knn,
+                                hp2 = NA_integer_,
+                                hp3 = NA_integer_,
+                                resample,
+                                cv_type)      
+      }
+      
+      # bind jobs files
+      jobs <- if (i == algorithm[1])
+        jobs_tmp
+      else
+        rbind(jobs, jobs_tmp)
+    }
+  }
+  
+  # modification for bootstrap jobs tibble (no repeats and folds)
+  
+  if (cv_type == "boot") {
+    
+    for (i in algorithm) {
+      if (i == "glmnet") { 
+        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
+                                n_fold = NA_integer_,
+                                algorithm = "glmnet",
+                                feature_set,
+                                hp1 = hp1_glmnet,
+                                hp2 = NA_integer_,
+                                hp3 = NA_integer_,
+                                resample,
+                                cv_type)
+      } else if (i == "random_forest") {
+        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
+                                n_fold = NA_integer_,
+                                algorithm = "random_forest",
+                                feature_set,
+                                hp1 = hp1_rf,
+                                hp2 = hp2_rf,
+                                hp3 = hp3_rf,
+                                resample,
+                                cv_type)
+      } else if (i == "knn") {
+        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
+                                n_fold = NA_integer_,
+                                algorithm = "knn",
+                                feature_set,
+                                hp1 = hp1_knn,
+                                hp2 = NA_integer_,
+                                hp3 = NA_integer_,
+                                resample,
+                                cv_type)      
+      }
+      
+      # bind jobs files
+      jobs <- if (i == algorithm[1])
+        jobs_tmp
+      else
+        rbind(jobs, jobs_tmp)
+    }
+    
+  }
+  
+  
+  # add job num to file --------------- 
+  jobs <- jobs %>% 
+    rownames_to_column("job_num") 
+  
+  # create new job directory (if it does not already exist) -------------------
+  if (!dir.exists(file.path(path_jobs, name_job))) {
+    dir.create(file.path(path_jobs, name_job))
+    dir.create(file.path(path_jobs, name_job, "input"))
+    dir.create(file.path(path_jobs, name_job, "output"))
+  } else {
+    stop("Job folder already exists. No new folders created.")
+  }
+  
+  # write jobs file to input folder ---------------
+  jobs %>% 
+    write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
+  
+  # copy data to input folder as data_trn -----------------
+  file.copy(from = file.path(path_data, data_trn),
+            to = file.path(path_jobs, name_job, "input/data_trn.csv")) %>% 
+    invisible()
+  
+  # copy template R files to input folder -----------------
+  file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
+            to = file.path(path_jobs, name_job, "input"),
+            recursive = TRUE) %>% 
+    invisible()
+  
+  # copy chtc functions to input folder
+  file.copy(from = file.path(path_lab_support, "chtc.R"),
+            to = file.path(path_jobs, name_job, "input"),
+            recursive = TRUE) %>% 
+    invisible()
+  
+  # copy template aggregate script to output folder ---------------
+  file.copy(from = file.path(path_templates, "post_chtc_processing.Rmd"),
+            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) %>% 
+    invisible()
+  
+  # update queue on submit file -----------------
+  queue <- str_c("queue ", nrow(jobs))
+  write(queue, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+}
 
 
 

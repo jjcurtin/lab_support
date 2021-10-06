@@ -5,12 +5,12 @@
 
 # CHANGE GLOBAL JOB PARAMETERS -------------------
 data_trn <- "period_720_lead_0.csv"
-name_job <- "test" # the name of the job to set folder names
+name_job <- "glmnet_knn_rf" # the name of the job to set folder names
 feature_set <- c("all_features") # 1+ data stream to use (all_features or passive_only)
-algorithm <- c("glmnet", "knn") # 1+ algorithm (glmnet, random_forest) 
-resample <- c("none", "up_3", "up_1", "down_3", "down_1", "smote_3", "smote_1") # 1+ resampling methods (up, down, smote, or none)
+algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
+resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none)
 # all resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
-cv_type <- "group_kfold_2_x_10" # (boot, group_kfold, kfold)
+cv_type <- "group_kfold_1_x_10" # (boot, group_kfold, kfold)
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
 # determine where to pass in global cv_type parameter
 

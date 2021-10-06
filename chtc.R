@@ -255,7 +255,7 @@ build_recipe <- function(d, job) {
   # d: (training) dataset from which to build recipe
   # job: single-row job-specific tibble
   # y = binary outcome variable (yes/no)
-  # feature_set = all_features or passive_only
+  # feature_set = feat_baseline_id, feat_baseline_temporal, feat_all, feat_all_passive
   # resample = type + under_ratio or none
   
   algorithm <- job$algorithm
@@ -281,12 +281,20 @@ build_recipe <- function(d, job) {
   
   
   # filter out context features if job uses passive only
-  if (feature_set == "passive_only") {
+  if (feature_set == "feat_all_passive") {
     rec <- rec %>%
       step_rm(contains("context"))
-  } 
+  } else if (feature_set == "feat_baseline_id") {
+    rec <- rec %>% 
+      step_rm(contains("sms")) %>% 
+      step_rm(contains("voice")) %>% 
+      step_rm(contains("all"))
+  } else if (feature_set == "feat_baseline_temporal") {
+    rec <- rec %>% 
+      step_rm(contains("id")) %>% 
+      step_rm(contains("label"))
+  }
   
-  # FIX: Add if statement for baseline ID only models and baseline meta only models
   
   
   

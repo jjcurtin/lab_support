@@ -17,9 +17,9 @@ cv_type <- "group_kfold_2_x_10" # (boot, group_kfold, kfold)
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
 hp1_glmnet <- seq(0.5, 1, length.out = 11) # alpha (mixture) 
 hp1_knn <- seq(5, 75, length.out = 15) # neighbors
-# hp1_rf <- c(5, 10, 20, 50) # mtry (p/3 for reg or square root of p for class)
-# hp2_rf <- c(2, 10, 20) # min_n
-# hp3_rf <- 2000 # trees (10 x's number of predictors)
+hp1_rf <- c(5, 10, 20, 50) # mtry (p/3 for reg or square root of p for class)
+hp2_rf <- c(2, 10, 20) # min_n
+hp3_rf <- 2800 # trees (10 x's number of predictors)
 
 # CHANGE STUDY PATHS -------------------- 
 path_jobs <- "P:/studydata/risk/chtc/meta/jobs" 
@@ -30,8 +30,9 @@ path_data <- "P:/studydata/risk/data_processed/meta/features"
 suppressPackageStartupMessages(library(tidyverse))
 source("../lab_support/chtc.R", echo = FALSE)
 
-# Don't forget to pass in hyperparameters using for algorithms
+# Don't forget to add/remove hyperparameters using/not using for algorithms
 make_jobs(data_trn, name_job, feature_set, algorithm, resample, cv_type,
-          path_jobs, path_data, hp_1_glmnet, hp1_knn)
+          path_jobs, path_data, hp_1_glmnet, hp1_knn, hp1_rf, hp2_rf,
+          hp3_rf)
 
 

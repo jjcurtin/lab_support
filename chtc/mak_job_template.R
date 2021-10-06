@@ -6,7 +6,7 @@
 # CHANGE GLOBAL JOB PARAMETERS -------------------
 data_trn <- "period_720_lead_0.csv"
 name_job <- "glmnet_knn_rf" # the name of the job to set folder names
-feature_set <- c("all_features") # 1+ data stream to use (all_features or passive_only)
+feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive") # 1+ feature sets to  use
 algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none)
 # all resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)

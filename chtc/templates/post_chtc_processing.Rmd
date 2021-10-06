@@ -167,58 +167,77 @@ results_aggregate %>%
 ### Plot hyperparameters
 
 ```{r fig.width = 10}
-# glmnet
-if (nrow(subset(results_aggregate, algorithm == "glmnet")) != 0){
-  results_aggregate %>%
-    filter(algorithm == "glmnet") %>% 
-    mutate(hp1 = factor(hp1, ordered = TRUE),
-           resample = case_when(resample == "none" ~ "none_19",
-                                TRUE ~ resample)) %>% 
-    separate(resample, c("resample", "under_ratio"), "_") %>% 
-    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-    ggplot(mapping = aes(x = log(hp2), 
-                     y = bal_accuracy, 
-                     group = hp1, 
-                     color = hp1)) +
-      geom_line() +
-      facet_grid(under_ratio ~ resample) +
-      scale_color_discrete(name = "mixture (alpha)") +
-      labs(title = "glmnet", x = "penalty (lambda)", y = "balanced accuracy")
-}
+feature_sets <- unique(results_aggregate$feature_set) 
+
+for (i in feature_sets) {
+  
+  results_i <- results_aggregate %>% 
+    filter(feature_set == i)
+    
+    
+   # glmnet
+  if (nrow(subset(results_i, algorithm == "glmnet")) != 0){
+  
+    print(str_c("Plotting glmnet hyperparameters for ", i, " feature set"))
+  
+  
+    results_i %>%
+      filter(algorithm == "glmnet") %>% 
+      mutate(hp1 = factor(hp1, ordered = TRUE),
+             resample = case_when(resample == "none" ~ "none_19",
+                                  TRUE ~ resample)) %>% 
+      separate(resample, c("resample", "under_ratio"), "_") %>% 
+      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+      ggplot(mapping = aes(x = log(hp2), 
+                       y = bal_accuracy, 
+                       group = hp1, 
+                       color = hp1)) +
+        geom_line() +
+        facet_grid(under_ratio ~ resample) +
+        scale_color_discrete(name = "mixture (alpha)") +
+        labs(title = "glmnet", x = "penalty (lambda)", y = "balanced accuracy")
+  }
 
 
-# random forest
-if (nrow(subset(results_aggregate, algorithm == "random_forest")) != 0) {
-  results_aggregate %>%
-    filter(algorithm == "random_forest") %>% 
-    mutate(hp2 = factor(hp2, ordered = TRUE),
-          resample = case_when(resample == "none" ~ "none_19",
-                                TRUE ~ resample)) %>% 
-    separate(resample, c("resample", "under_ratio"), "_") %>% 
-    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-    ggplot(mapping = aes(x = hp1, 
-                     y = bal_accuracy, 
-                     group = hp2, 
-                     color = hp2)) +
-      geom_line() +
-      facet_grid(under_ratio ~ resample) +
-      scale_color_discrete(name = "min n") +
-      labs(title = "random forest", x = "mtry", y = "balanced accuracy")
-}
+  # random forest
+  if (nrow(subset(results_i, algorithm == "random_forest")) != 0) {
+    
+    print(str_c("Plotting random forest hyperparameters for ", i, " feature set"))
+    
+    results_i %>%
+      filter(algorithm == "random_forest") %>% 
+      mutate(hp2 = factor(hp2, ordered = TRUE),
+            resample = case_when(resample == "none" ~ "none_19",
+                                  TRUE ~ resample)) %>% 
+      separate(resample, c("resample", "under_ratio"), "_") %>% 
+      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+      ggplot(mapping = aes(x = hp1, 
+                       y = bal_accuracy, 
+                       group = hp2, 
+                       color = hp2)) +
+        geom_line() +
+        facet_grid(under_ratio ~ resample) +
+        scale_color_discrete(name = "min n") +
+        labs(title = "random forest", x = "mtry", y = "balanced accuracy")
+  }  
 
-# knn
-if (nrow(subset(results_aggregate, algorithm == "knn")) != 0) {
-  results_aggregate %>%
-    filter(algorithm == "knn") %>%
-    mutate(resample = case_when(resample == "none" ~ "none_19",
-                                TRUE ~ resample)) %>% 
-    separate(resample, c("resample", "under_ratio"), "_") %>% 
-    mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-    ggplot(mapping = aes(x = hp1, 
-                     y = bal_accuracy)) +
-      geom_line() +
-      facet_grid(under_ratio ~ resample) +
-      labs(title = "knn", x = "neighbors", y = "balanced accuracy")
+  # knn
+  if (nrow(subset(results_i, algorithm == "knn")) != 0) {
+    
+    print(str_c("Plotting knn hyperparameters for ", i, " feature set"))
+    
+    results_i %>%
+      filter(algorithm == "knn") %>%
+      mutate(resample = case_when(resample == "none" ~ "none_19",
+                                  TRUE ~ resample)) %>% 
+      separate(resample, c("resample", "under_ratio"), "_") %>% 
+      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+      ggplot(mapping = aes(x = hp1, 
+                       y = bal_accuracy)) +
+        geom_line() +
+        facet_grid(under_ratio ~ resample) +
+        labs(title = "knn", x = "neighbors", y = "balanced accuracy")
+  }
 }
 ```
 

@@ -247,7 +247,7 @@ make_splits <- function(d, job) {
 
 # JC FUNCTION NOTE.  I dont think this one can be generic. Lets discuss
 # KW: updated outcome variable to y (still assumes binary yes/no outcome)
-# feature sets are specific to the meta study. 
+# feature sets are specific to the meta study. Also created reference groups for meta specific features.
 # Consider renaming to build_recipe_meta?
 
 build_recipe <- function(d, job) {
@@ -273,26 +273,31 @@ build_recipe <- function(d, job) {
   rec <- recipe(y ~ ., data = d) %>%
     step_string2factor(y, levels = c("no", "yes")) %>% 
     update_role(subid, dttm_label, new_role = "id variable") %>%
+    # step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>% 
+    # step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+    #                                        "14", "15", "16", "17", "18", "19", "20", "21", "22",
+    #                                        "23", "24", "1", "2", "3")) %>% 
     step_string2factor(all_nominal()) %>% 
     step_impute_median(all_numeric()) %>% 
     step_impute_mode(all_nominal(), -y) %>% 
     step_zv(all_predictors()) %>% 
-    step_dummy(all_nominal(), -y)
+    step_dummy(all_nominal(), -y) # reference variable is first level in factor
   
   
   # filter out context features if job uses passive only
   if (feature_set == "feat_all_passive") {
     rec <- rec %>%
-      step_rm(contains("context"))
+      step_rm(starts_with("context"))
   } else if (feature_set == "feat_baseline_id") {
     rec <- rec %>% 
-      step_rm(contains("sms")) %>% 
-      step_rm(contains("voice")) %>% 
-      step_rm(contains("all"))
+      step_rm(starts_with("sms")) %>% 
+      step_rm(starts_with("voice")) %>% 
+      step_rm(starts_with("all")) %>% 
+      step_rm(starts_with("context"))
   } else if (feature_set == "feat_baseline_temporal") {
     rec <- rec %>% 
-      step_rm(contains("id")) %>% 
-      step_rm(contains("label"))
+      step_rm(starts_with("id")) %>% 
+      step_rm(starts_with("label"))
   }
   
   

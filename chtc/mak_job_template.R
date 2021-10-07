@@ -4,7 +4,7 @@
 # for the relative paths to access local copy of lab_support to work
 
 # CHANGE GLOBAL JOB PARAMETERS -------------------
-data_trn <- "period_720_lead_0.csv"
+data_trn <- "period_168_lead_0.csv"
 name_job <- "glmnet_knn_rf" # the name of the job to set folder names
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive") # 1+ feature sets to  use
 algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 

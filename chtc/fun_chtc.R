@@ -176,14 +176,20 @@ make_jobs <- function(path_training_controls) {
             recursive = TRUE) %>% 
     invisible()
   
-  # copy template aggregate script to output folder ---------------
-  file.copy(from = file.path(path_templates, "post_chtc_processing.Rmd"),
-            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) %>% 
-    invisible()
-  
   # update queue on submit file -----------------
   queue <- str_c("queue ", nrow(jobs))
   write(queue, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # copy template aggregate script to output folder ---------------
+  file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
+            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) %>% 
+    invisible()
+  # Add source path for training_controls in post_processing Rmd
+  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"), append = TRUE)
+  
+  file.append(file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"),
+              file.path(path_templates, "output/post_chtc_processing_2.Rmd")) %>% 
+    invisible()
 }
 
 

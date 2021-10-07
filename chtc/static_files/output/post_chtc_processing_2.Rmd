@@ -1,15 +1,5 @@
 ```
 
-
-
-```{r}
-path_output <- "output"
-path_results <- "results"
-path_error <- "error"
-path_jobs <- "../input/jobs.csv"
-```
-
-
 Packages for lab workflow 
 ```{r, packages_workflow, message=FALSE, warning=FALSE}
 library(conflicted) 
@@ -30,6 +20,14 @@ library(kableExtra)
 theme_set(theme_classic()) 
 ```
 
+Set additional paths
+```{r}
+path_job <- here(path_jobs, name_job)
+path_output <- here(path_job, "output/output")
+path_results <-  here(path_job, "output/results")
+path_error <-  here(path_job, "output/error")
+```
+
 Source print_kbl function from lab support
 ```{r  source_script, message=FALSE, warning=FALSE}
 source(here("../lab_support/print_kbl.R"))
@@ -38,10 +36,8 @@ source(here("../lab_support/print_kbl.R"))
 
 ### Notes
 This script aggregates all CHTC results, runs checks on jobs and hyperparameters, 
-and summarizes model performance across all folds.   
-
-
-**Should be run from jobs output folder to not break any relative paths**    
+and summarizes model performance across all folds.    
+  
 
 Inputs:  
 
@@ -61,11 +57,11 @@ Output:
 
 ### Unzip and check jobs
 
-unzip and rename chtc folders
+unzip chtc folders
 ```{r}
-unzip(zipfile = "output.zip")
-unzip(zipfile = "results.zip")
-unzip(zipfile = "error.zip")
+unzip(zipfile = file.path(path_job, "output/output.zip"), exdir = file.path(path_job, "output"))
+unzip(zipfile = file.path(path_job, "output/results.zip"), exdir = file.path(path_job, "output"))
+unzip(zipfile = file.path(path_job, "output/error.zip"), exdir = file.path(path_job, "output"))
 ```
 
 
@@ -81,8 +77,6 @@ out_files <- map_df(list.files(path_output, full.names = TRUE), file.info)
 tabyl(out_files$size)
 ```
 
-
-
 ### Aggregate all result CSVs
 
 read in all CSVs
@@ -95,7 +89,7 @@ results <- vroom::vroom(result_files, col_types = vroom::cols()) %>%
 
 check for missing jobs
 ```{r}
-jobs <- vroom::vroom(path_jobs, col_types = vroom::cols())
+jobs <- vroom::vroom(here(path_jobs, name_job, "input/jobs.csv"), col_types = vroom::cols())
 
 missing_job_nums <- enframe(seq(1:nrow(jobs)), name = NULL, value = "job_num") %>% 
   filter(!job_num %in% results$job_num)
@@ -290,4 +284,5 @@ Save configuration summaries
 write_csv(results_aggregate, "results_aggregate.csv") %>% 
   glimpse()
 ```
+
 

@@ -35,8 +35,8 @@ source(here("../lab_support/print_kbl.R"))
 
 
 ### Notes
-This script aggregates all CHTC results, runs checks on jobs and hyperparameters, 
-and summarizes model performance across all folds.    
+This script aggregates all CHTC results for the job `r name_job`. It runs checks for 
+missing jobs, plots hyperparameters, and summarizes model performance across all folds.    
   
 
 Inputs:  
@@ -64,12 +64,51 @@ unzip(zipfile = file.path(path_job, "output/results.zip"), exdir = file.path(pat
 unzip(zipfile = file.path(path_job, "output/error.zip"), exdir = file.path(path_job, "output"))
 ```
 
+Read in jobs
+```{r}
+jobs <- vroom::vroom(here(path_job, "input/jobs.csv"), col_types = vroom::cols())
+```
 
-check all error files are blank (0 kb)
+
+
+check all error files are blank (0 kb)    
+Note: error files contain warnings
 ```{r}
 err_files <- map_df(list.files(path_error, full.names = TRUE), file.info)
 tabyl(err_files$size)
 ```
+
+Pull error messages and jobs if error files are not all blank
+```{r}
+if (nrow(subset(err_files, size > 0)) > 0) {
+  err_paths <- err_files %>% 
+    filter(size > 0) %>% 
+    rownames_to_column("path") %>% 
+    pull(path) 
+  for (i in err_paths) {
+    err_i <- read_csv(i, col_types = readr::cols()) %>% 
+      mutate(job_num = as.numeric(str_remove(str_split(str_split(i, "/")[[1]][10], "_")[[1]][2], ".err"))) %>% 
+      relocate(job_num)
+    errs <- if (i == err_paths[1]) {
+      err_i
+    } else rbind(errs, err_i)
+  }
+  
+  # print error messages
+  print_kbl(errs, align = "l")
+}
+```
+
+
+```{r}
+if (nrow(subset(err_files, size > 0)) > 0) {
+  # print jobs
+  jobs %>% 
+    inner_join(errs, by = "job_num") %>% 
+    print_kbl(align = "l")
+}
+```
+
 
 check all output files are blank (0 kb)
 ```{r}
@@ -79,7 +118,7 @@ tabyl(out_files$size)
 
 ### Aggregate all result CSVs
 
-read in all CSVs
+read in all result CSVs
 ```{r}
 result_files <- list.files(path_results, full.names = TRUE)
 results <- vroom::vroom(result_files, col_types = vroom::cols()) %>% 
@@ -89,8 +128,6 @@ results <- vroom::vroom(result_files, col_types = vroom::cols()) %>%
 
 check for missing jobs
 ```{r}
-jobs <- vroom::vroom(here(path_jobs, name_job, "input/jobs.csv"), col_types = vroom::cols())
-
 missing_job_nums <- enframe(seq(1:nrow(jobs)), name = NULL, value = "job_num") %>% 
   filter(!job_num %in% results$job_num)
 ```
@@ -106,11 +143,11 @@ if (nrow(missing_job_nums) > 0) {
 
 
 ### Average metrics across folds 
-100 models per configuration with a 10 x 10-fold design    
-Note: In testing using only 1 x 10-fold (10 models per configuration)    
 
-NOTE: glmnet algorithms will have 50-100 x's the # of jobs due to tuning lambda 
-within a single job
+NOTE: glmnet algorithms will have 1 returned model for each penalty/lambda combination. 
+This has already been averaged across folds on the whole dataset in `tune_model()`.   
+
+Other models (Knn and random forest) may have 10 - 100 models per unique configuration.   
 
 ```{r}
 results_aggregate <- results %>% 
@@ -129,86 +166,123 @@ results_aggregate %>%
   print_kbl(digits = 4)
 ```
 
+### Pull Best performing model by feature set
 
-### Plot hyperparameters
-
-```{r fig.width = 10}
+```{r}
 feature_sets <- unique(results_aggregate$feature_set) 
 
 for (i in feature_sets) {
   
   results_i <- results_aggregate %>% 
     filter(feature_set == i)
-    
-    
-   # glmnet
-  if (nrow(subset(results_i, algorithm == "glmnet")) != 0){
   
-    print(str_c("Plotting glmnet hyperparameters for ", i, " feature set"))
+  print(str_c("Best performing model for ", i, " feature set"))
   
+  if (slice_max(results_i, bal_accuracy)$algorithm == "glmnet") {
+  results_i %>% 
+    slice_max(bal_accuracy) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else {
+  results_i %>% 
+    slice_max(bal_accuracy) %>% 
+    glimpse()
+}
   
-    results_i %>%
-      filter(algorithm == "glmnet") %>% 
-      mutate(hp1 = factor(hp1, ordered = TRUE),
-             resample = case_when(resample == "none" ~ "none_19",
-                                  TRUE ~ resample)) %>% 
-      separate(resample, c("resample", "under_ratio"), "_") %>% 
-      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-      ggplot(mapping = aes(x = log(hp2), 
-                       y = bal_accuracy, 
-                       group = hp1, 
-                       color = hp1)) +
-        geom_line() +
-        facet_grid(under_ratio ~ resample) +
-        scale_color_discrete(name = "mixture (alpha)") +
-        labs(title = "glmnet", x = "penalty (lambda)", y = "balanced accuracy")
-  }
+}
+```
 
 
-  # random forest
-  if (nrow(subset(results_i, algorithm == "random_forest")) != 0) {
-    
-    print(str_c("Plotting random forest hyperparameters for ", i, " feature set"))
-    
-    results_i %>%
-      filter(algorithm == "random_forest") %>% 
-      mutate(hp2 = factor(hp2, ordered = TRUE),
-            resample = case_when(resample == "none" ~ "none_19",
-                                  TRUE ~ resample)) %>% 
-      separate(resample, c("resample", "under_ratio"), "_") %>% 
-      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-      ggplot(mapping = aes(x = hp1, 
-                       y = bal_accuracy, 
-                       group = hp2, 
-                       color = hp2)) +
-        geom_line() +
-        facet_grid(under_ratio ~ resample) +
-        scale_color_discrete(name = "min n") +
-        labs(title = "random forest", x = "mtry", y = "balanced accuracy")
-  }  
+### Plot hyperparameters
 
-  # knn
-  if (nrow(subset(results_i, algorithm == "knn")) != 0) {
+```{r}
+algorithms <- unique(results_aggregate$algorithm) 
+for (k in algorithms) {
+  
+  results_k <- results_aggregate %>% 
+      filter(algorithm == k)
+  
+  for (i in feature_sets) {
+  
+    results_i <- results_k %>% 
+      filter(feature_set == i)
     
-    print(str_c("Plotting knn hyperparameters for ", i, " feature set"))
     
-    results_i %>%
-      filter(algorithm == "knn") %>%
-      mutate(resample = case_when(resample == "none" ~ "none_19",
-                                  TRUE ~ resample)) %>% 
-      separate(resample, c("resample", "under_ratio"), "_") %>% 
-      mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
-      ggplot(mapping = aes(x = hp1, 
-                       y = bal_accuracy)) +
-        geom_line() +
-        facet_grid(under_ratio ~ resample) +
-        labs(title = "knn", x = "neighbors", y = "balanced accuracy")
+     # glmnet
+    if (nrow(subset(results_i, algorithm == "glmnet")) != 0){
+  
+      plot_title <- str_c("Plotting glmnet hyperparameters for ", i, " feature set")
+  
+  
+      plot_i <- results_i %>%
+        filter(algorithm == "glmnet") %>% 
+        mutate(hp1 = factor(hp1, ordered = TRUE),
+               resample = case_when(resample == "none" ~ "none_19",
+                                    TRUE ~ resample)) %>% 
+        separate(resample, c("resample", "under_ratio"), "_") %>% 
+        mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+        ggplot(mapping = aes(x = log(hp2), 
+                         y = bal_accuracy, 
+                         group = hp1, 
+                         color = hp1)) +
+          geom_line() +
+          facet_grid(under_ratio ~ resample) +
+          scale_color_discrete(name = "mixture (alpha)") +
+          labs(title = plot_title, x = "penalty (lambda)", y = "balanced accuracy")
+  
+      print(plot_i)
+    }
+
+
+    # random forest
+    if (nrow(subset(results_i, algorithm == "random_forest")) != 0) {
+      
+      plot_title <- str_c("Plotting RF hyperparameters for ", i, " feature set")
+      
+      plot_i <- results_i %>%
+        filter(algorithm == "random_forest") %>% 
+        mutate(hp2 = factor(hp2, ordered = TRUE),
+              resample = case_when(resample == "none" ~ "none_19",
+                                    TRUE ~ resample)) %>% 
+        separate(resample, c("resample", "under_ratio"), "_") %>% 
+        mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+        ggplot(mapping = aes(x = hp1, 
+                         y = bal_accuracy, 
+                         group = hp2, 
+                         color = hp2)) +
+          geom_line() +
+          facet_grid(under_ratio ~ resample) +
+          scale_color_discrete(name = "min n") +
+          labs(title = plot_title, x = "mtry", y = "balanced accuracy")
+      
+       print(plot_i)
+    }  
+  
+    # knn
+    if (nrow(subset(results_i, algorithm == "knn")) != 0) {
+      
+      plot_title <- str_c("Plotting knn hyperparameters for ", i, " feature set")
+      
+      plot_i <- results_i %>%
+        filter(algorithm == "knn") %>%
+        mutate(resample = case_when(resample == "none" ~ "none_19",
+                                    TRUE ~ resample)) %>% 
+        separate(resample, c("resample", "under_ratio"), "_") %>% 
+        mutate(under_ratio = factor(under_ratio, levels = c("1", "3", "19"))) %>% 
+        ggplot(mapping = aes(x = hp1, 
+                         y = bal_accuracy)) +
+          geom_line() +
+          facet_grid(under_ratio ~ resample) +
+          labs(title = plot_title, x = "neighbors", y = "balanced accuracy")
+      
+        print(plot_i)
+    }
   }
 }
 ```
 
 
-### Pull best model performance
+### Overall best model performance
 
 Highest balanced accuracy is `r round(max(results_aggregate$bal_accuracy), 2)`
 ```{r}

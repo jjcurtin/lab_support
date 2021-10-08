@@ -1,6 +1,5 @@
 ---
 title: "Post-CHTC Processing"
-author: "Kendra Wyant"
 date: "`r lubridate::today()`"
 output: 
   html_document:

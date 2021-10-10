@@ -1,7 +1,8 @@
 # This is a study level script for defining the recipe and global attributes that are 
 # the same across jobs.
 
-# Note: Should have a single build_recipe function to be compatible with fit script.   
+# DO NOT EDIT DIRECTLY IN THIS SCRIPT - this script serves as a template with all 
+# possible parameters specified/demo'd
 
 
 # SET GLOBAL PARAMETERS --------
@@ -15,6 +16,7 @@ y <- "y" # outcome variable - will be changed to y in recipe for consistency acr
 cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
 # determine where to pass in global cv_type parameter
+group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
 
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
 # Can remove or comment out hyperparameter variables if not using the algorithm 
@@ -37,7 +39,11 @@ path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data
 
 # BUILD RECIPE ---------
 
-# Sample recipe from meta project - this is for fitting classification models
+# Script should have a single build_recipe function to be compatible with fit script. 
+# Use if statements to customize recipes instead of using multiple different recipe functions.  
+
+
+# Sample recipe from meta project below - this is for fitting classification models
 
 build_recipe <- function(d, job, y) {
   

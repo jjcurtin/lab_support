@@ -26,7 +26,11 @@ d <- read_csv("data_trn.csv", col_types = cols())
 
 # create splits object ---------------
 set.seed(102030)
-splits <- make_splits(d = d, cv_type = cv_type)
+splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+  make_splits(d = d, cv_type = cv_type, group = group)
+} else { 
+  make_splits(d = d, cv_type = cv_type)
+}
 
 # build recipe ----------------
 rec <- build_recipe(d = d, job = job)

@@ -1,7 +1,7 @@
 # CHTC Read Me
 
 ## Study level files 
-`training_controls.R` is a study level file that should be copied over to a project's repo and edited as necessary. It contains a study specific recipe, job-specific parameters, and global attributes (outcome variable and cv_type). **This file should NOT be renamed since it is sourced automatically in the `fit_chtc` and `mak_jobs` scripts.**  
+`training_controls.R` is a study level file that should be copied over to a project's repo and edited as necessary. It contains a study specific recipe, job-specific parameters, and global attributes (outcome variable and cv_type). **This file CAN be renamed if you are using different controls for a single study. It is automatically renamed to `training_controls.R` in `mak_jobs` when copied over to the chtc input folder so it can still be sourced automatically in the `fit_chtc` script.**  
 
 ## Project level files
 `mak_jobs.R` is in the CHTC folder and is generalized to make CHTC jobs based on the `training_controls.R` script. You should execute `mak_jobs.R` from any R project in a local repo (No need to copy this over since you will only need to change the path for where your study-specific `training_controls.R` file is located). For this script to work you should also ensure you have an updated local copy of lab_support and/or you are on the correct branch if you are in the dev process. 

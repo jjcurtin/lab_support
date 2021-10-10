@@ -32,7 +32,12 @@ splits <- make_splits(d = d, cv_type = cv_type)
 rec <- build_recipe(d = d, job = job)
 
 # fit model and get predictions and metrics ----------------
-results <- tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type)
+results <- if (job$algorithm == "glmnet") {
+  tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type, 
+             hp2_glmnet_min, hp2_glmnet_max, hp2_glmnet_out)
+} else {
+  tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type)
+}
 
 # write out results tibble ------------
 file_name <- str_c("results_", process_num, ".csv")

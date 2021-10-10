@@ -44,10 +44,8 @@ build_recipe <- function(d, job, y) {
   # d: (training) dataset from which to build recipe
   # job: single-row job-specific tibble
   # y = binary outcome variable (yes/no)
-  # feature_set = feat_baseline_id, feat_baseline_temporal, feat_all, feat_all_passive
-  # resample = type + under_ratio or none
   
-  # get relevant info from jobs file (algorithm, feature_set, resample, under_ratio)
+  # get relevant info from job (algorithm, feature_set, resample, under_ratio)
   algorithm <- job$algorithm
   feature_set <- job$feature_set
   

@@ -355,7 +355,7 @@ Refit best model?
 
 Save configuration summaries
 ```{r}
-write_csv(results_aggregate, "results_aggregate.csv") %>% 
+write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>% 
   glimpse()
 ```
 

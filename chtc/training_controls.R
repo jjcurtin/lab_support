@@ -64,16 +64,16 @@ build_recipe <- function(d, job, y) {
   rec <- recipe(y ~ ., data = d) %>%
     step_string2factor(y, levels = c("no", "yes")) %>% 
     update_role(subid, dttm_label, new_role = "id variable") %>%
-    # still working on figuring out how to set reference level
-    # step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>% 
-    # step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-    #                                        "14", "15", "16", "17", "18", "19", "20", "21", "22",
-    #                                        "23", "24", "1", "2", "3")) %>% 
+    # reference group will be first level in factor - specify levels to choose reference group
+    step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
+    step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+                                           "14", "15", "16", "17", "18", "19", "20", "21", "22",
+                                           "23", "24", "1", "2", "3")) %>%
     step_string2factor(all_nominal()) %>% 
     step_impute_median(all_numeric()) %>% 
     step_impute_mode(all_nominal(), -y) %>% 
     step_zv(all_predictors()) %>% 
-    step_dummy(all_nominal(), -y) # reference variable is first level in factor
+    step_dummy(all_nominal(), -y) 
   
   
   # If statements for filtering features based on feature set

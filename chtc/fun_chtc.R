@@ -362,11 +362,11 @@ make_features <- function(job, folds, rec, cv_type) {
   
   # make feature matrices
   feat_in <- rec %>% 
-    prep(training = d_in) %>% 
+    prep(training = d_in, strings_as_factors = FALSE) %>% 
     bake(new_data = NULL)
   
   feat_out <- rec %>% 
-    prep(training = d_in) %>% 
+    prep(training = d_in, strings_as_factors = FALSE) %>% 
     bake(new_data = d_out)
   
   return(list(feat_in = feat_in, feat_out = feat_out))

@@ -195,45 +195,31 @@ make_jobs <- function(path_training_controls) {
 
 
 
-# JC FUNCTION NOTE: Don't need job because the resampling technique should be the same for
-# all jobs.  Do need to specify resampling technique as parameter(s) but likely as a context
-# variable in the calling script
-# Should support repeated kfold, repeated grouped kfold and bootstrap
-# KW: I added functionality for kfold and group_kfold - just needs bootstrap. Also still 
-# needs a way to change cv_type to a global parameter instead of getting it from job.
 
-make_splits <- function(d, job) {
+# KW: I added functionality for kfold and group_kfold - just needs bootstrap.
+
+make_splits <- function(d, cv_type) {
   
   # d: (training) dataset to be resampled 
-  # job: single job to get cv_type parameter from - may directly pass in cv_type
-  # if it becomes global parameter
   
   # bootstrap splits
-  if (job$cv_type == "boot") {
+  if (cv_type == "boot") {
     # add bootstap splits here
   }
   
-  cv_type <- if (str_split(str_remove(job$cv_type, "_x"), "_")[[1]][1] == "kfold") {
-    "kfold"
-  } else if (str_split(str_remove(job$cv_type, "_x"), "_")[[1]][1] == "group") {
-    "group_kfold"
-  }
-  
-  
   # kfold splits
-  if (cv_type == "kfold"){ 
-    n_repeats <- as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][2])
-    n_folds <- as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][3])
+  if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
+    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
+    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
     
     split <- d %>% 
       vfold_cv(v = n_folds, repeats = n_repeats) 
-  }
-  
-  # grouped kfold splits 
-  # grouping variable is hardcoded to be subid
-  if (cv_type == "group_kfold"){ 
-    n_repeats <- as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][3])
-    n_folds <- as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][4])
+   
+    # grouped kfold splits 
+    # grouping variable is hardcoded to be subid 
+  } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][4])
     
     for (i in 1:n_repeats) {
       split <- d %>% 
@@ -244,7 +230,7 @@ make_splits <- function(d, job) {
         split
       else
         rbind(splits, split)
-    }
+    } 
   }
   
   return(splits)
@@ -253,7 +239,7 @@ make_splits <- function(d, job) {
 
 
 
-tune_model <- function(job, rec, folds) {
+tune_model <- function(job, rec, folds, cv_type) {
   # job: single-row job-specific tibble from jobs
   # folds: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
@@ -294,7 +280,7 @@ tune_model <- function(job, rec, folds) {
   if (job$algorithm == "random_forest") {
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, folds = folds, rec = rec)
+    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -322,7 +308,7 @@ tune_model <- function(job, rec, folds) {
   
   if (job$algorithm == "knn") {
     # extract single fold associated with job
-    features <- make_features(job = job, folds = folds, rec = rec)
+    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -349,7 +335,7 @@ tune_model <- function(job, rec, folds) {
 
 # helper function for tune_model()
 # KW: still need to add section for bootstrap
-make_features <- function(job, folds, rec) {
+make_features <- function(job, folds, rec, cv_type) {
   
   # need to also pass in cv_type if becomes global parameter
   
@@ -357,12 +343,12 @@ make_features <- function(job, folds, rec) {
   # folds: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   
-  if (job$cv_type != "boot") {
+  if (cv_type != "boot") {
     
-    n_repeats <- if (str_split(str_remove(job$cv_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][2])
-    } else if (str_split(str_remove(job$cv_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(job$cv_type, "_x"), "_")[[1]][3])
+    n_repeats <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
+    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
     }
     
     fold_index <- job$n_fold + (job$n_repeat - 1) * n_repeats
@@ -371,7 +357,7 @@ make_features <- function(job, folds, rec) {
     d_out <- assessment(folds$splits[[fold_index]])
   }
   
-  if (job$cv_type == "boot") {
+  if (cv_type == "boot") {
     
     # pull out bootstrap split here
     

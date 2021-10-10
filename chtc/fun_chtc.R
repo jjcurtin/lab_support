@@ -235,7 +235,8 @@ make_splits <- function(d, cv_type) {
 
 
 
-tune_model <- function(job, rec, folds, cv_type) {
+tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
+                       hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
   # folds: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
@@ -243,7 +244,7 @@ tune_model <- function(job, rec, folds, cv_type) {
   if (job$algorithm == "glmnet") {
     # use whole dataset (all folds)
     # CHANGE: number of penalty values in tune grid
-    grid_penalty <- expand_grid(penalty = exp(seq(-7, 2, length.out = 100)))
+    grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # tune_grid - takes in recipe, splits, and hyperparameter values to find
     # the best penalty value across all folds 

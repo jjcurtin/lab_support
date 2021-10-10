@@ -16,20 +16,16 @@ suppressPackageStartupMessages({
 
 
 # JC general notes.  Need to make assumption about outcome name or else pass it in as string
-# KW: functions currently set where outcome variable is y - however it still has assumption that
-# y is a binary outcome variable with yes/no labels.
+# KW: functions currently set where outcome variable is y - in training_controls there is a 
+# variable for the outcome name in the dataset. In the recipe this is changed to y.   
 
 
 # Can also have a Rmd script that takes all results and selects best model configuration 
-# and also displays hyperparameter plots 
+# and also displays hyperparameter plots - currently called post_chtc_processing.Rmd 
 
 
-# KW: I am thinking this function could be called from within a script in a study-level CHTC 
-# folder. All that would need to be done would be defining the parameters and calling this 
-# function. The reason I think the script should be in a study folder is that the parameters 
-# and paths will always be changing. A template example of this script will be in lab_support. 
 
-# hyperparameters are set to NULL by default so that only the supplied hyperparameters are used
+# Only need to supply hyperparameters in training_controls.R for algorithms being used 
 make_jobs <- function(path_training_controls) {
   # read in study specific controls
   source(path_training_controls)

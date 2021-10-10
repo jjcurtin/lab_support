@@ -17,7 +17,12 @@ cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # determine where to pass in global cv_type parameter
 
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
+# Can remove or comment out hyperparameter variables if not using the algorithm 
+# if using the algorithm, you must provide the associated hyperparameters
 hp1_glmnet <- seq(0.5, 1, length.out = 11) # alpha (mixture) 
+hp2_glmnet_min <- -8 # min for penalty grid - will be passed into exp(seq(min, max, length.out = out))
+hp2_glmnet_max <- 2 # max for penalty grid
+hp2_glmnet_out <- 100 # length of penalty grid
 hp1_knn <- seq(5, 75, length.out = 15) # neighbors
 hp1_rf <- c(5, 10, 20, 50) # mtry (p/3 for reg or square root of p for class)
 hp2_rf <- c(2, 10, 20) # min_n
@@ -32,10 +37,7 @@ path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data
 
 # BUILD RECIPE ---------
 
-# JC FUNCTION NOTE.  I dont think this one can be generic. Lets discuss
-# KW: updated outcome variable to y (still assumes binary yes/no outcome)
-# feature sets are specific to the meta study. Also created reference groups for meta specific features.
-# Consider renaming to build_recipe_meta?
+# Sample recipe from meta project - this is for fitting classification models
 
 build_recipe <- function(d, job, y) {
   
@@ -45,9 +47,9 @@ build_recipe <- function(d, job, y) {
   # feature_set = feat_baseline_id, feat_baseline_temporal, feat_all, feat_all_passive
   # resample = type + under_ratio or none
   
+  # get relevant info from jobs file (algorithm, feature_set, resample, under_ratio)
   algorithm <- job$algorithm
   feature_set <- job$feature_set
-  
   
   if (job$resample == "none") {
     resample <- job$resample
@@ -60,10 +62,11 @@ build_recipe <- function(d, job, y) {
   d <- d %>% 
     rename(y = y)
   
-  
+  # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
     step_string2factor(y, levels = c("no", "yes")) %>% 
     update_role(subid, dttm_label, new_role = "id variable") %>%
+    # still working on figuring out how to set reference level
     # step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>% 
     # step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
     #                                        "14", "15", "16", "17", "18", "19", "20", "21", "22",
@@ -75,7 +78,7 @@ build_recipe <- function(d, job, y) {
     step_dummy(all_nominal(), -y) # reference variable is first level in factor
   
   
-  # filter out context features if job uses passive only
+  # If statements for filtering features based on feature set
   if (feature_set == "feat_all_passive") {
     rec <- rec %>%
       step_rm(starts_with("context"))
@@ -91,10 +94,7 @@ build_recipe <- function(d, job, y) {
       step_rm(starts_with("label"))
   }
   
-  
-  
-  
-  # control for unbalanced outcome variable
+  # resampling options for unbalanced outcome variable
   if (resample == "down") {
     rec <- rec %>% 
       themis::step_downsample(y, under_ratio = under_ratio, seed = 10) 

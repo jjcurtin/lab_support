@@ -8,7 +8,7 @@
 # SET GLOBAL PARAMETERS --------
 data_trn <- "period_168_lead_0.csv"
 name_job <- "test" # the name of the job to set folder names
-feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive") # 1+ feature sets to  use
+feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive", "feat_logs") # 1+ feature sets
 algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none)
 # all resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
@@ -75,6 +75,7 @@ build_recipe <- function(d, job, y) {
     step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
                                            "14", "15", "16", "17", "18", "19", "20", "21", "22",
                                            "23", "24", "1", "2", "3")) %>%
+    step_string2factor(label_season, levels = c("Spring", "Summer", "Fall", "Winter")) %>% 
     step_string2factor(all_nominal()) %>% 
     step_impute_median(all_numeric()) %>% 
     step_impute_mode(all_nominal(), -y) %>% 
@@ -91,8 +92,16 @@ build_recipe <- function(d, job, y) {
       step_rm(starts_with("sms")) %>% 
       step_rm(starts_with("voice")) %>% 
       step_rm(starts_with("all")) %>% 
-      step_rm(starts_with("context"))
+      step_rm(starts_with("context")) %>% 
+      step_rm(starts_with("label"))
   } else if (feature_set == "feat_baseline_temporal") {
+    rec <- rec %>% 
+      step_rm(starts_with("id")) %>% 
+      step_rm(starts_with("sms")) %>% 
+      step_rm(starts_with("voice")) %>% 
+      step_rm(starts_with("all")) %>% 
+      step_rm(starts_with("context"))
+  } else if (feature_set == "feat_logs") {
     rec <- rec %>% 
       step_rm(starts_with("id")) %>% 
       step_rm(starts_with("label"))

@@ -72,7 +72,7 @@ jobs <- vroom::vroom(here(path_job, "input/jobs.csv"), col_types = vroom::cols()
 
 
 check all error files are blank (0 kb)    
-Note: error files contain warnings
+Note: error files also contain warnings
 ```{r}
 err_files <- map_df(list.files(path_error, full.names = TRUE), file.info)
 tabyl(err_files$size)
@@ -100,13 +100,14 @@ if (nrow(subset(err_files, size > 0)) > 0) {
 ```
 
 
+Job rows with error messages
 ```{r}
 if (nrow(subset(err_files, size > 0)) > 0) {
   # print jobs
   jobs %>% 
     inner_join(errs, by = "job_num") %>% 
     print_kbl(align = "l")
-}
+} else print("no errors or warnings")
 ```
 
 
@@ -137,7 +138,7 @@ missing_job_nums <- enframe(seq(1:nrow(jobs)), name = NULL, value = "job_num") %
 ```{r}
 if (nrow(missing_job_nums) > 0) {
   print(str_c("missing jobs: ", str_c(as.character(missing_job_nums$job_num), collapse=", ")))
-  } else print(str_c("No missing jobs"))
+  } else print("No missing jobs")
 ```
 
 
@@ -314,34 +315,6 @@ if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max
 ```
 
 
-```{r}
-# Print fits for model with highest balanced accuracy (for repeated single models - not glmnet)
-if (slice_max(results_aggregate, bal_accuracy)$algorithm != "glmnet") {
-  (best_model_bal_accuracy <- results %>% 
-    select(-job_num) %>%
-    inner_join(results_aggregate %>% 
-                 slice_max(bal_accuracy) %>% 
-                 select(-c(accuracy:n_jobs)),
-               by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample")) %>% 
-    arrange(n_fold, n_repeat)) %>% 
-    print_kbl(height = "100%", caption = "Fits for model with highest balanced accuracy") 
-}
-```
-
-
-```{r}
-# Fits for model with highest ROC AUC (if different configuration and not glmnet)
-if (slice_max(results_aggregate, bal_accuracy)$algorithm != "glmnet" & slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
-  results %>% 
-    select(-job_num) %>% 
-    inner_join(results_aggregate %>% 
-                 slice_max(roc_auc) %>% 
-                 select(-c(accuracy:n_jobs)),
-               by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample")) %>% 
-    arrange(n_fold, n_repeat) %>% 
-    print_kbl(height = "100%", caption = "Fits for model with highest roc")
-}
-```
 
 
 ### Plot/visualize model performance 
@@ -355,7 +328,7 @@ Refit best model?
 
 Save configuration summaries
 ```{r}
-write_csv(results_aggregate, "results_aggregate.csv") %>% 
+write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>% 
   glimpse()
 ```
 

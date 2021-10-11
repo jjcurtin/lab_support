@@ -536,7 +536,6 @@ find_nearest_context <- function(lon_target, lat_target, context){
   }
 
   context <- context %>%
-    dplyr::filter(variable_name == "type") %>%
     select(lon_context = lon, lat_context =  lat) %>%
     mutate(dist_context = map2_dbl(.$lon_context, .$lat_context,
                                    get_dist,

@@ -243,11 +243,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
   
   if (job$algorithm == "glmnet") {
     # use whole dataset (all folds)
-    # CHANGE: number of penalty values in tune grid
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
-    # tune_grid - takes in recipe, splits, and hyperparameter values to find
-    # the best penalty value across all folds 
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
@@ -406,6 +403,20 @@ get_metrics <- function(model, feat_out) {
 }
 
 
+# Gets number of features for a specific recipe
+get_n_features <- function(d, rec) {
+  n_cols <- rec %>% 
+    prep(training = d, strings_as_factors = FALSE) %>% 
+    bake(new_data = NULL) %>% 
+    ncol()
+  
+  n_exclude <- rec %>% 
+    summary() %>% 
+    filter(role != "predictor") %>% 
+    nrow()
+
+  return(n_cols - n_exclude)
+}
 
 
 

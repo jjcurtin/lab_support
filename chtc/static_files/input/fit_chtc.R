@@ -13,7 +13,7 @@ source("training_controls.R")
 # set up job_num ---------------
 # process_num <- 1
 args <- commandArgs(trailingOnly = TRUE) 
-process_num <- as.numeric(args[1]) + 1 # process/job arg starts at 0
+process_num <- as.numeric(args[1]) + 1 # CHTC arg starts at 0
 
 # read in jobs.csv file ------------------
 jobs <- read_csv("jobs.csv", col_types = cols()) 
@@ -43,7 +43,14 @@ results <- if (job$algorithm == "glmnet") {
   tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type)
 }
 
+# Add number of features to tibble ----------------
+results <- results %>% 
+  mutate(n_features = get_n_features(d = d, rec = rec))
+
 # write out results tibble ------------
-file_name <- str_c("results_", process_num, ".csv")
 results %>% 
-  write_csv(., file_name)
+  write_csv(., str_c("results_", process_num, ".csv"))
+
+# Save model ------------
+model %>% 
+  saveRDS(., str_c("model_", process_num, ".rds"))

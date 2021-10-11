@@ -101,6 +101,6 @@ update_followmee_data <- function(past_data, creds) {
   
   data <- get_followmee_data(subid = subid, creds = creds, n_days = 7) %>% 
     bind_rows(past_data) %>% 
-    distinct() %>% 
+    distinct(subid, date, lat, lon, .keep_all = TRUE) %>% 
     arrange(date)
 }

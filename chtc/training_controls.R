@@ -75,6 +75,7 @@ build_recipe <- function(d, job, y) {
     step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
                                            "14", "15", "16", "17", "18", "19", "20", "21", "22",
                                            "23", "24", "1", "2", "3")) %>%
+    step_string2factor(label_season, levels = c("Spring", "Summer", "Fall", "Winter")) %>% 
     step_string2factor(all_nominal()) %>% 
     step_impute_median(all_numeric()) %>% 
     step_impute_mode(all_nominal(), -y) %>% 
@@ -91,7 +92,8 @@ build_recipe <- function(d, job, y) {
       step_rm(starts_with("sms")) %>% 
       step_rm(starts_with("voice")) %>% 
       step_rm(starts_with("all")) %>% 
-      step_rm(starts_with("context"))
+      step_rm(starts_with("context")) %>% 
+      step_rm(starts_with("label"))
   } else if (feature_set == "feat_baseline_temporal") {
     rec <- rec %>% 
       step_rm(starts_with("id")) %>% 

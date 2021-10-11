@@ -234,7 +234,6 @@ make_splits <- function(d, cv_type, group = NULL) {
 
 
 
-
 tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
@@ -245,6 +244,9 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     # use whole dataset (all folds)
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, event_level = "second")
+    
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
@@ -253,7 +255,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 resamples = folds,
                 grid = grid_penalty,
                 metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc))
+                                     sens, spec, roc_auc),
+                control = ctrl)
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%
@@ -268,7 +271,10 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
       relocate(spec, .after = sens)
     
-    return(results)
+    # Create a tibble of predictions
+    predictions <- collect_predictions(models)
+    
+    return(list(results, predictions))
   }
   
   if (job$algorithm == "random_forest") {
@@ -297,7 +303,13 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
     
-    return(results) 
+    # Create a tibble of predictions
+    predictions <- predict(model, new_data = feat_out) %>% 
+      bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
+      # add subids and y from feat_out by row number
+      bind_cols(feat_out %>% select(subid, dttm_label, y))
+    
+    return(list(results, predictions)) 
   }
   
   if (job$algorithm == "knn") {
@@ -320,7 +332,13 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
     
-    return(results) 
+    # Create a tibble of predictions
+    predictions <- predict(model, new_data = feat_out) %>% 
+      bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
+      # add subids and y from feat_out by row number
+      bind_cols(feat_out %>% select(subid, dttm_label, y))
+    
+    return(list(results, predictions)) 
   }
   
 }

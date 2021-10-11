@@ -35,7 +35,7 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 # build recipe ----------------
 rec <- build_recipe(d = d, job = job)
 
-# fit model and get predictions and metrics ----------------
+# fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
   tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type, 
              hp2_glmnet_min, hp2_glmnet_max, hp2_glmnet_out)
@@ -43,7 +43,22 @@ results <- if (job$algorithm == "glmnet") {
   tune_model(job = job, rec = rec, folds = splits, cv_type = cv_type)
 }
 
-# Add number of features to tibble ----------------
+# separate predictions from results ----------------
+predictions <- results[[2]]
+
+# add subids by row number for glmnet only (row id = row id in original dataset)
+# subids already present for single split models (knn, rf)
+if (job$algorithm == "glmnet") {
+  predictions <- predictions %>% 
+    left_join(d %>% 
+                rowid_to_column() %>% 
+                select(rowid, subid, dttm_label), by = c(".row" = "rowid")) 
+}
+
+# pull out results from list ----------------
+results <- results[[1]]
+
+# Add number of features to results 
 results <- results %>% 
   mutate(n_features = get_n_features(d = d, rec = rec))
 
@@ -52,5 +67,6 @@ results %>%
   write_csv(., str_c("results_", process_num, ".csv"))
 
 # Save model ------------
-model %>% 
-  saveRDS(., str_c("model_", process_num, ".rds"))
+# save as rds due to large file size
+predictions %>%
+  saveRDS(., str_c("preds_", process_num, ".rds"))

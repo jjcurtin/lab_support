@@ -58,10 +58,6 @@ if (job$algorithm == "glmnet") {
 # pull out results from list ----------------
 results <- results[[1]]
 
-# Add number of features to results 
-results <- results %>% 
-  mutate(n_features = get_n_features(d = d, rec = rec))
-
 # write out results tibble ------------
 results %>% 
   write_csv(., str_c("results_", process_num, ".csv"))

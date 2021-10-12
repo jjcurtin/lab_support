@@ -210,7 +210,7 @@ make_splits <- function(d, cv_type, group = NULL) {
     
     split <- d %>% 
       vfold_cv(v = n_folds, repeats = n_repeats) 
-   
+    
     # grouped kfold splits 
     # must specify grouping variable in training_controls.R
   } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
@@ -245,7 +245,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # control grid to save predictions
-    ctrl <- control_resamples(save_pred = TRUE, event_level = "second")
+    ctrl <- control_resamples(save_pred = TRUE, event_level = "second", 
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
     
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
@@ -263,13 +264,45 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       # summarise across repeats
       group_by(penalty, .metric, .estimator, .config) %>% 
       summarise(mean = mean(mean), .groups = "drop") %>% 
-      select(hp2 = penalty, .metric, mean) %>% 
+      select(hp2 = penalty, .metric, mean, .config) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>% 
       bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) %>% 
       relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
       relocate(spec, .after = sens)
+    
+    # add n features to results
+    n_feats <- models %>% 
+      select(.extracts) %>% 
+      unnest(.extracts) %>% 
+      select(.extracts, .config) %>% 
+      group_by(.config) %>%
+      slice(1) %>% 
+      unnest(.extracts) %>% 
+      summarise(n_feats = n()) 
+    
+    results <- results %>% 
+      left_join(n_feats, by = ".config") %>% 
+      select(-.config)
+    
+    
+    # FIX: look into the fact that some resamples are using less features
+    # models %>% 
+    #   select(id, .extracts) %>% 
+    #   unnest(.extracts) %>% 
+    #   select(id, .extracts, .config) %>% 
+    #   # Since you get all of the coefficients for each glmnet
+    #   # fit, the values are replicated within a value of mixture.
+    #   # We'll keep the first row so that we don't get the same
+    #   # values over and over again. 
+    #   group_by(id, .config) %>%
+    #   slice(1) %>% 
+    #   unnest(.extracts) %>% 
+    #   summarise(n_feats = n()) %>% 
+    #   print(n = Inf)
+    
+    
     
     # Create a tibble of predictions
     predictions <- collect_predictions(models)
@@ -303,6 +336,10 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
     
+    # add n features to results
+    results <- results %>% 
+      mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
+    
     # Create a tibble of predictions
     predictions <- predict(model, new_data = feat_out) %>% 
       bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
@@ -331,6 +368,10 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
+    
+    # add n features to results
+    results <- results %>% 
+      mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
     
     # Create a tibble of predictions
     predictions <- predict(model, new_data = feat_out) %>% 
@@ -419,23 +460,3 @@ get_metrics <- function(model, feat_out) {
   
   return(model_metrics)
 }
-
-
-# Gets number of features for a specific recipe
-get_n_features <- function(d, rec) {
-  n_cols <- rec %>% 
-    prep(training = d, strings_as_factors = FALSE) %>% 
-    bake(new_data = NULL) %>% 
-    ncol()
-  
-  n_exclude <- rec %>% 
-    summary() %>% 
-    filter(role != "predictor") %>% 
-    nrow()
-
-  return(n_cols - n_exclude)
-}
-
-
-
-

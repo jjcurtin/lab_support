@@ -319,8 +319,68 @@ if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max
 
 ### Plot/visualize model performance 
 
-FIX: How to plot observed vs predicted outcomes with just performance metrics? 
-Refit best model?    
+read in all predictions (read in only job nums for best model?)
+```{r}
+preds_files <- list.files(path_preds, full.names = TRUE)
+preds <- vroom::vroom(preds_files, col_types = vroom::cols()) %>% 
+  glimpse()
+```
+
+pull out job nums for best model (highest balanced accuracy)
+```{r}
+jobs_best <- results %>% 
+  inner_join(slice_max(results_aggregate, bal_accuracy) %>% 
+  select(c(algorithm, feature_set, hp1, hp2, hp3, resample, n_jobs)),
+  by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample"))
+```
+
+Check number of rows equal number of jobs aggregated
+```{r}
+nrow(jobs_best) == slice_max(results_aggregate, bal_accuracy)$n_jobs
+```
+
+Pull out predictions
+```{r}
+preds <- preds %>% filter(job_num %in% jobs_best$job_num)
+
+# glmnet must also filter on penalty
+if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet") {
+ preds <- preds %>% filter(penalty == slice_max(results_aggregate, bal_accuracy)$hp2) 
+}
+```
+
+`r nrow(preds)` predictions for `r nrow(tabyl(preds$subid))` participants      
+
+
+Check number of predictions is correct    
+
+- Single repeat cross validation should have one prediction for each held out observation (i.e., should equal number of total observations)    
+
+FIX: Not sure how to check yet for bootstrap and repeated cross validation
+```{r}
+if (str_split(cv_type, "_")[[1]][1] == "group" | str_split(cv_type, "_")[[1]][1] == "kfold") {
+  d_nrow <- nrow(vroom::vroom(here(path_data, data_trn), col_types = vroom::cols()))
+  if (nrow(preds) == d_nrow) {
+    print(str_c("number of predictions (", nrow(preds), ") = number of observations (", d_nrow, ")")) 
+    } else if (nrow(preds) > d_nrow) { 
+      print(str_c("WARNING: number of predictions (", nrow(preds), ") > number of observations (", 
+                  d_nrow, ")"))
+      } else if (nrow(preds) < d_nrow) print(str_c("WARNING: number of predictions (", 
+                                                    nrow(preds), ") < number of observations (", d_nrow, ")"))
+}
+```
+
+
+
+plot predictions by participant over their 3 month participation
+```{r}
+preds %>% 
+  # filter(subid %in% c(1, 2, 3, 4, 5, 6, 7, 8)) %>% 
+  group_by(subid) %>% 
+  ggplot(aes(x = dttm_label, y = .pred_yes)) +
+  geom_line() +
+  facet_wrap(~ subid, scales = "free_x")
+```
 
 
 
@@ -329,6 +389,13 @@ Refit best model?
 Save configuration summaries
 ```{r}
 write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>% 
+  glimpse()
+```
+
+
+Save predictions from best model
+```{r}
+write_csv(preds, here(path_job, "output/preds_best.csv")) %>% 
   glimpse()
 ```
 

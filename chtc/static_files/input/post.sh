@@ -4,6 +4,9 @@
 # move data to results
 mv results_*.csv results
 
+# move model predictions to predictions
+mv preds_*.rds predictions
+
  #move error files to error
 mv error*.err error
 
@@ -12,6 +15,7 @@ mv output*.out output
 
 # put files to transfer into zip files
 zip -r -m results results
+zip -r -m predictions predictions
 zip -r -m error error
 zip -r -m output output
 

@@ -52,7 +52,8 @@ if (job$algorithm == "glmnet") {
   predictions <- predictions %>% 
     left_join(d %>% 
                 rowid_to_column() %>% 
-                select(rowid, subid, dttm_label), by = c(".row" = "rowid")) 
+                select(rowid, subid, dttm_label), by = c(".row" = "rowid")) %>% 
+    mutate(job_num = job$job_num)
 }
 
 # pull out results from list ----------------

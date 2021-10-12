@@ -305,7 +305,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     
     
     # Create a tibble of predictions
-    predictions <- collect_predictions(models)
+    predictions <- collect_predictions(models) 
     
     return(list(results, predictions))
   }
@@ -344,7 +344,9 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     predictions <- predict(model, new_data = feat_out) %>% 
       bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
       # add subids and y from feat_out by row number
-      bind_cols(feat_out %>% select(subid, dttm_label, y))
+      bind_cols(feat_out %>% select(subid, dttm_label, y)) %>% 
+      # add job_num
+      mutate(job_num = job$job_num)
     
     return(list(results, predictions)) 
   }
@@ -377,7 +379,9 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     predictions <- predict(model, new_data = feat_out) %>% 
       bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
       # add subids and y from feat_out by row number
-      bind_cols(feat_out %>% select(subid, dttm_label, y))
+      bind_cols(feat_out %>% select(subid, dttm_label, y)) %>% 
+      # add job_num
+      mutate(job_num = job$job_num)
     
     return(list(results, predictions)) 
   }

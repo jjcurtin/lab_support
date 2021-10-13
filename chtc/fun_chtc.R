@@ -245,8 +245,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # control grid to save predictions
-    ctrl <- control_resamples(save_pred = TRUE, event_level = "second", 
-                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+    ctrl <- control_resamples(event_level = "second", extract = function (x) extract_fit_parsnip(x) %>% tidy())
     
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
@@ -272,42 +271,21 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
       relocate(spec, .after = sens)
     
-    # add n features to results
-    n_feats <- models %>% 
-      select(.extracts) %>% 
-      unnest(.extracts) %>% 
-      select(.extracts, .config) %>% 
-      group_by(.config) %>%
-      slice(1) %>% 
-      unnest(.extracts) %>% 
-      summarise(n_feats = n() - 1) 
+    # add n features to results (avg n across repeats/folds)
+     n_feats <- models %>% 
+       select(.extracts, id) %>% 
+       unnest(.extracts) %>%   
+       select(.extracts, id, .config) %>%
+       group_by(id, .config) %>% 
+       mutate(n = nrow(.extracts[[1]])) %>%
+       group_by(.config) %>% 
+       summarise(n = round(mean(n - 1))) 
     
     results <- results %>% 
       left_join(n_feats, by = ".config") %>% 
       select(-.config)
     
-    
-    # FIX: look into the fact that some resamples are using less features
-    # models %>%
-    #   select(id, .extracts) %>%
-    #   unnest(.extracts) %>%
-    #   select(id, .extracts, .config) %>%
-    #   # Since you get all of the coefficients for each glmnet
-    #   # fit, the values are replicated within a value of mixture.
-    #   # We'll keep the first row so that we don't get the same
-    #   # values over and over again.
-    #   group_by(id, .config) %>%
-    #   slice(1) %>%
-    #   unnest(.extracts) %>%
-    #   summarise(n_feats = n()) %>%
-    #   print(n = Inf)
-    
-    
-    
-    # Create a tibble of predictions
-    predictions <- collect_predictions(models) 
-    
-    return(list(results, predictions))
+    return(results)
   }
   
   if (job$algorithm == "random_forest") {
@@ -340,15 +318,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- results %>% 
       mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
     
-    # Create a tibble of predictions
-    predictions <- predict(model, new_data = feat_out) %>% 
-      bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
-      # add subids and y from feat_out by row number
-      bind_cols(feat_out %>% select(subid, dttm_label, y)) %>% 
-      # add job_num
-      mutate(job_num = job$job_num)
-    
-    return(list(results, predictions)) 
+    return(results)
   }
   
   if (job$algorithm == "knn") {
@@ -375,15 +345,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- results %>% 
       mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
     
-    # Create a tibble of predictions
-    predictions <- predict(model, new_data = feat_out) %>% 
-      bind_cols(predict(model, new_data = feat_out, type = "prob")) %>% 
-      # add subids and y from feat_out by row number
-      bind_cols(feat_out %>% select(subid, dttm_label, y)) %>% 
-      # add job_num
-      mutate(job_num = job$job_num)
-    
-    return(list(results, predictions)) 
+    return(results) 
   }
   
 }

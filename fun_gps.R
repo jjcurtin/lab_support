@@ -7,7 +7,7 @@ library(stringr)
 library(httr)
 library(tidyr)
 library(dplyr)
-#
+
 plot_places <- function(places, label_column, color_column) {
 # places is a tibble that has two required and one optional column:
 # lat (numeric), lon (numeric), and info(character).

@@ -426,3 +426,108 @@ get_metrics <- function(model, feat_out) {
   
   return(model_metrics)
 }
+
+tune_best_model <- function(best_model, rec, folds, cv_type) {
+  
+  if (best_model$algorithm == "glmnet") {
+    
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+    
+    models <- logistic_reg(penalty = best_model$hp2,
+                          mixture = best_model$hp1) %>%
+      set_engine("glmnet") %>%
+      set_mode("classification") %>%
+      tune_grid(preprocessor = rec,
+                resamples = folds,
+                metrics = metric_set(accuracy, bal_accuracy,
+                                     sens, spec, roc_auc),
+                control = ctrl)
+    
+    results <- collect_metrics(models) %>%
+      # summarise across repeats
+      group_by(.metric, .estimator, .config) %>% 
+      summarise(mean = mean(mean), .groups = "drop") %>% 
+      pivot_wider(., names_from = ".metric",
+                  values_from = "mean") %>%
+      select(-.estimator) %>% 
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .) %>% 
+      relocate(sens, .after = bal_accuracy) %>%  
+      relocate(spec, .after = sens)
+    
+    
+    # Create a tibble of predictions
+    predictions <- collect_predictions(models)
+    
+    return(list(results, predictions, models))
+  }
+  
+  if (best_model$algorithm == "random_forest") {
+    
+    # fit model on feat_in with best_model hyperparemeter values 
+    models <- rand_forest(mtry = best_model$hp1,
+                         min_n = best_model$hp2,
+                         trees = best_model$hp3) %>%
+      set_engine("ranger",
+                 importance = "impurity",
+                 respect.unordered.factors = "order",
+                 oob.error = FALSE,
+                 seed = 102030) %>%
+      set_mode("classification") %>%
+      tune_grid(preprocessor = rec,
+                resamples = folds,
+                metrics = metric_set(accuracy, bal_accuracy,
+                                     sens, spec, roc_auc),
+                control = ctrl)
+    
+    results <- collect_metrics(models) %>%
+      # summarise across repeats
+      group_by(.metric, .estimator, .config) %>% 
+      summarise(mean = mean(mean), .groups = "drop") %>% 
+      pivot_wider(., names_from = ".metric",
+                  values_from = "mean") %>%
+      select(-.estimator) %>% 
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .) %>% 
+      relocate(sens, .after = bal_accuracy) %>%  
+      relocate(spec, .after = sens)
+    
+    
+    # Create a tibble of predictions
+    predictions <- collect_predictions(models)
+    
+    return(list(results, predictions, models))
+  }
+  
+  if (best_model$algorithm == "knn") {
+    
+    # fit model - best_model provides number of neighbors
+    
+    models <- nearest_neighbor(neighbors = best_model$hp1) %>% 
+      set_engine("kknn") %>% 
+      set_mode("classification") %>% 
+      tune_grid(preprocessor = rec,
+                resamples = folds,
+                metrics = metric_set(accuracy, bal_accuracy,
+                                     sens, spec, roc_auc),
+                control = ctrl)
+    
+    results <- collect_metrics(models) %>%
+      # summarise across repeats
+      group_by(.metric, .estimator, .config) %>% 
+      summarise(mean = mean(mean), .groups = "drop") %>% 
+      pivot_wider(., names_from = ".metric",
+                  values_from = "mean") %>%
+      select(-.estimator) %>% 
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .) %>% 
+      relocate(sens, .after = bal_accuracy) %>% 
+      relocate(spec, .after = sens)
+    
+    
+    # Create a tibble of predictions
+    predictions <- collect_predictions(models)
+    
+    return(list(results, predictions, models))
+  }
+}
+

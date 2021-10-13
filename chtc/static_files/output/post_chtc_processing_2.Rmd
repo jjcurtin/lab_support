@@ -5,6 +5,7 @@ Packages for lab workflow
 library(conflicted) 
  conflict_prefer("filter", "dplyr")
  conflict_prefer("select", "dplyr")
+ conflict_prefer("spec", "yardstick")
 
 library(here)  
 ```
@@ -28,11 +29,11 @@ path_results <-  here(path_job, "output/results")
 path_error <-  here(path_job, "output/error")
 ```
 
-Source print_kbl function from lab support
+Source function scripts from lab support
 ```{r  source_script, message=FALSE, warning=FALSE}
+source(here("../lab_support/chtc/fun_chtc.R"))
 source(here("../lab_support/print_kbl.R"))
 ```
-
 
 ### Notes
 This script aggregates all CHTC results for the job `r name_job`. It runs checks for 
@@ -324,39 +325,49 @@ if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max
 
 
 
-### Plot/visualize model performance 
+### Refit best model
 
-read in all predictions (read in only job nums for best model?)
+Replicates best CHTC model using decision metric specified in study's training controls    
 ```{r}
-preds_files <- list.files(path_preds, full.names = TRUE)
-preds <- vroom::vroom(preds_files, col_types = vroom::cols()) %>% 
+best_model <- slice_max(results_aggregate, get(perf_metric)) %>% 
   glimpse()
 ```
 
-pull out job nums for best model (highest balanced accuracy)
+Replicate splits and recipe
 ```{r}
-jobs_best <- results %>% 
-  inner_join(slice_max(results_aggregate, bal_accuracy) %>% 
-  select(c(algorithm, feature_set, hp1, hp2, hp3, resample, n_jobs)),
-  by = c("algorithm", "feature_set", "hp1", "hp2", "hp3", "resample"))
-```
+# read in data
+d <- vroom::vroom(here(path_job, "input/data_trn.csv"), col_types = vroom::cols())
 
-Check number of rows equal number of jobs aggregated
-```{r}
-nrow(jobs_best) == slice_max(results_aggregate, bal_accuracy)$n_jobs
-```
-
-Pull out predictions
-```{r}
-preds <- preds %>% filter(job_num %in% jobs_best$job_num)
-
-# glmnet must also filter on penalty
-if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet") {
- preds <- preds %>% filter(penalty == slice_max(results_aggregate, bal_accuracy)$hp2) 
+# create splits object ---------------
+set.seed(102030)
+splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+  make_splits(d = d, cv_type = cv_type, group = group)
+} else { 
+  make_splits(d = d, cv_type = cv_type)
 }
+
+# build recipe ----------------
+rec <- build_recipe(d = d, job = best_model)
 ```
 
-`r nrow(preds)` predictions for `r nrow(tabyl(preds$subid))` participants      
+Fit model and get results
+```{r warning = FALSE}
+results <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
+```
+
+Pull predictions
+```{r}
+# separate predictions from results ----------------
+predictions <- results[[2]]
+
+# add subids by row number in original data set 
+predictions <- predictions %>% 
+  left_join(d %>% 
+            rowid_to_column() %>% 
+            select(rowid, subid, dttm_label), by = c(".row" = "rowid"))
+```
+
+`r nrow(predictions)` predictions for `r nrow(tabyl(predictions$subid))` participants      
 
 
 Check number of predictions is correct    
@@ -366,29 +377,46 @@ Check number of predictions is correct
 FIX: Not sure how to check yet for bootstrap and repeated cross validation
 ```{r}
 if (str_split(cv_type, "_")[[1]][1] == "group" | str_split(cv_type, "_")[[1]][1] == "kfold") {
-  d_nrow <- nrow(vroom::vroom(here(path_data, data_trn), col_types = vroom::cols()))
-  if (nrow(preds) == d_nrow) {
-    print(str_c("number of predictions (", nrow(preds), ") = number of observations (", d_nrow, ")")) 
-    } else if (nrow(preds) > d_nrow) { 
-      print(str_c("WARNING: number of predictions (", nrow(preds), ") > number of observations (", 
-                  d_nrow, ")"))
-      } else if (nrow(preds) < d_nrow) print(str_c("WARNING: number of predictions (", 
-                                                    nrow(preds), ") < number of observations (", d_nrow, ")"))
+  if (nrow(predictions) == nrow(d)) {
+    print(str_c("number of predictions (", nrow(predictions), ") = number of observations (", nrow(d), ")")) 
+    } else if (nrow(predictions) > nrow(d)) { 
+      print(str_c("WARNING: number of predictions (", nrow(predictions), ") > number of observations (", 
+                  nrow(d), ")"))
+      } else if (nrow(predictions) < nrow(d)) print(str_c("WARNING: number of predictions (", 
+                                                    nrow(predictions), ") < number of observations (", nrow(d), ")"))
 }
 ```
 
 
-
-plot predictions by participant over their 3 month participation
-```{r}
-preds %>% 
-  # filter(subid %in% c(1, 2, 3, 4, 5, 6, 7, 8)) %>% 
+plot predictions by participant
+```{r fig.height = 60}
+predictions %>% 
   group_by(subid) %>% 
   ggplot(aes(x = dttm_label, y = .pred_yes)) +
   geom_line() +
-  facet_wrap(~ subid, scales = "free_x")
+  facet_wrap(~ subid, scales = "free_x", ncol = 3)
 ```
 
+
+Pull out best model results
+```{r}
+best_model_results <- results[[1]] %>% 
+  glimpse()
+```
+
+Compare to CHTC best model
+```{r}
+best_model %>% 
+  select(-n_jobs) %>% 
+  glimpse()
+```
+
+
+pull out model fits    
+Unnest .extracts column to see feature estimates
+```{r}
+best_model_fits <- results[[3]]
+```
 
 
 ### Write out aggregated model configurations
@@ -399,11 +427,20 @@ write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>%
   glimpse()
 ```
 
-
-Save predictions from best model
+Save best model
 ```{r}
-write_csv(preds, here(path_job, "output/preds_best.csv")) %>% 
+write_csv(best_model_results, here(path_job, "output/best_model_results.csv")) %>% 
   glimpse()
 ```
 
+Save best_model fits
+```{r}
+saveRDS(best_model_fits, "best_model_fits.rds")
+```
+
+Save predictions from best model
+```{r}
+write_csv(predictions, here(path_job, "output/best_model_preds.csv")) %>% 
+  glimpse()
+```
 

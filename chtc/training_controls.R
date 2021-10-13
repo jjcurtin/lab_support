@@ -124,9 +124,9 @@ build_recipe <- function(d, job, y) {
   
   # algorithm specific steps
   if (algorithm == "glmnet" | algorithm == "knn") {
-    rec <- rec %>% 
-      step_normalize(all_predictors()) %>% 
-      step_dummy(all_nominal(), -y) 
+    rec <- rec  %>% 
+      step_dummy(all_nominal(), -y) %>% 
+      step_normalize(all_predictors())
   } 
   
   return(rec)

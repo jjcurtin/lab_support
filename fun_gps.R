@@ -7,23 +7,33 @@ library(stringr)
 library(httr)
 library(tidyr)
 library(dplyr)
-
-plot_places <- function(places, labels = NULL) {
+#
+plot_places <- function(places, label_column, color_column) {
 # places is a tibble that has two required and one optional column:
 # lat (numeric), lon (numeric), and info(character).
 # Other columns are ignored.
 # see https://rstudio.github.io/leaflet/ for more info on leaflet
 
-  if (is.null(labels)) {
-    places$.labels <- as.character(1:nrow(places))
-  } else places[".labels"] <- places[labels]
+  if (missing(label_column)) {
+    labels <- as.character(1:nrow(places))
+  } else {
+    labels <- places %>% 
+      pull ({{ label_column }})
+  }
 
+  if (missing(color_column)) {
+    colors <- "red"
+  } else {
+    colors <- places %>%
+      pull({{ color_column }})
+  }
+  
   map <-  leaflet() %>%
     addTiles() %>%
     addCircleMarkers(data = places,
                      lng = ~lon, lat = ~lat,
-                     radius = 1.5, color = "red", opacity = 1,
-                     popup = ~.labels) %>%
+                     radius = 1.5, color = colors, opacity = 1,
+                     popup = labels) %>%
     addMeasure(position = "bottomleft",
                primaryLengthUnit = "meters",
                primaryAreaUnit = "sqmeters")

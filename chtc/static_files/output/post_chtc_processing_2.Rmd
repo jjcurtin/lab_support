@@ -169,6 +169,13 @@ results_aggregate %>%
 
 ### Pull Best performing model by feature set
 
+Summary of feature sets
+```{r}
+results_aggregate %>% 
+  count(feature_set, n_feats) 
+```
+
+Get metrics
 ```{r}
 feature_sets <- unique(results_aggregate$feature_set) 
 

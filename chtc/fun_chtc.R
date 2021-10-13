@@ -280,7 +280,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       group_by(.config) %>%
       slice(1) %>% 
       unnest(.extracts) %>% 
-      summarise(n_feats = n()) 
+      summarise(n_feats = n() - 1) 
     
     results <- results %>% 
       left_join(n_feats, by = ".config") %>% 
@@ -288,18 +288,18 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     
     
     # FIX: look into the fact that some resamples are using less features
-    # models %>% 
-    #   select(id, .extracts) %>% 
-    #   unnest(.extracts) %>% 
-    #   select(id, .extracts, .config) %>% 
+    # models %>%
+    #   select(id, .extracts) %>%
+    #   unnest(.extracts) %>%
+    #   select(id, .extracts, .config) %>%
     #   # Since you get all of the coefficients for each glmnet
     #   # fit, the values are replicated within a value of mixture.
     #   # We'll keep the first row so that we don't get the same
-    #   # values over and over again. 
+    #   # values over and over again.
     #   group_by(id, .config) %>%
-    #   slice(1) %>% 
-    #   unnest(.extracts) %>% 
-    #   summarise(n_feats = n()) %>% 
+    #   slice(1) %>%
+    #   unnest(.extracts) %>%
+    #   summarise(n_feats = n()) %>%
     #   print(n = Inf)
     
     

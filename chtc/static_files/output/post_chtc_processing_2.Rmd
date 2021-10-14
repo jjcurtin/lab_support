@@ -435,7 +435,7 @@ write_csv(best_model_results, here(path_job, "output/best_model_results.csv")) %
 
 Save best_model fits
 ```{r}
-saveRDS(best_model_fits, "best_model_fits.rds")
+saveRDS(best_model_fits, here(path_job, "output/best_model_fits.rds"))
 ```
 
 Save predictions from best model

@@ -388,15 +388,19 @@ if (str_split(cv_type, "_")[[1]][1] == "group" | str_split(cv_type, "_")[[1]][1]
 ```
 
 
-plot predictions by participant
+plot predictions by participant   
+*Change x-axis to day on study instead of exact date?*    
+Note: this will need some more work to generalize if x is not a date time object
 ```{r fig.height = 60}
 predictions %>% 
   group_by(subid) %>% 
-  ggplot(aes(x = dttm_label, y = .pred_yes)) +
-  geom_line() +
-  facet_wrap(~ subid, scales = "free_x", ncol = 3)
+  ggplot(aes(x = dttm_label, y = .pred_yes, color = y)) +
+  geom_point(size = .9) +
+  facet_wrap(~ subid, scales = "free_x", ncol = 3) + 
+  scale_color_manual(values = c("gray70", "red3")) +
+  theme(legend.position = "none") +
+  ylim(0, 1)
 ```
-
 
 Pull out best model results
 ```{r}

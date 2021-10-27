@@ -88,7 +88,7 @@ if (nrow(subset(err_files, size > 0)) > 0) {
     pull(path) 
   for (i in err_paths) {
     err_i <- read_csv(i, col_types = readr::cols()) %>% 
-      mutate(job_num = as.numeric(str_remove(str_split(str_split(i, "/")[[1]][10], "_")[[1]][2], ".err"))) %>% 
+      mutate(job_num = as.numeric(str_remove(str_split(str_split(i, "/")[[1]][11], "_")[[1]][2], ".err"))) %>% 
       relocate(job_num)
     errs <- if (i == err_paths[1]) {
       err_i

@@ -3,11 +3,11 @@ universe = vanilla
 requirements = (OpSysMajorVer == 7)
 
 executable = execute.sh
-arguments = $(job_num)
+arguments = $(Process)
 
 log = $(Cluster).log
-error = error/$(Cluster)_$(job_num).err
-output = output/$(Cluster)_$(job_num).out
+error = error/$(Cluster)_$(Process).err
+output = output/$(Cluster)_$(Process).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
@@ -22,4 +22,3 @@ request_disk = 700000KB
 +wantFlocking = false
 +wantGlideIn = false
 
-queue job_num from jobs.csv

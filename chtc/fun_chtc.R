@@ -172,6 +172,10 @@ make_jobs <- function(path_training_controls) {
             recursive = TRUE) %>% 
     invisible()
   
+  # update queue on submit file -----------------
+  queue <- str_c("queue ", nrow(jobs))
+  write(queue, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
   # copy template aggregate script to output folder ---------------
   file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
             to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) %>% 

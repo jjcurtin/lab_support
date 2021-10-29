@@ -13,7 +13,7 @@ source("training_controls.R")
 # set up job_num ---------------
 # job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
-job_num_arg <- as.numeric(args[1]) # CHTC arg starts at 1 because using passed in integers
+job_num_arg <- as.numeric(args[1]) + 1
 
 # read in jobs.csv file ------------------
 jobs <- read_csv("jobs.csv", col_types = cols()) 

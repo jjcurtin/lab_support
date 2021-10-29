@@ -152,7 +152,7 @@ make_jobs <- function(path_training_controls) {
   
   # copy data to input folder as data_trn -----------------
   file.copy(from = file.path(path_data, data_trn),
-            to = file.path(path_jobs, name_job, "input/data_trn.csv")) %>% 
+            to = file.path(path_jobs, name_job, "input/data_trn.rds")) %>% 
     invisible()
   
   # copy study specific training_controls to input folder -----------------
@@ -171,10 +171,6 @@ make_jobs <- function(path_training_controls) {
             to = file.path(path_jobs, name_job, "input"),
             recursive = TRUE) %>% 
     invisible()
-  
-  # update queue on submit file -----------------
-  queue <- str_c("queue ", nrow(jobs))
-  write(queue, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
   
   # copy template aggregate script to output folder ---------------
   file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),

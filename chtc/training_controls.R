@@ -12,7 +12,7 @@ feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat
 algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none)
 # all resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
-y <- "y" # outcome variable - will be changed to y in recipe for consistency across studies 
+y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
 cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
 # determine where to pass in global cv_type parameter
@@ -44,12 +44,10 @@ path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data
 
 
 # Sample recipe from meta project below - this is for fitting classification models
-
-build_recipe <- function(d, job, y) {
+build_recipe <- function(d, job) {
   
   # d: (training) dataset from which to build recipe
   # job: single-row job-specific tibble
-  # y = binary outcome variable (yes/no)
   
   # get relevant info from job (algorithm, feature_set, resample, under_ratio)
   algorithm <- job$algorithm
@@ -62,44 +60,41 @@ build_recipe <- function(d, job, y) {
     under_ratio <- as.numeric(str_split(job$resample, "_")[[1]][2])
   }
   
-  # Set outcome variable to y
-  d <- d %>% 
-    rename(y = y)
-  
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
-    step_string2factor(y, levels = c("no", "yes")) %>% 
     update_role(subid, dttm_label, new_role = "id variable") %>%
+    step_rm(label_num) %>% 
+    step_string2factor(y, levels = c("no", "yes")) %>% 
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
-    step_string2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+    step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
                                            "14", "15", "16", "17", "18", "19", "20", "21", "22",
                                            "23", "24", "1", "2", "3")) %>%
     step_string2factor(label_season, levels = c("Spring", "Summer", "Fall", "Winter")) %>% 
     step_string2factor(all_nominal()) %>% 
+    step_zv(all_predictors()) %>% 
     step_impute_median(all_numeric()) %>% 
-    step_impute_mode(all_nominal(), -y) %>% 
-    step_zv(all_predictors()) 
-  
+    step_impute_mode(all_nominal(),  -y) 
   
   # If statements for filtering features based on feature set
   if (feature_set == "feat_all_passive") {
     rec <- rec %>%
-      step_rm(starts_with("context"))
+      step_rm(starts_with("sms"), -contains("passive")) %>% 
+      step_rm(starts_with("voi"), -contains("passive"))
   } else if (feature_set == "feat_baseline_id") {
     rec <- rec %>% 
       step_rm(starts_with("sms")) %>% 
-      step_rm(starts_with("voice")) %>% 
-      step_rm(starts_with("all")) %>% 
-      step_rm(starts_with("context")) %>% 
+      step_rm(starts_with("voi")) %>% 
       step_rm(starts_with("label"))
   } else if (feature_set == "feat_baseline_temporal") {
     rec <- rec %>% 
       step_rm(starts_with("id")) %>% 
       step_rm(starts_with("sms")) %>% 
-      step_rm(starts_with("voice")) %>% 
-      step_rm(starts_with("all")) %>% 
-      step_rm(starts_with("context"))
+      step_rm(starts_with("voi")) 
+  } else if (feature_set == "feat_baseline_all") {
+    rec <- rec %>% 
+      step_rm(starts_with("sms")) %>% 
+      step_rm(starts_with("voi")) 
   } else if (feature_set == "feat_logs") {
     rec <- rec %>% 
       step_rm(starts_with("id")) %>% 
@@ -123,7 +118,14 @@ build_recipe <- function(d, job, y) {
   }
   
   # algorithm specific steps
-  if (algorithm == "glmnet" | algorithm == "knn") {
+  if (algorithm == "glmnet") {
+    rec <- rec  %>%
+      step_dummy(all_nominal(), -y) %>%
+      step_nzv(all_predictors()) %>%
+      step_normalize(all_predictors())
+  } 
+  
+  if (algorithm == "knn") {
     rec <- rec  %>% 
       step_dummy(all_nominal(), -y) %>% 
       step_normalize(all_predictors())
@@ -131,4 +133,5 @@ build_recipe <- function(d, job, y) {
   
   return(rec)
 }
+
 

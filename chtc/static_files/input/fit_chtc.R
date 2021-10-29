@@ -11,18 +11,20 @@ source("fun_chtc.R")
 source("training_controls.R")
 
 # set up job_num ---------------
-# process_num <- 1
+# job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
-process_num <- as.numeric(args[1]) + 1 # CHTC arg starts at 0
+job_num_arg <- as.numeric(args[1]) # CHTC arg starts at 1 because using passed in integers
 
 # read in jobs.csv file ------------------
 jobs <- read_csv("jobs.csv", col_types = cols()) 
 
 # pull out job ------------------
-job <- slice(jobs, process_num)
+job <- slice(jobs, job_num_arg)
 
 # read in data train --------------- 
-d <- read_csv("data_trn.csv", col_types = cols())
+d <- read_rds("data_trn.rds") %>% 
+  # Set outcome variable to y
+  rename(y = {{y_col_name}})
 
 # create splits object ---------------
 set.seed(102030)
@@ -45,5 +47,5 @@ results <- if (job$algorithm == "glmnet") {
 
 # write out results tibble ------------
 results %>% 
-  write_csv(., str_c("results_", process_num, ".csv"))
+  write_csv(., str_c("results_", job_num_arg, ".csv"))
 

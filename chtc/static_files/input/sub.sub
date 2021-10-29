@@ -3,22 +3,23 @@ universe = vanilla
 requirements = (OpSysMajorVer == 7)
 
 executable = execute.sh
-arguments = $(Process)
+arguments = $(job_num)
 
 log = $(Cluster).log
-error = error/$(Cluster)_$(Process).err
-output = output/$(Cluster)_$(Process).out
+error = error/$(Cluster)_$(job_num).err
+output = output/$(Cluster)_$(job_num).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, tidymodels.tar.gz, fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.csv, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz
+transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, tidymodels.tar.gz, fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz
 #on_exit_hold = exitcode != 0
 
 materialize_max_idle = 2000
 
 request_cpus = 1
-request_memory = 1100MB
+request_memory = 2000MB
 request_disk = 700000KB
 +wantFlocking = false
 +wantGlideIn = false
 
+queue job_num from jobs.csv

@@ -17,5 +17,5 @@ zip -r -m output output
 
 # move input files into input_files
 mkdir input_files
-mv p*.sh data_trn.csv jobs.csv f*.R sub.sub execute.sh input_files
+mv p*.sh data_trn.rds jobs.csv f*.R sub.sub execute.sh input_files
 

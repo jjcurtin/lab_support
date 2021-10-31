@@ -157,7 +157,7 @@ Other models (Knn and random forest) may have 10 - 100 models per unique configu
 ```{r}
 results_aggregate <- results %>% 
   group_by(algorithm, feature_set, hp1, hp2, hp3, resample) %>% 
-  summarize(across(c(accuracy, bal_accuracy, sens, spec, roc_auc),
+  summarize(across(c(accuracy, bal_accuracy, sens, spec, roc_auc, n_feats),
                    mean),
             n_jobs = n(), .groups = "drop") 
 ```
@@ -176,7 +176,8 @@ results_aggregate %>%
 Summary of feature sets
 ```{r}
 results_aggregate %>% 
-  count(feature_set, n_feats) 
+  group_by(feature_set) %>% 
+  summarise(n_feats_avg = mean(n_feats))
 ```
 
 Get metrics

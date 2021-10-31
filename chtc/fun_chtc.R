@@ -429,11 +429,11 @@ get_metrics <- function(model, feat_out) {
 
 tune_best_model <- function(best_model, rec, folds, cv_type) {
   
+  # control grid to save predictions
+  ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
+                            extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  
   if (best_model$algorithm == "glmnet") {
-    
-    # control grid to save predictions
-    ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
-                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
     
     models <- logistic_reg(penalty = best_model$hp2,
                           mixture = best_model$hp1) %>%

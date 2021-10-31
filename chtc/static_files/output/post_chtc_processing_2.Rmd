@@ -17,6 +17,7 @@ library(janitor)
 library(lubridate)
 library(ggplot2)
 library(kableExtra)
+library(vip)
 
 theme_set(theme_classic()) 
 ```
@@ -342,7 +343,8 @@ best_model <- slice_max(results_aggregate, get(perf_metric)) %>%
 Replicate splits and recipe
 ```{r}
 # read in data
-d <- vroom::vroom(here(path_job, "input/data_trn.csv"), col_types = vroom::cols())
+d <- read_rds(here(path_job, "input/data_trn.rds")) %>% 
+  rename(y = {{y_col_name}})
 
 # create splits object ---------------
 set.seed(102030)
@@ -358,13 +360,13 @@ rec <- build_recipe(d = d, job = best_model)
 
 Fit model and get results
 ```{r warning = FALSE}
-results <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
+results_best <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
 ```
 
 Pull predictions
 ```{r}
 # separate predictions from results ----------------
-predictions <- results[[2]]
+predictions <- results_best[[2]]
 
 # add subids by row number in original data set 
 predictions <- predictions %>% 
@@ -410,7 +412,7 @@ predictions %>%
 
 Pull out best model results
 ```{r}
-best_model_results <- results[[1]] %>% 
+best_model_results <- results_best[[1]] %>% 
   glimpse()
 ```
 
@@ -425,7 +427,7 @@ best_model %>%
 pull out model fits    
 Unnest .extracts column to see feature estimates
 ```{r}
-best_model_fits <- results[[3]]
+best_model_fits <- results_best[[3]]
 ```
 
 
@@ -453,4 +455,68 @@ Save predictions from best model
 write_csv(predictions, here(path_job, "output/best_model_preds.csv")) %>% 
   glimpse()
 ```
+
+### View top predictors
+
+Train best model on all data
+```{r}
+# For some reason id variables in recipe were being included as predictors so
+# updating recipe to remove them 
+rec <- rec %>% 
+  step_rm(has_role(match = "id variable"))
+
+feat_all <-  rec %>% 
+    prep(training = d, strings_as_factors = FALSE) %>% 
+    bake(new_data = d)
+
+if (best_model$algorithm == "glmnet") {
+  model <- logistic_reg(penalty = best_model$hp2,
+                        mixture = best_model$hp1) %>% 
+    set_engine("glmnet") %>%
+    set_mode("classification") %>%
+    fit(y ~ .,
+          data = feat_all)
+} else if (best_model$algorithm == "random_forest") {
+  model <- rand_forest(mtry = best_model$hp1,
+                       min_n = best_model$hp2,
+                       trees = best_model$hp3) %>%
+      set_engine("ranger",
+                 importance = "impurity",
+                 respect.unordered.factors = "order",
+                 oob.error = FALSE,
+                 seed = 102030) %>%
+      set_mode("classification") %>%
+      fit(y ~ .,
+          data = feat_all)
+} else if (best_model$algorithm == "knn") {
+  model <- nearest_neighbor(neighbors = best_model$hp1) %>% 
+      set_engine("kknn") %>% 
+      set_mode("classification") %>% 
+      fit(y ~ .,
+          data = feat_all)
+}
+```
+
+View top features    
+*FIX: Cannot get variable importance scores for Knn - discuss with JC about how to handle*
+```{r}
+if (best_model$algorithm == "random_forest") {
+  vip(model)
+} else if (best_model$algorithm = "glmnet") {
+  model %>% 
+    tidy() %>% 
+    filter(estimate != 0) %>% 
+    arrange(desc(abs(estimate)))
+  vip(model)
+}
+```
+
+```{r}
+# temporary change algorithm of best model for testing
+# best_model <- results_aggregate %>%
+#   filter(algorithm == "glmnet") %>%
+#   arrange(desc(bal_accuracy)) %>%
+#   slice(1)
+```
+
 

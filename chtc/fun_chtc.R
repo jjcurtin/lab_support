@@ -277,9 +277,9 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
        unnest(.extracts) %>%   
        select(.extracts, id, .config) %>%
        group_by(id, .config) %>% 
-       mutate(n = nrow(.extracts[[1]])) %>%
+       mutate(n_feats = nrow(.extracts[[1]])) %>%
        group_by(.config) %>% 
-       summarise(n = round(mean(n - 1))) 
+       summarise(n_feats = round(mean(n - 1))) 
     
     results <- results %>% 
       left_join(n_feats, by = ".config") %>% 

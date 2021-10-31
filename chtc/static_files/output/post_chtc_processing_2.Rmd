@@ -140,7 +140,8 @@ missing_job_nums <- enframe(seq(1:nrow(jobs)), name = NULL, value = "job_num") %
 
 ```{r}
 if (nrow(missing_job_nums) > 0) {
-  print(str_c("missing jobs: ", str_c(as.character(missing_job_nums$job_num), collapse=", ")))
+  print(str_c("missing ", nrow(missing_job_nums), " of ", nrow(jobs),
+              " jobs: ", str_c(as.character(missing_job_nums$job_num), collapse=", ")))
   } else print("No missing jobs")
 ```
 

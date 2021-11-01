@@ -507,7 +507,15 @@ if (best_model$algorithm == "random_forest") {
     tidy() %>% 
     filter(estimate != 0) %>% 
     arrange(desc(abs(estimate)))
-  vip(model)
+    
+  vip::vi(model) %>% 
+    mutate(Importance = abs(Importance),
+           Variable = fct_reorder(Variable, Importance)) %>%
+    head(n = 20) %>% 
+    ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
+    geom_col() +
+    scale_x_continuous(expand = c(0, 0)) +
+    labs(y = NULL)
 }
 ```
 

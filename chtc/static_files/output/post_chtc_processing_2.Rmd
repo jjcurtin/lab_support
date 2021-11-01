@@ -502,7 +502,7 @@ View top features
 ```{r}
 if (best_model$algorithm == "random_forest") {
   vip(model)
-} else if (best_model$algorithm = "glmnet") {
+} else if (best_model$algorithm == "glmnet") {
   model %>% 
     tidy() %>% 
     filter(estimate != 0) %>% 

@@ -244,9 +244,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     # use whole dataset (all folds)
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
-    # control grid to save predictions
-    ctrl <- control_resamples(event_level = "second", extract = function (x) extract_fit_parsnip(x) %>% tidy())
-    
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
@@ -270,20 +267,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       relocate(hp2, .before = hp3) %>% 
       relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
       relocate(spec, .after = sens)
-    
-    # add n features to results (avg n across repeats/folds)
-     n_feats <- models %>% 
-       select(.extracts, id) %>% 
-       unnest(.extracts) %>%   
-       select(.extracts, id, .config) %>%
-       group_by(id, .config) %>% 
-       mutate(n_feats = nrow(.extracts[[1]])) %>%
-       group_by(.config) %>% 
-       summarise(n_feats = round(mean(n - 1))) 
-    
-    results <- results %>% 
-      left_join(n_feats, by = ".config") %>% 
-      select(-.config)
     
     return(results)
   }
@@ -314,10 +297,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
     
-    # add n features to results
-    results <- results %>% 
-      mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
-    
     return(results)
   }
   
@@ -340,10 +319,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
       bind_cols(job, .) 
-    
-    # add n features to results
-    results <- results %>% 
-      mutate(n_feats = ncol(feat_in) - nrow(subset(summary(rec), role != "predictor")))
     
     return(results) 
   }

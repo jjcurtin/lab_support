@@ -252,15 +252,14 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 resamples = folds,
                 grid = grid_penalty,
                 metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc),
-                control = ctrl)
+                                     sens, spec, roc_auc))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%
       # summarise across repeats
-      group_by(penalty, .metric, .estimator, .config) %>% 
+      group_by(penalty, .metric, .estimator) %>% 
       summarise(mean = mean(mean), .groups = "drop") %>% 
-      select(hp2 = penalty, .metric, mean, .config) %>% 
+      select(hp2 = penalty, .metric, mean) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>% 
       bind_cols(job %>% select(-hp2), .) %>% 

@@ -157,8 +157,8 @@ Other models (Knn and random forest) may have 10 - 100 models per unique configu
 
 ```{r}
 results_aggregate <- results %>% 
-  group_by(algorithm, feature_set, hp1, hp2, hp3, resample) %>% 
-  summarize(across(c(accuracy, bal_accuracy, sens, spec, roc_auc, n_feats),
+  group_by(algorithm, feature_set, hp1, hp2, hp3, resample, n_feats) %>% 
+  summarize(across(c(accuracy, bal_accuracy, sens, spec, roc_auc),
                    mean),
             n_jobs = n(), .groups = "drop") 
 ```
@@ -177,10 +177,8 @@ results_aggregate %>%
 Summary of feature sets
 ```{r}
 results_aggregate %>% 
-  group_by(feature_set) %>% 
-  summarise(n_feats_avg = mean(n_feats),
-            n_feats_min = min(n_feats),
-            n_feats_max = max(n_feats))
+  count(feature_set, n_feats) %>% 
+  select(-n)
 ```
 
 Get metrics
@@ -506,7 +504,8 @@ if (best_model$algorithm == "random_forest") {
   model %>% 
     tidy() %>% 
     filter(estimate != 0) %>% 
-    arrange(desc(abs(estimate)))
+    arrange(desc(abs(estimate))) %>% 
+    print(n = Inf)
     
   vip::vi(model) %>% 
     mutate(Importance = abs(Importance),

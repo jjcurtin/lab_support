@@ -37,7 +37,7 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 # build recipe ----------------
 rec <- build_recipe(d = d, job = job)
 
-# make features on d to get n_feats 
+# make features on d to get n_feats ----------------
 feat_all <-  rec %>% 
   # remove id variables from count
   step_rm(has_role(match = "id variable")) %>% 
@@ -55,5 +55,7 @@ results <- if (job$algorithm == "glmnet") {
 # write out results tibble ------------
 results %>% 
   mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
+  mutate(job_num = job_num_arg) %>% 
+  relocate(job_num) %>% 
   write_csv(., str_c("results_", job_num_arg, ".csv"))
 

@@ -60,7 +60,8 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_glmnet,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample)
+                                resample,
+                                feature_fun_type)
       } else if (i == "random_forest") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -69,7 +70,8 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_rf,
                                 hp2 = hp2_rf,
                                 hp3 = hp3_rf,
-                                resample)
+                                resample,
+                                feature_fun_type)
       } else if (i == "knn") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -78,7 +80,8 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_knn,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample)      
+                                resample,
+                                feature_fun_type)      
       }
       
       # bind jobs files

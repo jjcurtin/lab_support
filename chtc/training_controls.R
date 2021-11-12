@@ -17,6 +17,7 @@ cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
 # determine where to pass in global cv_type parameter
 group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
+remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate features before removing nzv
 
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
 # Can remove or comment out hyperparameter variables if not using the algorithm 
@@ -121,7 +122,6 @@ build_recipe <- function(d, job) {
   if (algorithm == "glmnet") {
     rec <- rec  %>%
       step_dummy(all_nominal(), -y) %>%
-      step_nzv(all_predictors()) %>%
       step_normalize(all_predictors())
   } 
   

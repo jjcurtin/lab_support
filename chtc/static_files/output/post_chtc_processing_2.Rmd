@@ -168,20 +168,21 @@ results_aggregate <- results %>%
    
 
 ```{r}
-results_aggregate %>% 
-  print_kbl(digits = 4)
+# optional print kbl  commented out since sometimes causes error with knitting if too large
+# results_aggregate %>%
+#   print_kbl(digits = 4)
 ```
 
-### Pull Best performing model by feature set
+### View best performing models
 
 Summary of feature sets
 ```{r}
 results_aggregate %>% 
-  count(feature_set, n_feats) %>% 
+  count(feature_set, feature_fun_type, n_feats) %>% 
   select(-n)
 ```
 
-Get metrics
+Get metrics for top models by feature set
 ```{r}
 feature_sets <- unique(results_aggregate$feature_set) 
 
@@ -203,6 +204,30 @@ for (i in feature_sets) {
     glimpse()
 }
   
+}
+```
+
+Get metrics for top models by algorithm
+```{r}
+algorithms <- unique(results_aggregate$algorithm) 
+
+for (k in algorithms) {
+  
+  results_k <- results_aggregate %>% 
+    filter(algorithm == k)
+  
+  print(str_c("Best performing model for ", k, " algorithm"))
+  
+  if (slice_max(results_k, bal_accuracy)$algorithm == "glmnet") {
+  results_k %>% 
+    slice_max(bal_accuracy) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else {
+  results_k %>% 
+    slice_max(bal_accuracy) %>% 
+    glimpse()
+}
 }
 ```
 
@@ -330,15 +355,8 @@ if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max
 
 
 
-### Refit best model
-
-Replicates best CHTC model using decision metric specified in study's training controls    
-```{r}
-best_model <- slice_max(results_aggregate, get(perf_metric)) %>% 
-  glimpse()
-```
-
-Replicate splits and recipe
+### Refit best model for each algorithm and feature set
+Read in data and create splits
 ```{r}
 # read in data
 d <- read_rds(here(path_job, "input/data_trn.rds")) %>% 
@@ -351,29 +369,81 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 } else { 
   make_splits(d = d, cv_type = cv_type)
 }
-
-# build recipe ----------------
-rec <- build_recipe(d = d, job = best_model)
 ```
 
-Fit model and get results
+
+Replicates best CHTC models using decision metric specified in study's training controls  
 ```{r warning = FALSE}
-results_best <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
+# warning set to false to hide warning that there are no tuning parameters provided
+# this is okay and occurs because we are only providing the best hyperparameter value
+# but still using fits to fit across folds (replicating CHTC process)
+for (k in algorithms) {
+  
+  results_k <- results_aggregate %>% 
+      filter(algorithm == k)
+  
+  for (i in feature_sets) {
+  
+    results_i <- results_k %>% 
+      filter(feature_set == i)
+    
+    best_model <- slice_max(results_i, get(perf_metric)) %>% 
+      glimpse()
+    
+    # build recipe
+    rec <- build_recipe(d = d, job = best_model)
+    
+    # fit model and get results
+    results_best <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
+    
+    # pull out model results
+    best_model_results <- results_best[[1]] 
+    
+    # compare results to CHTC model
+    best_model_results %>% 
+      select(-.config) %>% 
+      glimpse()
+    
+    # pull out model predictions
+    predictions <- results_best[[2]]
+
+    # add subids by row number in original data set 
+    predictions <- predictions %>% 
+      left_join(d %>% 
+                  rowid_to_column() %>% 
+                  select(rowid, subid, dttm_label), by = c(".row" = "rowid"))
+    
+    # pull out model fits    
+    # Unnest .extracts column to see feature estimates
+    best_model_fits <- results_best[[3]]
+    
+    # save out model
+    write_rds(best_model_fits, here(path_job, str_c("output/best_", k, "_", i, "_", "model_fits.rds")), compress = "xz")
+    
+    # save out predictions
+    write_rds(predictions, here(path_job, str_c("output/best_", k, "_", i, "_", "model_preds.rds")), compress = "xz") 
+    
+    # save out results
+    write_csv(best_model_results, here(path_job, str_c("output/best_", k, "_", i, "_", "model_results.csv")))
+  }
+}
 ```
 
-Pull predictions
+
+### best overall model predictions
+
 ```{r}
-# separate predictions from results ----------------
-predictions <- results_best[[2]]
-
-# add subids by row number in original data set 
-predictions <- predictions %>% 
-  left_join(d %>% 
-            rowid_to_column() %>% 
-            select(rowid, subid, dttm_label), by = c(".row" = "rowid"))
+best_model <- slice_max(results_aggregate, get(perf_metric)) %>% 
+      glimpse()
 ```
 
-`r nrow(predictions)` predictions for `r nrow(tabyl(predictions$subid))` participants      
+Read in predictions
+```{r}
+k <- best_model$algorithm
+i <- best_model$feature_set
+
+predictions <- read_rds(here(path_job, "output/best_", k,  "_", i, "_", "model_preds.rds"))
+```
 
 
 Check number of predictions is correct    
@@ -408,24 +478,107 @@ predictions %>%
   ylim(0, 1)
 ```
 
-Pull out best model results
+### View top predictors by algorithm and feature set
+
+Functions for vi permutation
 ```{r}
-best_model_results <- results_best[[1]] %>% 
-  glimpse()
+acc_perm <- function(actual, predicted) {
+  accuracy_vec(actual, predicted)
+}
+
+pred_perm <- function(object, newdata) {
+  preds <- predict(object, newdata, type = "response", s = object$fit$penalty)[, 1]    
+  preds <- if_else(preds>= .5, "yes", "no") 
+  preds <- factor(preds, levels = c("no", "yes"))
+  return(preds)
+}
 ```
 
-Compare to CHTC best model
-```{r}
-best_model %>% 
-  select(-n_jobs) %>% 
-  glimpse()
-```
-
-
-pull out model fits    
-Unnest .extracts column to see feature estimates
-```{r}
-best_model_fits <- results_best[[3]]
+View top features 
+```{r warning = FALSE}
+for (k in algorithms) {
+  results_k <- results_aggregate %>% 
+      filter(algorithm == k)
+  
+  for (i in feature_sets) {
+  
+    results_i <- results_k %>% 
+      filter(feature_set == i)
+    
+    best_model <- slice_max(results_i, get(perf_metric)) %>% 
+      glimpse()
+    
+    # build recipe
+    rec <- build_recipe(d = d, job = best_model)
+    
+    # For some reason id variables in recipe were being included as predictors so
+    # updating recipe to remove them 
+    rec <- rec %>% 
+     step_rm(has_role(match = "id variable"))
+    
+    feat_all <-  rec %>% 
+      prep(training = d, strings_as_factors = FALSE) %>% 
+      bake(new_data = d)
+    
+    if (best_model$algorithm == "glmnet") {
+      model <- logistic_reg(penalty = best_model$hp2,
+                            mixture = best_model$hp1) %>% 
+        set_engine("glmnet") %>%
+        set_mode("classification") %>%
+        fit(y ~ .,
+            data = feat_all)
+      
+      # view non-zero coefficients as a check
+      model %>% 
+        tidy() %>% 
+        filter(estimate != 0) %>% 
+        arrange(desc(abs(estimate))) %>% 
+        print(n = Inf)
+      
+      } else if (best_model$algorithm == "random_forest") {
+        model <- rand_forest(mtry = best_model$hp1,
+                             min_n = best_model$hp2,
+                             trees = best_model$hp3) %>%
+          set_engine("ranger",
+                     importance = "impurity",
+                     respect.unordered.factors = "order",
+                     seed = 102030) %>%
+          set_mode("classification") %>%
+          fit(y ~ .,
+              data = feat_all)
+        } else if (best_model$algorithm == "knn") {
+          model <- nearest_neighbor(neighbors = best_model$hp1) %>% 
+            set_engine("kknn") %>% 
+            set_mode("classification") %>% 
+            fit(y ~ .,
+                data = feat_all)
+        }
+    
+    # separate x and y for permutation
+    x <- feat_all %>% 
+      select(-y) %>% 
+      as.matrix()
+    y <- feat_all %>% 
+      pull(y)
+    
+    # get top predictors
+    set.seed(102030)  # for reproducibility in vi_permute ()
+    model %>%
+      vip::vi(method = "permute", 
+              target = y,
+              train = x,
+              metric = acc_perm,
+              pred_wrapper = pred_perm, 
+              smaller_is_better = FALSE, 
+              nsim = 100) %>%   # consider best value for nsim for stability
+      mutate(Variable = fct_reorder(Variable, Importance)) %>%  
+      filter(Importance != 0) %>% 
+      ggplot(aes(x = Importance, y = Variable)) +
+      geom_col() +
+      scale_x_continuous(expand = c(0, 0)) +
+      labs(y = NULL)
+  }
+}
 ```
 
 
@@ -435,95 +588,6 @@ Save configuration summaries
 ```{r}
 write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>% 
   glimpse()
-```
-
-Save best model
-```{r}
-write_csv(best_model_results, here(path_job, "output/best_model_results.csv")) %>% 
-  glimpse()
-```
-
-Save best_model fits
-```{r}
-saveRDS(best_model_fits, here(path_job, "output/best_model_fits.rds"))
-```
-
-Save predictions from best model
-```{r}
-write_csv(predictions, here(path_job, "output/best_model_preds.csv")) %>% 
-  glimpse()
-```
-
-### View top predictors
-
-Train best model on all data
-```{r}
-# For some reason id variables in recipe were being included as predictors so
-# updating recipe to remove them 
-rec <- rec %>% 
-  step_rm(has_role(match = "id variable"))
-
-feat_all <-  rec %>% 
-    prep(training = d, strings_as_factors = FALSE) %>% 
-    bake(new_data = d)
-
-if (best_model$algorithm == "glmnet") {
-  model <- logistic_reg(penalty = best_model$hp2,
-                        mixture = best_model$hp1) %>% 
-    set_engine("glmnet") %>%
-    set_mode("classification") %>%
-    fit(y ~ .,
-          data = feat_all)
-} else if (best_model$algorithm == "random_forest") {
-  model <- rand_forest(mtry = best_model$hp1,
-                       min_n = best_model$hp2,
-                       trees = best_model$hp3) %>%
-      set_engine("ranger",
-                 importance = "impurity",
-                 respect.unordered.factors = "order",
-                 oob.error = FALSE,
-                 seed = 102030) %>%
-      set_mode("classification") %>%
-      fit(y ~ .,
-          data = feat_all)
-} else if (best_model$algorithm == "knn") {
-  model <- nearest_neighbor(neighbors = best_model$hp1) %>% 
-      set_engine("kknn") %>% 
-      set_mode("classification") %>% 
-      fit(y ~ .,
-          data = feat_all)
-}
-```
-
-View top features    
-*FIX: Cannot get variable importance scores for Knn - discuss with JC about how to handle*
-```{r}
-if (best_model$algorithm == "random_forest") {
-  vip(model)
-} else if (best_model$algorithm == "glmnet") {
-  model %>% 
-    tidy() %>% 
-    filter(estimate != 0) %>% 
-    arrange(desc(abs(estimate))) %>% 
-    print(n = Inf)
-    
-  vip::vi(model) %>% 
-    mutate(Importance = abs(Importance),
-           Variable = fct_reorder(Variable, Importance)) %>%
-    head(n = 20) %>% 
-    ggplot(aes(x = Importance, y = Variable, fill = Sign)) +
-    geom_col() +
-    scale_x_continuous(expand = c(0, 0)) +
-    labs(y = NULL)
-}
-```
-
-```{r}
-# temporary change algorithm of best model for testing
-# best_model <- results_aggregate %>%
-#   filter(algorithm == "glmnet") %>%
-#   arrange(desc(bal_accuracy)) %>%
-#   slice(1)
 ```
 
 

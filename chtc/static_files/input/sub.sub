@@ -17,8 +17,8 @@ transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, tidymo
 materialize_max_idle = 2000
 
 request_cpus = 1
-request_memory = 2000MB
-request_disk = 700000KB
+request_memory = 8000MB
+request_disk = 1000000KB
 +wantFlocking = false
 +wantGlideIn = false
 

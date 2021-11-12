@@ -38,11 +38,18 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------
+# make features before removing nzv
 feat_all <-  rec %>% 
   # remove id variables from count
   step_rm(has_role(match = "id variable")) %>% 
   prep(training = d, strings_as_factors = FALSE) %>% 
   bake(new_data = NULL)
+
+# remove nzv if specified in training controls
+if (remove_nzv & job$algorithm == "glmnet") {
+  rec <- rec %>% 
+    step_nzv(all_predictors())
+}
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
@@ -57,5 +64,5 @@ results %>%
   mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
   mutate(job_num = job_num_arg) %>% 
   relocate(job_num) %>% 
-  write_csv(., str_c("results_", job_num_arg, ".csv"))
+  write_csv(., str_c("results_", job$job_num, ".csv"))
 

@@ -146,6 +146,20 @@ if (nrow(missing_job_nums) > 0) {
   } else print("No missing jobs")
 ```
 
+Look at missing jobs
+```{r}
+jobs %>% 
+  filter(job_num %in% missing_job_nums$job_num)  %>% 
+  tabyl(algorithm)
+
+jobs %>% 
+  filter(job_num %in% missing_job_nums$job_num)  %>% 
+  tabyl(feature_set)
+
+jobs %>% 
+  filter(job_num %in% missing_job_nums$job_num) %>% 
+  print_kbl()
+```
 
 
 ### Average metrics across folds 
@@ -173,7 +187,13 @@ results_aggregate <- results %>%
 #   print_kbl(digits = 4)
 ```
 
-### View best performing models
+Save configuration summaries
+```{r}
+write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) 
+```
+
+### View best performing models   
+
 
 Summary of feature sets
 ```{r}
@@ -181,6 +201,52 @@ results_aggregate %>%
   count(feature_set, feature_fun_type, n_feats) %>% 
   select(-n)
 ```
+
+Overall best model performance     
+
+Highest balanced accuracy is `r round(max(results_aggregate$bal_accuracy), 2)`
+```{r}
+if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet") {
+  results_aggregate %>% 
+    slice_max(bal_accuracy) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else {
+  results_aggregate %>% 
+    slice_max(bal_accuracy) %>% 
+    glimpse()
+}
+```
+
+highest ROC AUC is `r round(max(results_aggregate$roc_auc), 2)`
+```{r}
+# pull best AUC model if different than best balanced accuracy model
+if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
+  results_aggregate %>% 
+    slice_max(roc_auc) %>% 
+    mutate(hp2 = log(hp2)) %>% 
+    glimpse()
+} else if (slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
+  results_aggregate %>% 
+    slice_max(roc_auc) %>% 
+    glimpse()
+  }
+```
+
+Save best model according to performance metric specified in training controls
+```{r}
+results_aggregate %>% 
+  slice_max(get(perf_metric)) %>% 
+  write_csv(., here(path_project, "best_model.csv"))
+
+# glimpse best model if using different perf_metric
+if (perf_metric != "roc_auc" & perf_metric != "bal_accuracy") {
+  results_aggregate %>% 
+    slice_max(get(perf_metric)) %>% 
+    glimpse()
+}
+```
+
 
 Get metrics for top models by feature set
 ```{r}
@@ -194,15 +260,19 @@ for (i in feature_sets) {
   print(str_c("Best performing model for ", i, " feature set"))
   
   if (slice_max(results_i, bal_accuracy)$algorithm == "glmnet") {
-  results_i %>% 
-    slice_max(bal_accuracy) %>% 
+  results_i_best <- results_i %>% 
+    slice_max(get(perf_metric)) %>% 
     mutate(hp2 = log(hp2)) %>% 
     glimpse()
 } else {
-  results_i %>% 
-    slice_max(bal_accuracy) %>% 
+  results_i_best <- results_i %>% 
+    slice_max(get(perf_metric)) %>% 
     glimpse()
 }
+  
+  # save out best active/passive model
+  file_name <- str_c("best_", i, ".csv")
+  write_csv(results_i_best, here(path_project, file_name))
   
 }
 ```
@@ -219,15 +289,19 @@ for (k in algorithms) {
   print(str_c("Best performing model for ", k, " algorithm"))
   
   if (slice_max(results_k, bal_accuracy)$algorithm == "glmnet") {
-  results_k %>% 
-    slice_max(bal_accuracy) %>% 
+  results_k_best <- results_k %>% 
+    slice_max(get(perf_metric)) %>% 
     mutate(hp2 = log(hp2)) %>% 
     glimpse()
 } else {
-  results_k %>% 
-    slice_max(bal_accuracy) %>% 
+  results_k_best <- results_k %>% 
+    slice_max(get(perf_metric)) %>% 
     glimpse()
 }
+  
+  # save out best model for each algorithm
+  file_name <- str_c("best_", k, ".csv")
+  write_csv(results_k_best, here(path_project, file_name))
 }
 ```
 
@@ -321,41 +395,8 @@ for (k in algorithms) {
 ```
 
 
-### Overall best model performance
 
-Highest balanced accuracy is `r round(max(results_aggregate$bal_accuracy), 2)`
-```{r}
-if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet") {
-  results_aggregate %>% 
-    slice_max(bal_accuracy) %>% 
-    mutate(hp2 = log(hp2)) %>% 
-    glimpse()
-} else {
-  results_aggregate %>% 
-    slice_max(bal_accuracy) %>% 
-    glimpse()
-  }
-```
-
-highest ROC AUC is `r round(max(results_aggregate$roc_auc), 2)`
-```{r}
-# pull best AUC model if different than best balanced accuracy model
-if (slice_max(results_aggregate, bal_accuracy)$algorithm == "glmnet" & slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
-  results_aggregate %>% 
-    slice_max(roc_auc) %>% 
-    mutate(hp2 = log(hp2)) %>% 
-    glimpse()
-} else if (slice_max(results_aggregate, bal_accuracy)$roc_auc != slice_max(results_aggregate, roc_auc)$roc_auc) {
-  results_aggregate %>% 
-    slice_max(roc_auc) %>% 
-    glimpse()
-  }
-```
-
-
-
-
-### Refit best model for each algorithm and feature set
+### Refit best model
 Read in data and create splits
 ```{r}
 # read in data
@@ -371,223 +412,57 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 }
 ```
 
-
-Replicates best CHTC models using decision metric specified in study's training controls  
-```{r warning = FALSE}
-# warning set to false to hide warning that there are no tuning parameters provided
-# this is okay and occurs because we are only providing the best hyperparameter value
-# but still using fits to fit across folds (replicating CHTC process)
-for (k in algorithms) {
-  
-  results_k <- results_aggregate %>% 
-      filter(algorithm == k)
-  
-  for (i in feature_sets) {
-  
-    results_i <- results_k %>% 
-      filter(feature_set == i)
-    
-    best_model <- slice_max(results_i, get(perf_metric)) %>% 
-      glimpse()
-    
-    # build recipe
-    rec <- build_recipe(d = d, job = best_model)
-    
-    # fit model and get results
-    results_best <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
-    
-    # pull out model results
-    best_model_results <- results_best[[1]] 
-    
-    # compare results to CHTC model
-    best_model_results %>% 
-      select(-.config) %>% 
-      glimpse()
-    
-    # pull out model predictions
-    predictions <- results_best[[2]]
-
-    # add subids by row number in original data set 
-    predictions <- predictions %>% 
-      left_join(d %>% 
-                  rowid_to_column() %>% 
-                  select(rowid, subid, dttm_label), by = c(".row" = "rowid"))
-    
-    # pull out model fits    
-    # Unnest .extracts column to see feature estimates
-    best_model_fits <- results_best[[3]]
-    
-    # save out model
-    write_rds(best_model_fits, here(path_job, str_c("output/best_", k, "_", i, "_", "model_fits.rds")), compress = "xz")
-    
-    # save out predictions
-    write_rds(predictions, here(path_job, str_c("output/best_", k, "_", i, "_", "model_preds.rds")), compress = "xz") 
-    
-    # save out results
-    write_csv(best_model_results, here(path_job, str_c("output/best_", k, "_", i, "_", "model_results.csv")))
-  }
-}
-```
-
-
-### best overall model predictions
-
 ```{r}
 best_model <- slice_max(results_aggregate, get(perf_metric)) %>% 
       glimpse()
 ```
 
-Read in predictions
+Replicates best CHTC models using decision metric specified in study's training controls  
 ```{r}
-k <- best_model$algorithm
-i <- best_model$feature_set
-
-predictions <- read_rds(here(path_job, "output/best_", k,  "_", i, "_", "model_preds.rds"))
-```
-
-
-Check number of predictions is correct    
-
-- Single repeat cross validation should have one prediction for each held out observation (i.e., should equal number of total observations)    
-
-FIX: Not sure how to check yet for bootstrap and repeated cross validation
-```{r}
-if (str_split(cv_type, "_")[[1]][1] == "group" | str_split(cv_type, "_")[[1]][1] == "kfold") {
-  if (nrow(predictions) == nrow(d)) {
-    print(str_c("number of predictions (", nrow(predictions), ") = number of observations (", nrow(d), ")")) 
-    } else if (nrow(predictions) > nrow(d)) { 
-      print(str_c("WARNING: number of predictions (", nrow(predictions), ") > number of observations (", 
-                  nrow(d), ")"))
-      } else if (nrow(predictions) < nrow(d)) print(str_c("WARNING: number of predictions (", 
-                                                    nrow(predictions), ") < number of observations (", nrow(d), ")"))
-}
-```
-
-
-plot predictions by participant   
-*Change x-axis to day on study instead of exact date?*    
-Note: this will need some more work to generalize if x is not a date time object
-```{r fig.height = 60}
-predictions %>% 
-  group_by(subid) %>% 
-  ggplot(aes(x = dttm_label, y = .pred_yes, color = y)) +
-  geom_point(size = .9) +
-  facet_wrap(~ subid, scales = "free_x", ncol = 3) + 
-  scale_color_manual(values = c("gray70", "red3")) +
-  theme(legend.position = "none") +
-  ylim(0, 1)
-```
-
-### View top predictors by algorithm and feature set
-
-Functions for vi permutation
-```{r}
-acc_perm <- function(actual, predicted) {
-  accuracy_vec(actual, predicted)
-}
-
-pred_perm <- function(object, newdata) {
-  preds <- predict(object, newdata, type = "response", s = object$fit$penalty)[, 1]    
-  preds <- if_else(preds>= .5, "yes", "no") 
-  preds <- factor(preds, levels = c("no", "yes"))
-  return(preds)
-}
-```
-
-View top features 
-```{r warning = FALSE}
-for (k in algorithms) {
-  results_k <- results_aggregate %>% 
-      filter(algorithm == k)
-  
-  for (i in feature_sets) {
-  
-    results_i <- results_k %>% 
-      filter(feature_set == i)
+# build recipe
+rec <- build_recipe(d = d, job = best_model)
     
-    best_model <- slice_max(results_i, get(perf_metric)) %>% 
+# fit model and get results
+results_best <- tune_best_model(best_model = best_model, rec = rec, folds = splits, cv_type = cv_type)
+    
+# pull out model results
+best_model_results <- results_best[[1]] 
+    
+# compare results to CHTC model
+best_model_results %>% 
+      select(-.config) %>% 
       glimpse()
     
-    # build recipe
-    rec <- build_recipe(d = d, job = best_model)
+# pull out model predictions (optional)
+# predictions <- results_best[[2]]
+
+# add subids by row number in original data set 
+# predictions <- predictions %>% 
+#   left_join(d %>% 
+#             rowid_to_column() %>% 
+#             select(rowid, subid, dttm_label), by = c(".row" = "rowid"))
     
-    # For some reason id variables in recipe were being included as predictors so
-    # updating recipe to remove them 
-    rec <- rec %>% 
-     step_rm(has_role(match = "id variable"))
+# pull out model fits (optional)   
+# Unnest .extracts column to see feature estimates
+# best_model_fits <- results_best[[3]]
     
-    feat_all <-  rec %>% 
-      prep(training = d, strings_as_factors = FALSE) %>% 
-      bake(new_data = d)
+# save out model to path_project (optional)
+# fits_path <- here(path_project, str_c("best_", k, "_", "model_fits.rds"))
+# write_rds(best_model_fits, fits_path, compress = "xz")
     
-    if (best_model$algorithm == "glmnet") {
-      model <- logistic_reg(penalty = best_model$hp2,
-                            mixture = best_model$hp1) %>% 
-        set_engine("glmnet") %>%
-        set_mode("classification") %>%
-        fit(y ~ .,
-            data = feat_all)
-      
-      # view non-zero coefficients as a check
-      model %>% 
-        tidy() %>% 
-        filter(estimate != 0) %>% 
-        arrange(desc(abs(estimate))) %>% 
-        print(n = Inf)
-      
-      } else if (best_model$algorithm == "random_forest") {
-        model <- rand_forest(mtry = best_model$hp1,
-                             min_n = best_model$hp2,
-                             trees = best_model$hp3) %>%
-          set_engine("ranger",
-                     importance = "impurity",
-                     respect.unordered.factors = "order",
-                     seed = 102030) %>%
-          set_mode("classification") %>%
-          fit(y ~ .,
-              data = feat_all)
-        } else if (best_model$algorithm == "knn") {
-          model <- nearest_neighbor(neighbors = best_model$hp1) %>% 
-            set_engine("kknn") %>% 
-            set_mode("classification") %>% 
-            fit(y ~ .,
-                data = feat_all)
-        }
+# save out predictions (optional)
+# preds_path <- here(path_project, str_c("best_", k, "_", "model_preds.rds"))
+# write_rds(predictions, preds_path, compress = "xz") 
     
-    # separate x and y for permutation
-    x <- feat_all %>% 
-      select(-y) %>% 
-      as.matrix()
-    y <- feat_all %>% 
-      pull(y)
-    
-    # get top predictors
-    set.seed(102030)  # for reproducibility in vi_permute ()
-    model %>%
-      vip::vi(method = "permute", 
-              target = y,
-              train = x,
-              metric = acc_perm,
-              pred_wrapper = pred_perm, 
-              smaller_is_better = FALSE, 
-              nsim = 100) %>%   # consider best value for nsim for stability
-      mutate(Variable = fct_reorder(Variable, Importance)) %>%  
-      filter(Importance != 0) %>% 
-      ggplot(aes(x = Importance, y = Variable)) +
-      geom_col() +
-      scale_x_continuous(expand = c(0, 0)) +
-      labs(y = NULL)
-  }
-}
+# save out results (optional)
+# res_path <- here(path_project, str_c("best_", k, "_", "model_results.csv"))
+# write_csv(best_model_results, res_path)
 ```
 
 
-### Write out aggregated model configurations
 
-Save configuration summaries
-```{r}
-write_csv(results_aggregate, here(path_job, "output/results_aggregate.csv")) %>% 
-  glimpse()
-```
+
+
+
 
 

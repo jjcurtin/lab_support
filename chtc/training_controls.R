@@ -34,7 +34,7 @@ hp3_rf <- 2800 # trees (10 x's number of predictors)
 # CHANGE STUDY PATHS -------------------- 
 path_jobs <- "P:/studydata/risk/chtc/meta/jobs" # location of where you want your jobs to be setup
 path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data set
-
+path_project <- "./meta/ana_scripts"
 
 
 

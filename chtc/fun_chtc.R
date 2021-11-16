@@ -416,11 +416,11 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                           mixture = best_model$hp1) %>%
       set_engine("glmnet") %>%
       set_mode("classification") %>%
-      tune_grid(preprocessor = rec,
-                resamples = folds,
-                metrics = metric_set(accuracy, bal_accuracy,
+      fit_resamples(preprocessor = rec,
+                    resamples = folds,
+                    metrics = metric_set(accuracy, bal_accuracy,
                                      sens, spec, roc_auc),
-                control = ctrl)
+                    control = ctrl)
     
     results <- collect_metrics(models) %>%
       # summarise across repeats
@@ -452,11 +452,11 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                  oob.error = FALSE,
                  seed = 102030) %>%
       set_mode("classification") %>%
-      tune_grid(preprocessor = rec,
-                resamples = folds,
-                metrics = metric_set(accuracy, bal_accuracy,
+      fit_resamples(preprocessor = rec,
+                    resamples = folds,
+                    metrics = metric_set(accuracy, bal_accuracy,
                                      sens, spec, roc_auc),
-                control = ctrl)
+                    control = ctrl)
     
     results <- collect_metrics(models) %>%
       # summarise across repeats
@@ -483,11 +483,11 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
     models <- nearest_neighbor(neighbors = best_model$hp1) %>% 
       set_engine("kknn") %>% 
       set_mode("classification") %>% 
-      tune_grid(preprocessor = rec,
-                resamples = folds,
-                metrics = metric_set(accuracy, bal_accuracy,
+      fit_resamples(preprocessor = rec,
+                    resamples = folds,
+                    metrics = metric_set(accuracy, bal_accuracy,
                                      sens, spec, roc_auc),
-                control = ctrl)
+                    control = ctrl)
     
     results <- collect_metrics(models) %>%
       # summarise across repeats

@@ -179,6 +179,12 @@ results_aggregate <- results %>%
 
 
 `r nrow(results_aggregate)` unique model configurations.    
+
+Check all models have jobs that a 1 or in mulitiples of 10
+```{r}
+results_aggregate %>% 
+  filter(!n_jobs %in% c(1, seq(10, 1000, by = 10)))
+```
    
 
 ```{r}

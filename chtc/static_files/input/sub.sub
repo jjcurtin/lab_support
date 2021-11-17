@@ -3,7 +3,9 @@ universe = vanilla
 requirements = (OpSysMajorVer == 7)
 
 executable = execute.sh
-arguments = $(Process)
+plusone = $(Process) + 1
+JobNum= $INT(plusone,%d)
+arguments = $(JobNum)
 
 log = $(Cluster).log
 error = error/$(Cluster)_$(Process).err

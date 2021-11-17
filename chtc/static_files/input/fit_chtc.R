@@ -13,13 +13,14 @@ source("training_controls.R")
 # set up job_num ---------------
 # job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
-job_num_arg <- as.numeric(args[1])
+job_num_arg <- args[1]
 
 # read in jobs.csv file ------------------
 jobs <- read_csv("jobs.csv", col_types = cols()) 
 
 # pull out job ------------------
-job <- slice(jobs, job_num_arg)
+job <- jobs %>% 
+  filter(job_num == job_num_arg)
 
 # read in data train --------------- 
 d <- read_rds("data_trn.rds") %>% 

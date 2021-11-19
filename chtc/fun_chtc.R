@@ -24,6 +24,10 @@ suppressPackageStartupMessages({
 # and also displays hyperparameter plots - currently called post_chtc_processing.Rmd 
 
 
+# FIX: change collect_metrics to summarize = FALSE in tune_model for glmnet so that all 
+# fold estimates get returned. Need to test that results tibble still matches what is 
+# returned with collect_metrics
+
 
 # Only need to supply hyperparameters in training_controls.R for algorithms being used 
 make_jobs <- function(path_training_controls) {

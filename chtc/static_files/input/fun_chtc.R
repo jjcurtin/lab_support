@@ -158,19 +158,28 @@ make_jobs <- function(path_training_controls) {
     write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
   
   # copy data to input folder as data_trn -----------------
-  file.copy(from = file.path(path_data, data_trn),
+  check_copy <- file.copy(from = file.path(path_data, data_trn),
             to = file.path(path_jobs, name_job, "input/data_trn.rds"))
+  if (!check_copy) {
+    stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
+  }
   
   # copy study specific training_controls to input folder -----------------
-  file.copy(from = file.path(path_training_controls),
-            to = file.path(path_jobs, name_job, "input/training_controls.R")) %>% 
-    invisible()
+  check_copy <-file.copy(from = file.path(path_training_controls),
+            to = file.path(path_jobs, name_job, "input/training_controls.R")) 
+  if (!check_copy) {
+    stop("Training controls not coppied to input folder. Check path_training_controls in mak_jobs.")
+  }
   
   # copy template R files to input folder -----------------
-  file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
+  check_copy <- file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
             to = file.path(path_jobs, name_job, "input"),
-            recursive = TRUE) %>% 
-    invisible()
+            recursive = TRUE) 
+  for (i in 1:length(check_copy)) {
+    if (check_copy[i] == FALSE) {
+    stop("Not all static files coppied to input folder. Make sure you are running mak_jobs in an R project.")
+    }
+  }
   
   # update submit file from training controls -----------------
   # add files to transfer
@@ -208,9 +217,12 @@ make_jobs <- function(path_training_controls) {
   write(queue_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
   
   # copy template aggregate script to output folder ---------------
-  file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
-            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) %>% 
-    invisible()
+  check_copy <- file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
+            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) 
+  if (!check_copy) {
+    stop("Aggregate script not coppied to output folder. Make sure you are running mak_jobs in an R project.")
+  }
+  
   # Add source path for training_controls in post_processing Rmd
   write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"), append = TRUE)
   

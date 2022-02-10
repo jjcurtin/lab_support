@@ -17,7 +17,7 @@ cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
 # determine where to pass in global cv_type parameter
 group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
-remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate features before removing nzv
+# remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate features before removing nzv
 
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
 # Can remove or comment out hyperparameter variables if not using the algorithm 
@@ -36,6 +36,14 @@ path_jobs <- "P:/studydata/risk/chtc/meta/jobs" # location of where you want you
 path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data set
 path_project <- "./meta/ana_scripts"
 
+# CHANGE CHTC SPECIFIC CONTROLS
+tar <- c("chtc_train.tar.gz", "meta.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
+max_idle <- 2000 # has been 2000 in other scripts - can change here if want to
+request_cpus <- 1 
+request_memory <- "8000MB"
+request_disk <- "1000000KB" # this is pretty large - necessary for meta
+flock <- FALSE
+glide <- FALSE
 
 
 # BUILD RECIPE ---------

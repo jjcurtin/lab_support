@@ -13,14 +13,5 @@ output = output/$(Cluster)_$(JobNum).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, tidymodels.tar.gz, fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz
 #on_exit_hold = exitcode != 0
-
-materialize_max_idle = 2000
-
-request_cpus = 1
-request_memory = 8000MB
-request_disk = 1000000KB
-+wantFlocking = false
-+wantGlideIn = false
 

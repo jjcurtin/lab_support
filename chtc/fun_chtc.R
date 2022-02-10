@@ -159,8 +159,7 @@ make_jobs <- function(path_training_controls) {
   
   # copy data to input folder as data_trn -----------------
   file.copy(from = file.path(path_data, data_trn),
-            to = file.path(path_jobs, name_job, "input/data_trn.rds")) %>% 
-    invisible()
+            to = file.path(path_jobs, name_job, "input/data_trn.rds"))
   
   # copy study specific training_controls to input folder -----------------
   file.copy(from = file.path(path_training_controls),
@@ -179,9 +178,40 @@ make_jobs <- function(path_training_controls) {
             recursive = TRUE) %>% 
     invisible()
   
-  # update queue on submit file -----------------
-  queue <- str_c("queue ", nrow(jobs))
-  write(queue, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  # update submit file from training controls -----------------
+  # add files to transfer
+  transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
+                          paste(tar, collapse = ', '), 
+                          ", fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
+  write(transfer_files_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add max idle jobs
+  max_idle_str <- str_c("materialize_max_idle = ", max_idle)
+  write(max_idle_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add cpus requested
+  cpus_str <- str_c("request_cpus = ", request_cpus)
+  write(cpus_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add memory requested
+  memory_str <- str_c("request_memory = ", request_memory)
+  write(memory_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add disk space requested
+  disk_str <- str_c("request_disk = ", request_disk)
+  write(disk_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add flock
+  flock_str <- str_c("+wantFlocking = ", flock)
+  write(flock_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add glide
+  glide_str <- str_c("+wantGlideIn = ", glide)
+  write(glide_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  
+  # add queue
+  queue_str <- str_c("queue ", nrow(jobs))
+  write(queue_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
   
   # copy template aggregate script to output folder ---------------
   file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),

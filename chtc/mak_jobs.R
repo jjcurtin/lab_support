@@ -4,8 +4,8 @@
 # for the relative paths to access local copy of lab_support to work
 
 # Set path for training_controls.R -------------------- 
-path_training_controls <- "./meta/chtc/training_controls.R" # location of study specific training_controls.R (can use relative path if in repo) 
-
+# location of study specific training_controls.R (can use relative path if in repo) 
+path_training_controls <- "./PROJECT/chtc/training_controls.R" 
 
 # Make jobs -------------------- 
 suppressPackageStartupMessages(library(tidyverse))

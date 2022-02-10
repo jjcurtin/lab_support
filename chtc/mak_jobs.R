@@ -9,7 +9,7 @@ path_training_controls <- "./PROJECT/chtc/training_controls.R"
 
 # Make jobs -------------------- 
 suppressPackageStartupMessages(library(tidyverse))
-source("../lab_support/chtc/fun_chtc.R", echo = FALSE)
+source("../lab_support/chtc/static_files/input/fun_chtc.R", echo = FALSE)
 
 # Don't forget to add/remove hyperparameters using/not using for algorithms
 make_jobs(path_training_controls)

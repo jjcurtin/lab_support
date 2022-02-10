@@ -172,12 +172,6 @@ make_jobs <- function(path_training_controls) {
             recursive = TRUE) %>% 
     invisible()
   
-  # copy chtc functions to input folder
-  file.copy(from = file.path(path_chtc, "fun_chtc.R"),
-            to = file.path(path_jobs, name_job, "input"),
-            recursive = TRUE) %>% 
-    invisible()
-  
   # update submit file from training controls -----------------
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",

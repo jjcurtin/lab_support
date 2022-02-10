@@ -546,11 +546,20 @@ find_nearest_context <- function(lon_target, lat_target, context){
   }
 
   context <- context %>%
-    select(lon_context = lon, lat_context =  lat) %>%
+    rename(lon_context = lon, lat_context =  lat) %>%
     mutate(dist_context = map2_dbl(.$lon_context, .$lat_context,
                                    get_dist,
                                    lon_target = lon_target, lat_target = lat_target)) %>%
     arrange(dist_context) %>%
     slice(1)
+  
+  if ("context_id" %in% names(context)) {
+    context <- context %>% 
+      select(context_id, lat_context, lon_context, dist_context)
+  } else {
+    context <- context %>% 
+      select(lat_context, lon_context, dist_context)
+  }
+  
   return(context)
 }

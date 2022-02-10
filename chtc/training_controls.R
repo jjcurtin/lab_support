@@ -6,7 +6,7 @@
 
 
 # SET GLOBAL PARAMETERS --------
-data_trn <- "period_168_lead_0.csv"
+data_trn <- "features_all_aggregate.csv" # can be csv or rds file
 name_job <- "test" # the name of the job to set folder names
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive", "feat_logs") # 1+ feature sets
 algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
@@ -32,7 +32,7 @@ hp2_rf <- c(2, 10, 20) # min_n
 hp3_rf <- 2800 # trees (10 x's number of predictors)
 
 # CHANGE STUDY PATHS -------------------- 
-path_jobs <- "P:/studydata/risk/chtc/meta/jobs" # location of where you want your jobs to be setup
+path_jobs <- "P:/studydata/risk/chtc/meta/jobs/training" # location of where you want your jobs to be setup
 path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data set
 path_project <- "./meta/ana_scripts"
 

@@ -24,10 +24,13 @@ suppressPackageStartupMessages({
 # and also displays hyperparameter plots - currently called post_chtc_processing.Rmd 
 
 
+
+# NOTE: Currently glmnet does not have separate folds/splits - training function takes in whole splits
+# object and tunes for lambda using hyperparameters in training_controls.R
+
 # FIX: change collect_metrics to summarize = FALSE in tune_model for glmnet so that all 
 # fold estimates get returned. Need to test that results tibble still matches what is 
-# returned with collect_metrics
-
+# returned with collect_metrics. 
 
 # Only need to supply hyperparameters in training_controls.R for algorithms being used 
 make_jobs <- function(path_training_controls) {
@@ -64,8 +67,7 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_glmnet,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample,
-                                feature_fun_type)
+                                resample) # took out feature_fun_type - not in training controls currently
       } else if (i == "random_forest") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -74,8 +76,7 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_rf,
                                 hp2 = hp2_rf,
                                 hp3 = hp3_rf,
-                                resample,
-                                feature_fun_type)
+                                resample)
       } else if (i == "knn") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -84,8 +85,7 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_knn,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample,
-                                feature_fun_type)      
+                                resample)      
       }
       
       # bind jobs files
@@ -158,12 +158,21 @@ make_jobs <- function(path_training_controls) {
     write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
   
   # copy data to input folder as data_trn -----------------
-  check_copy <- file.copy(from = file.path(path_data, data_trn),
-            to = file.path(path_jobs, name_job, "input/data_trn.rds"))
-  if (!check_copy) {
-    stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
+  if (str_detect(data_trn, ".csv")) {
+    check_copy <- file.copy(from = file.path(path_data, data_trn),
+                            to = file.path(path_jobs, name_job, "input/data_trn.csv"))
+    if (!check_copy) {
+      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
+    }
+  } else if (str_detect(data_trn, ".rds")) {
+    check_copy <- file.copy(from = file.path(path_data, data_trn),
+                            to = file.path(path_jobs, name_job, "input/data_trn.rds"))
+    if (!check_copy) {
+      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
+    }
   }
   
+
   # copy study specific training_controls to input folder -----------------
   check_copy <-file.copy(from = file.path(path_training_controls),
             to = file.path(path_jobs, name_job, "input/training_controls.R")) 

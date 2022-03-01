@@ -4,11 +4,11 @@
 # move data to results
 mv results_*.csv results
 
- #move error files to error
-mv error*.err error
+#move error files to error
+# mv error*.err error
 
 # move output files to output
-mv output*.out output
+# mv output*.out output
 
 # put files to transfer into zip files
 zip -r -m results results

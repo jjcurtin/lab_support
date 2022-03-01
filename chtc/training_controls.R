@@ -38,7 +38,7 @@ path_project <- "./meta/ana_scripts"
 
 # CHANGE CHTC SPECIFIC CONTROLS
 tar <- c("chtc_train.tar.gz", "meta.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
-max_idle <- 2000 # has been 2000 in other scripts - can change here if want to
+max_idle <- 1000 # according to CHTC we should set this at 1000 to not flood the server. It will not limit the number of jobs running at one time 
 request_cpus <- 1 
 request_memory <- "8000MB"
 request_disk <- "1000000KB" # this is pretty large - necessary for meta

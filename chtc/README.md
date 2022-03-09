@@ -15,6 +15,7 @@ Once `mak_jobs` is run, you should have the following at the jobs file path you 
 
 ## Tars
 - We will have a lab chtc tar file with the essential packages for running scripts in lab_support/chtc/tars. (*This is not there yet. I think our closest version to this currently is risk.tar.gz on the server in risk/chtc/tars - it looks like JC started to break this apart into features and training so I am not clear on which one to copy over to lab_support*).  
+- NOTE FROM JJC:  Tars will not be saved in repo.  They are too big.  They will be saved on server.  Also, we should probably have two generically named tars, one for features and one for training, rather than study specific.  At least we should consider this
 - We will supplement this with a study specific tar as needed. All tars used should be specified in training controls so that the submit file knows what to transfer, but you will need to manually drag any tars you are using over to CHTC.   
 - CHTC has good documentation for building tars at https://chtc.cs.wisc.edu/uw-research-computing/r-jobs.html#build    
 - You will need to use a build script to add packages to an existing tar or create a new tar. There is a build script in lab_support/chtc/tars titled build_tar.sub   

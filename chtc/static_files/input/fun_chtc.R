@@ -39,7 +39,7 @@ make_jobs <- function(path_training_controls) {
   
   # relative paths should work from any repo project if a local copy of lab_support exists
   path_templates <- "../lab_support/chtc/static_files"
-  path_chtc <- "../lab_support/chtc"
+  # path_chtc <- "../lab_support/chtc"
   
   # create jobs tibble for K-fold ---------------
   if (cv_type != "boot") {
@@ -150,7 +150,7 @@ make_jobs <- function(path_training_controls) {
     dir.create(file.path(path_jobs, name_job, "input"))
     dir.create(file.path(path_jobs, name_job, "output"))
   } else {
-    stop("Job folder already exists. No new folders created.")
+    message("Job folder already exists. No new folders created.")
   }
   
   # write jobs file to input folder ---------------
@@ -158,18 +158,16 @@ make_jobs <- function(path_training_controls) {
     write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
   
   # copy data to input folder as data_trn -----------------
-  if (str_detect(data_trn, ".csv")) {
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_jobs, name_job, "input/data_trn.csv"))
-    if (!check_copy) {
-      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
-    }
-  } else if (str_detect(data_trn, ".rds")) {
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_jobs, name_job, "input/data_trn.rds"))
-    if (!check_copy) {
-      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
-    }
+  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) #parse name from extensions
+  if (length(chunks) == 2) {
+    fn <- str_c("data_trn.", chunks[[2]])
+  } else {
+    fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+  }
+  check_copy <- file.copy(from = file.path(path_data, data_trn),
+                          to = file.path(path_jobs, name_job, "input", fn))
+  if (!check_copy) {
+    stop("Data not copied to input folder. Check path_data and data_trn (file name) in training controls.")
   }
   
 

@@ -67,7 +67,7 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_glmnet,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample) # took out feature_fun_type - not in training controls currently
+                                resample)
       } else if (i == "random_forest") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -158,7 +158,7 @@ make_jobs <- function(path_training_controls) {
     write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
   
   # copy data to input folder as data_trn -----------------
-  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) #parse name from extensions
+  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
   if (length(chunks) == 2) {
     fn <- str_c("data_trn.", chunks[[2]])
   } else {
@@ -173,7 +173,7 @@ make_jobs <- function(path_training_controls) {
 
   # copy study specific training_controls to input folder -----------------
   check_copy <-file.copy(from = file.path(path_training_controls),
-            to = file.path(path_jobs, name_job, "input/training_controls.R")) 
+            to = file.path(path_jobs, name_job, "input", "training_controls.R")) 
   if (!check_copy) {
     stop("Training controls not coppied to input folder. Check path_training_controls in mak_jobs.")
   }
@@ -184,7 +184,7 @@ make_jobs <- function(path_training_controls) {
             recursive = TRUE) 
   for (i in 1:length(check_copy)) {
     if (check_copy[i] == FALSE) {
-    stop("Not all static files coppied to input folder. Make sure you are running mak_jobs in an R project.")
+    stop("Not all static files copied to input folder. Make sure you are running mak_jobs in an R project.")
     }
   }
   
@@ -193,48 +193,48 @@ make_jobs <- function(path_training_controls) {
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                           paste(tar, collapse = ', '), 
                           ", fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
-  write(transfer_files_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)
-  write(max_idle_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(max_idle_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add cpus requested
   cpus_str <- str_c("request_cpus = ", request_cpus)
-  write(cpus_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(cpus_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add memory requested
   memory_str <- str_c("request_memory = ", request_memory)
-  write(memory_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(memory_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add disk space requested
   disk_str <- str_c("request_disk = ", request_disk)
-  write(disk_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(disk_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add flock
   flock_str <- str_c("+wantFlocking = ", flock)
-  write(flock_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(flock_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add glide
   glide_str <- str_c("+wantGlideIn = ", glide)
-  write(glide_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(glide_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add queue
   queue_str <- str_c("queue ", nrow(jobs))
-  write(queue_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(queue_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # copy template aggregate script to output folder ---------------
-  check_copy <- file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
-            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) 
+  check_copy <- file.copy(from = file.path(path_templates, "output", "post_chtc_processing_1.Rmd"),
+            to = file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd")) 
   if (!check_copy) {
-    stop("Aggregate script not coppied to output folder. Make sure you are running mak_jobs in an R project.")
+    stop("Aggregate script not copied to output folder. Make sure you are running mak_jobs in an R project.")
   }
   
   # Add source path for training_controls in post_processing Rmd
-  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"), append = TRUE)
+  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"), append = TRUE)
   
-  file.append(file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"),
-              file.path(path_templates, "output/post_chtc_processing_2.Rmd")) %>% 
+  file.append(file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"),
+              file.path(path_templates, "output", "post_chtc_processing_2.Rmd")) %>% 
     invisible()
 }
 

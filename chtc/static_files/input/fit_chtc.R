@@ -23,9 +23,18 @@ job <- jobs %>%
   filter(job_num == job_num_arg)
 
 # read in data train --------------- 
-d <- read_rds("data_trn.rds") %>% 
-  # Set outcome variable to y
-  rename(y = {{y_col_name}})
+if (str_detect("data_trn.rds", list.files())) {
+  # read in *.rds file
+  d <- read_rds("data_trn.rds") %>% 
+    # Set outcome variable to y
+    rename(y = {{y_col_name}})
+} else if (str_detect("data_trn.csv", list.files())) {
+  # let vroom() parse the delimited file type
+  d <- vroom(file = str_subset(list.files(), "data_trn"),
+             show_col_types = FALSE) %>% 
+    # set outcome variable to y
+    rename(y = {{y_col_name}})
+}
 
 # create splits object ---------------
 set.seed(102030)

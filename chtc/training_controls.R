@@ -22,7 +22,7 @@ group <- "subid" # grouping variable for grouped k-fold - remove if not using gr
 # CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
 # Can remove or comment out hyperparameter variables if not using the algorithm 
 # if using the algorithm, you must provide the associated hyperparameters
-hp1_glmnet <- seq(0.5, 1, length.out = 11) # alpha (mixture) 
+hp1_glmnet <- c(0.05, seq(.1, 1, length.out = 11)) # alpha (mixture) 
 hp2_glmnet_min <- -8 # min for penalty grid - will be passed into exp(seq(min, max, length.out = out))
 hp2_glmnet_max <- 2 # max for penalty grid
 hp2_glmnet_out <- 100 # length of penalty grid

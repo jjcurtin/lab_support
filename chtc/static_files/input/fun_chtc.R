@@ -260,7 +260,7 @@ make_splits <- function(d, cv_type, group = NULL) {
     n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
     n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
     
-    split <- d %>% 
+    splits <- d %>% 
       vfold_cv(v = n_folds, repeats = n_repeats) 
     
     # grouped kfold splits 

@@ -301,7 +301,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 resamples = folds,
                 grid = grid_penalty,
                 metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc))
+                                     sens, yardstick::spec, npv, ppv, roc_auc))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%

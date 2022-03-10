@@ -167,18 +167,17 @@ make_jobs <- function(path_training_controls) {
   check_copy <- file.copy(from = file.path(path_data, data_trn),
                           to = file.path(path_jobs, name_job, "input", fn))
   if (!check_copy) {
-    stop("Data not copied to input folder. Check path_data and data_trn (file name) in training controls.")
+    stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
   }
   
-
   # copy study specific training_controls to input folder -----------------
   check_copy <-file.copy(from = file.path(path_training_controls),
             to = file.path(path_jobs, name_job, "input", "training_controls.R")) 
   if (!check_copy) {
-    stop("Training controls not coppied to input folder. Check path_training_controls in mak_jobs.")
+    stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
   
-  # copy template R files to input folder -----------------
+  # copy template R and unix files to input folder -----------------
   check_copy <- file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
             to = file.path(path_jobs, name_job, "input"),
             recursive = TRUE) 

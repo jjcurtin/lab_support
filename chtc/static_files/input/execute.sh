@@ -4,7 +4,7 @@
 #untar R installation
 tar -xzf R402.tar.gz
 tar -xzf SLIBS.tar.gz
-tar -xzf tidymodels.tar.gz
+tar -xzf train.tar.gz
 export LD_LIBRARY_PATH=$(pwd)/SS:$LD_LIBRARY_PATH
 
 #use that R installation

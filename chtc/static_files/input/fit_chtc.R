@@ -16,7 +16,7 @@ args <- commandArgs(trailingOnly = TRUE)
 job_num_arg <- args[1]
 
 # read in jobs.csv file ------------------
-jobs <- read_csv("jobs.csv", col_types = cols()) 
+jobs <- read_csv("jobs.csv", col_types = "iiiccdddc")
 
 # pull out job ------------------
 job <- jobs %>% 

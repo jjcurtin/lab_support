@@ -15,7 +15,7 @@ source("training_controls.R")
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-jobs <- read_csv("jobs.csv", col_types = "iiiccdddc")
+jobs <- vroom("jobs.csv", col_types = "iiiccdddc")
 
 job <- jobs %>% 
   filter(job_num == job_num_arg)
@@ -44,15 +44,13 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------
-# make features before removing nzv
 feat_all <-  rec %>% 
-  # remove id variables from count
   step_rm(has_role(match = "id variable")) %>% 
   prep(training = d, strings_as_factors = FALSE) %>% 
   bake(new_data = NULL)
 
 # remove nzv if specified in training controls
-if (remove_nzv & job$algorithm == "glmnet") {
+if (remove_nzv) {
   rec <- rec %>% 
     step_nzv(all_predictors())
 }

@@ -74,5 +74,5 @@ results %>%
   mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
-  write_csv(., str_c("results_", job$job_num, ".csv"))
+  write_csv(str_c("results_", job$job_num, ".csv"))
 

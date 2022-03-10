@@ -10,15 +10,13 @@ suppressPackageStartupMessages({
 source("fun_chtc.R")
 source("training_controls.R")
 
-# set up job_num ---------------
+# set up job---------
 # job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-# read in jobs.csv file ------------------
 jobs <- read_csv("jobs.csv", col_types = "iiiccdddc")
 
-# pull out job ------------------
 job <- jobs %>% 
   filter(job_num == job_num_arg)
 

@@ -3,7 +3,7 @@
 # libraries & source functions file ----------------
 suppressPackageStartupMessages({
   require(dplyr)
-  require(readr)
+  require(vroom)
   require(tidyr)
   require(stringr)
 }) 

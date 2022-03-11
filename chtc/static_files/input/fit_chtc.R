@@ -44,6 +44,7 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------
+#count before removing nzv
 feat_all <-  rec %>% 
   step_rm(has_role(match = "id variable")) %>% 
   prep(training = d, strings_as_factors = FALSE) %>% 

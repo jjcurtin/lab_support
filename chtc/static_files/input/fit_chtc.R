@@ -11,7 +11,7 @@ source("fun_chtc.R")
 source("training_controls.R")
 
 # set up job---------
-# job_num_arg <- 1, 47, 1087
+# job_num_arg <- 3, 47, 91
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 

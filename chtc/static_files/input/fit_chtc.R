@@ -3,7 +3,7 @@
 # libraries & source functions file ----------------
 suppressPackageStartupMessages({
   require(dplyr)
-  require(vroom)
+  require(vroom) 
   require(tidyr)
   require(stringr)
 }) 
@@ -69,5 +69,5 @@ results %>%
   mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
-  write_csv(str_c("results_", job$job_num, ".csv"))
+  vroom_write(str_c("results_", job$job_num, ".csv"), delim = ",")
 

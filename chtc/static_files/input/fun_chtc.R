@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   require(glmnet)
   require(kknn)
   require(vip)
+  require(vroom)
 })
 
 
@@ -155,7 +156,7 @@ make_jobs <- function(path_training_controls) {
   
   # write jobs file to input folder ---------------
   jobs %>% 
-    write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
+    vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
   # copy data to input folder as data_trn -----------------
   chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions

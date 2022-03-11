@@ -301,7 +301,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 resamples = folds,
                 grid = grid_penalty,
                 metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, yardstick::spec, npv, ppv, roc_auc))
+                                     sens, yardstick::spec, ppv, npv, 
+                                     f_meas, roc_auc))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%
@@ -311,10 +312,11 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       select(hp2 = penalty, .metric, mean) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>% 
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job %>% select(-hp2), .) %>% 
-      relocate(hp2, .before = hp3) %>% 
-      relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
-      relocate(spec, .after = sens)
+      relocate(hp2, .before = hp3) #%>% 
+      #relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
+      #relocate(spec, .after = sens)
     
     return(results)
   }
@@ -326,7 +328,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
-    # fit model on feat_in with job hyperparemeter values 
+    # fit model on feat_in with job hyperparameter values 
     model <- rand_forest(mtry = job$hp1,
                          min_n = job$hp2,
                          trees = job$hp3) %>%
@@ -343,6 +345,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results)
@@ -355,7 +358,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     feat_out <- features$feat_out
     
     # fit model - job provides number of neighbors
-    
     model <- nearest_neighbor(neighbors = job$hp1) %>% 
       set_engine("kknn") %>% 
       set_mode("classification") %>% 
@@ -366,6 +368,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results) 
@@ -435,14 +438,14 @@ get_metrics <- function(model, feat_out) {
     summary(event_level = "second") %>% 
     select(metric = .metric,
            estimate = .estimate) %>% 
-    filter(metric %in% c("accuracy", "sens", "spec", "bal_accuracy")) %>% 
+    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy", "f_meas")) %>% 
     suppressWarnings() # warning not about metrics we are returning
   
   roc <- tibble(truth = feat_out$y,
                 prob = predict(model, feat_out,
-                               type = "prob")$.pred_yes) %>% 
+                              type = "prob")$.pred_yes) %>% 
     roc_auc(prob, truth = truth, event_level = "second") %>% 
-    select(metric = .metric,
+    select(metric = .metric, 
            estimate = .estimate)
   
   model_metrics <- bind_rows(model_metrics, roc)

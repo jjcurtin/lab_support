@@ -195,7 +195,7 @@ make_jobs <- function(path_training_controls) {
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                           paste(tar, collapse = ', '), 
-                          ", fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
+                          ", fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.csv.xz, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add max idle jobs

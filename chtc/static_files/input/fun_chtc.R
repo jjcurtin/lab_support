@@ -305,9 +305,10 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       tune_grid(preprocessor = rec,
                 resamples = folds,
                 grid = grid_penalty,
-                metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, yardstick::spec, ppv, npv, 
-                                     f_meas, roc_auc))
+                # metrics assume that positive event it first level
+                # make sure this is true in recipe
+                metrics = metric_set(accuracy, bal_accuracy, roc_auc,
+                                     sens, yardstick::spec, ppv, npv))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%
@@ -317,11 +318,9 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       select(hp2 = penalty, .metric, mean) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>% 
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
       bind_cols(job %>% select(-hp2), .) %>% 
-      relocate(hp2, .before = hp3) #%>% 
-      #relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
-      #relocate(spec, .after = sens)
+      relocate(hp2, .before = hp3) 
     
     return(results)
   }
@@ -350,7 +349,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results)
@@ -373,7 +372,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results) 
@@ -440,16 +439,16 @@ get_metrics <- function(model, feat_out) {
     conf_mat(truth, estimate)
   
   model_metrics <- cm %>% 
-    summary(event_level = "second") %>% 
+    summary(event_level = "first") %>%   # make sure this is true in recipe
     select(metric = .metric,
            estimate = .estimate) %>% 
-    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy", "f_meas")) %>% 
+    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
     suppressWarnings() # warning not about metrics we are returning
   
   roc <- tibble(truth = feat_out$y,
                 prob = predict(model, feat_out,
                               type = "prob")$.pred_yes) %>% 
-    roc_auc(prob, truth = truth, event_level = "second") %>% 
+    roc_auc(prob, truth = truth, event_level = "first") %>% 
     select(metric = .metric, 
            estimate = .estimate)
   

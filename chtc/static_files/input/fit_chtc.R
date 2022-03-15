@@ -3,29 +3,33 @@
 # libraries & source functions file ----------------
 suppressPackageStartupMessages({
   require(dplyr)
-  require(readr)
+  require(vroom) 
   require(tidyr)
   require(stringr)
 }) 
 source("fun_chtc.R")
 source("training_controls.R")
 
-# set up job_num ---------------
-# job_num_arg <- 1
+# set up job---------
+# job_num_arg <- 3, 47, 91
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-# read in jobs.csv file ------------------
-jobs <- read_csv("jobs.csv", col_types = cols()) 
+jobs <- vroom("jobs.csv", col_types = "iiiccdddc")
 
-# pull out job ------------------
 job <- jobs %>% 
   filter(job_num == job_num_arg)
 
 # read in data train --------------- 
-# FIX use if statement to allow for rds file types
-d <- read_csv("data_trn.csv", col_types = cols()) %>% 
-  # Set outcome variable to y
+fn <- str_subset(list.files(), "^data_trn")
+if (str_detect(fn, ".rds")) {
+  d <- read_rds(fn)
+} else {
+  d <- vroom(fn, show_col_types = FALSE) 
+}
+
+# Set outcome variable to y
+d <- d %>% 
   rename(y = {{y_col_name}})
 
 # create splits object ---------------
@@ -40,12 +44,17 @@ splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------
+#count before removing nzv
 feat_all <-  rec %>% 
-  # remove id variables from count
   step_rm(has_role(match = "id variable")) %>% 
   prep(training = d, strings_as_factors = FALSE) %>% 
   bake(new_data = NULL)
 
+# remove nzv if specified in training controls
+if (remove_nzv) {
+  rec <- rec %>% 
+    step_nzv(all_predictors())
+}
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
@@ -60,5 +69,5 @@ results %>%
   mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
-  write_csv(., str_c("results_", job$job_num, ".csv"))
+  vroom_write(str_c("results_", job$job_num, ".csv"), delim = ",")
 

@@ -1,5 +1,7 @@
 #!/bin/bash
 # post.sh
+# JJC - will be replaced by a script that transfers raw (not zipped files)
+# For windows, this is a winscp script
 
 # move data to results
 mv results_*.csv results

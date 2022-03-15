@@ -12,6 +12,7 @@ suppressPackageStartupMessages({
   require(glmnet)
   require(kknn)
   require(vip)
+  require(vroom)
 })
 
 
@@ -33,13 +34,13 @@ suppressPackageStartupMessages({
 # returned with collect_metrics. 
 
 # Only need to supply hyperparameters in training_controls.R for algorithms being used 
-make_jobs <- function(path_training_controls) {
+make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # read in study specific controls
   source(path_training_controls)
   
   # relative paths should work from any repo project if a local copy of lab_support exists
   path_templates <- "../lab_support/chtc/static_files"
-  path_chtc <- "../lab_support/chtc"
+  # path_chtc <- "../lab_support/chtc"
   
   # create jobs tibble for K-fold ---------------
   if (cv_type != "boot") {
@@ -67,7 +68,7 @@ make_jobs <- function(path_training_controls) {
                                 hp1 = hp1_glmnet,
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
-                                resample) # took out feature_fun_type - not in training controls currently
+                                resample)
       } else if (i == "random_forest") {
         jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
                                 n_fold = 1:cv_folds,
@@ -150,43 +151,43 @@ make_jobs <- function(path_training_controls) {
     dir.create(file.path(path_jobs, name_job, "input"))
     dir.create(file.path(path_jobs, name_job, "output"))
   } else {
-    stop("Job folder already exists. No new folders created.")
+    message("Job folder already exists. No new folders created.")
   }
   
   # write jobs file to input folder ---------------
   jobs %>% 
-    write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
+    vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
   # copy data to input folder as data_trn -----------------
-  if (str_detect(data_trn, ".csv")) {
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_jobs, name_job, "input/data_trn.csv"))
-    if (!check_copy) {
-      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
-    }
-  } else if (str_detect(data_trn, ".rds")) {
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_jobs, name_job, "input/data_trn.rds"))
-    if (!check_copy) {
-      stop("Data not coppied to input folder. Check path_data and data_trn (file name) in training controls.")
-    }
+  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
+  if (length(chunks) == 2) {
+    fn <- str_c("data_trn.", chunks[[2]])
+  } else {
+    fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+  }
+  check_copy <- file.copy(from = file.path(path_data, data_trn),
+                          to = file.path(path_jobs, name_job, "input", fn),
+                          overwrite = overwrite_jobs)
+  if (!check_copy) {
+    stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
   }
   
-
   # copy study specific training_controls to input folder -----------------
   check_copy <-file.copy(from = file.path(path_training_controls),
-            to = file.path(path_jobs, name_job, "input/training_controls.R")) 
+            to = file.path(path_jobs, name_job, "input", "training_controls.R"),
+            overwrite = overwrite_jobs) 
   if (!check_copy) {
-    stop("Training controls not coppied to input folder. Check path_training_controls in mak_jobs.")
+    stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
   
-  # copy template R files to input folder -----------------
+  # copy template R and unix files to input folder -----------------
   check_copy <- file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
             to = file.path(path_jobs, name_job, "input"),
-            recursive = TRUE) 
+            recursive = TRUE,
+            overwrite = overwrite_jobs) 
   for (i in 1:length(check_copy)) {
     if (check_copy[i] == FALSE) {
-    stop("Not all static files coppied to input folder. Make sure you are running mak_jobs in an R project.")
+    stop("Not all static files copied to input folder. Make sure you are running mak_jobs in an R project.")
     }
   }
   
@@ -194,49 +195,50 @@ make_jobs <- function(path_training_controls) {
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                           paste(tar, collapse = ', '), 
-                          ", fun_chtc.R, fit_chtc.R, training_controls.R, data_trn.rds, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
-  write(transfer_files_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+                          ", fun_chtc.R, fit_chtc.R, training_controls.R, ", fn, ", jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
+  write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)
-  write(max_idle_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(max_idle_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add cpus requested
   cpus_str <- str_c("request_cpus = ", request_cpus)
-  write(cpus_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(cpus_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add memory requested
   memory_str <- str_c("request_memory = ", request_memory)
-  write(memory_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(memory_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add disk space requested
   disk_str <- str_c("request_disk = ", request_disk)
-  write(disk_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(disk_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add flock
   flock_str <- str_c("+wantFlocking = ", flock)
-  write(flock_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(flock_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add glide
   glide_str <- str_c("+wantGlideIn = ", glide)
-  write(glide_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(glide_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add queue
   queue_str <- str_c("queue ", nrow(jobs))
-  write(queue_str, file.path(path_jobs, name_job, "input/sub.sub"), append = TRUE)
+  write(queue_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # copy template aggregate script to output folder ---------------
-  check_copy <- file.copy(from = file.path(path_templates, "output/post_chtc_processing_1.Rmd"),
-            to = file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd")) 
+  check_copy <- file.copy(from = file.path(path_templates, "output", "post_chtc_processing_1.Rmd"),
+            to = file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"),
+            overwrite = overwrite_jobs) 
   if (!check_copy) {
-    stop("Aggregate script not coppied to output folder. Make sure you are running mak_jobs in an R project.")
+    stop("Aggregate script not copied to output folder. Make sure you are running mak_jobs in an R project.")
   }
   
   # Add source path for training_controls in post_processing Rmd
-  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"), append = TRUE)
+  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"), append = TRUE)
   
-  file.append(file.path(path_jobs, name_job, "output/post_chtc_processing.Rmd"),
-              file.path(path_templates, "output/post_chtc_processing_2.Rmd")) %>% 
+  file.append(file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"),
+              file.path(path_templates, "output", "post_chtc_processing_2.Rmd")) %>% 
     invisible()
 }
 
@@ -304,7 +306,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 resamples = folds,
                 grid = grid_penalty,
                 metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc))
+                                     sens, yardstick::spec, ppv, npv, 
+                                     f_meas, roc_auc))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
     results <- collect_metrics(models) %>%
@@ -314,10 +317,11 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
       select(hp2 = penalty, .metric, mean) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>% 
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job %>% select(-hp2), .) %>% 
-      relocate(hp2, .before = hp3) %>% 
-      relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
-      relocate(spec, .after = sens)
+      relocate(hp2, .before = hp3) #%>% 
+      #relocate(sens, .after = accuracy) %>%  # order metrics to bind with other algorithms
+      #relocate(spec, .after = sens)
     
     return(results)
   }
@@ -329,7 +333,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
-    # fit model on feat_in with job hyperparemeter values 
+    # fit model on feat_in with job hyperparameter values 
     model <- rand_forest(mtry = job$hp1,
                          min_n = job$hp2,
                          trees = job$hp3) %>%
@@ -346,6 +350,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results)
@@ -358,7 +363,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     feat_out <- features$feat_out
     
     # fit model - job provides number of neighbors
-    
     model <- nearest_neighbor(neighbors = job$hp1) %>% 
       set_engine("kknn") %>% 
       set_mode("classification") %>% 
@@ -369,6 +373,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     results <- get_metrics(model = model, feat_out = feat_out) %>% 
       pivot_wider(., names_from = "metric",
                   values_from = "estimate") %>%   
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, f_meas, roc_auc) %>% 
       bind_cols(job, .) 
     
     return(results) 
@@ -438,14 +443,14 @@ get_metrics <- function(model, feat_out) {
     summary(event_level = "second") %>% 
     select(metric = .metric,
            estimate = .estimate) %>% 
-    filter(metric %in% c("accuracy", "sens", "spec", "bal_accuracy")) %>% 
+    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy", "f_meas")) %>% 
     suppressWarnings() # warning not about metrics we are returning
   
   roc <- tibble(truth = feat_out$y,
                 prob = predict(model, feat_out,
-                               type = "prob")$.pred_yes) %>% 
+                              type = "prob")$.pred_yes) %>% 
     roc_auc(prob, truth = truth, event_level = "second") %>% 
-    select(metric = .metric,
+    select(metric = .metric, 
            estimate = .estimate)
   
   model_metrics <- bind_rows(model_metrics, roc)

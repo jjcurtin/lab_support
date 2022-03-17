@@ -471,8 +471,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
                     resamples = folds,
-                    metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc),
+                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
+                                     sens, yardstick::spec, ppv, npv),
                     control = ctrl)
     
     results <- collect_metrics(models) %>%

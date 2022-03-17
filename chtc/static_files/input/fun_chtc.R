@@ -460,7 +460,7 @@ get_metrics <- function(model, feat_out) {
 tune_best_model <- function(best_model, rec, folds, cv_type) {
   
   # control grid to save predictions
-  ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
+  ctrl <- control_resamples(save_pred = TRUE, event_level = "first",  
                             extract = function (x) extract_fit_parsnip(x) %>% tidy())
   
   if (best_model$algorithm == "glmnet") {
@@ -507,8 +507,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
                     resamples = folds,
-                    metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc),
+                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
+                                     sens, yardstick::spec, ppv, npv),
                     control = ctrl)
     
     results <- collect_metrics(models) %>%
@@ -518,9 +518,7 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>%
       select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .) %>% 
-      relocate(sens, .after = bal_accuracy) %>%  
-      relocate(spec, .after = sens)
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
     
     
     # Create a tibble of predictions
@@ -538,8 +536,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
       set_mode("classification") %>% 
       fit_resamples(preprocessor = rec,
                     resamples = folds,
-                    metrics = metric_set(accuracy, bal_accuracy,
-                                     sens, spec, roc_auc),
+                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
+                                     sens, yardstick::spec, ppv, npv),
                     control = ctrl)
     
     results <- collect_metrics(models) %>%
@@ -549,9 +547,7 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
       pivot_wider(., names_from = ".metric",
                   values_from = "mean") %>%
       select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .) %>% 
-      relocate(sens, .after = bal_accuracy) %>% 
-      relocate(spec, .after = sens)
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
     
     
     # Create a tibble of predictions

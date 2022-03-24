@@ -1,5 +1,6 @@
 # clean_qualtrics_by_log(d, log)
 # Used by cln_ scripts to clean Qualtrics files based on entries in a data log
+require(lubridate)
 
 clean_qualtrics_by_log <- function(d, log){
   

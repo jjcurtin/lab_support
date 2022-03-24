@@ -68,6 +68,7 @@ clean_qualtrics_by_log <- function(d, log){
     
     # assign new value with correct class
     if (is_double(d[[i_data, log_var_name]])) d[[i_data, log_var_name]] <- as.double(log_change$new_value[i_log])
+    if (is_integer(d[[i_data, log_var_name]])) d[[i_data, log_var_name]] <- as.integer(log_change$new_value[i_log])
     if (is_character(d[[i_data, log_var_name]])) d[[i_data, log_var_name]] <- as.character(log_change$new_value[i_log])
     if (is.POSIXt(d[[i_data, log_var_name]])) d[[i_data, log_var_name]] <- as_datetime(log_change$new_value[i_log])
   }

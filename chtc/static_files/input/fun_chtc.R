@@ -493,7 +493,7 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
   
   if (best_model$algorithm == "random_forest") {
     
-    # fit model on feat_in with best_model hyperparemeter values 
+    # fit model on feat_in with best_model hyperparameter values 
     models <- rand_forest(mtry = best_model$hp1,
                          min_n = best_model$hp2,
                          trees = best_model$hp3) %>%
@@ -555,3 +555,48 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
   }
 }
 
+fit_best_model <- function(best_model, rec, d) {
+  
+  # make features for full dataset
+  feat <- rec %>% 
+    prep(training = d, strings_as_factors = FALSE) %>% 
+    bake(new_data = NULL)
+  
+  if (best_model$algorithm == "glmnet") {
+    
+    fit_best <- logistic_reg(penalty = best_model$hp2,
+                           mixture = best_model$hp1) %>%
+      set_engine("glmnet") %>%
+      set_mode("classification") %>%
+      fit(y ~ ., data = feat)
+    
+    return(fit_best)
+  }
+  
+  if (best_model$algorithm == "random_forest") {
+    
+    fit_best <- rand_forest(mtry = best_model$hp1,
+                          min_n = best_model$hp2,
+                          trees = best_model$hp3) %>%
+      set_engine("ranger",
+                 importance = "impurity_corrected",
+                 respect.unordered.factors = "order",
+                 oob.error = FALSE,
+                 seed = 102030) %>%
+      set_mode("classification") %>%
+      fit(y ~ ., data = feat)
+    
+    
+    return(fit_best)
+  }
+  
+  if (best_model$algorithm == "knn") {
+    
+    fit_best <- nearest_neighbor(neighbors = best_model$hp1) %>% 
+      set_engine("kknn") %>% 
+      set_mode("classification") %>% 
+      fit(y ~ ., data = feat)
+    
+    return(fit_best)
+  }
+}

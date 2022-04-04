@@ -337,7 +337,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                          min_n = job$hp2,
                          trees = job$hp3) %>%
       set_engine("ranger",
-                 importance = "impurity",
+                 importance = "none",
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%
@@ -498,7 +498,7 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                          min_n = best_model$hp2,
                          trees = best_model$hp3) %>%
       set_engine("ranger",
-                 importance = "impurity",
+                 importance = "none",
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%

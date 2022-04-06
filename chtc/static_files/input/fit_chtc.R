@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   require(vroom) 
   require(tidyr)
   require(stringr)
+  require(readr)
 }) 
 source("fun_chtc.R")
 source("training_controls.R")

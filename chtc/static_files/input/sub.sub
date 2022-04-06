@@ -9,7 +9,6 @@ arguments = $(JobNum)
 
 log = $(Cluster).log
 error = error/$(Cluster)_$(JobNum).err
-output = output/$(Cluster)_$(JobNum).out
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT

@@ -71,8 +71,7 @@ build_recipe <- function(d, job) {
   
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
-    update_role(subid, dttm_label, new_role = "id variable") %>%
-    step_rm(label_num) %>% 
+    step_rm(label_num, subid, dttm_label) %>% 
     step_string2factor(y, levels = c("no", "yes")) %>% 
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%

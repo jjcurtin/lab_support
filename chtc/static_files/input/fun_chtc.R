@@ -255,20 +255,29 @@ make_splits <- function(d, cv_type, group = NULL) {
     # add bootstap splits here
   }
   
-  # kfold splits
-  if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
-    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+  
+  # get n_folds and n_repeats if any type of kfold
+  if (str_detect(cv_type, "kfold")) {
+    n_folds <- cv_type %>% 
+      str_extract("_x_\\d{1,2}") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
     
+    n_repeats <- cv_type %>% 
+      str_extract("\\d{1,3}_x_") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
+  }
+  
+  # standard kfold
+  if (str_detect(cv_type, "^kfold")) {  # starts with kfold
     splits <- d %>% 
       vfold_cv(v = n_folds, repeats = n_repeats) 
+  }
     
-    # grouped kfold splits 
-    # must specify grouping variable in training_controls.R
-  } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
-    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][4])
-    
+  # grouped kfold
+  if (str_detect(cv_type, "group")) {
+
     for (i in 1:n_repeats) {
       split <- d %>% 
         group_vfold_cv(group = all_of(group), v = n_folds) %>% 
@@ -285,7 +294,21 @@ make_splits <- function(d, cv_type, group = NULL) {
   return(splits)
 }
 
-
+make_rset <- function(folds, n_repeat, n_fold, cv_type) {
+# used to make an rset object that contains a single split for use in tuning glmnet on CHTC  
+  
+  n_folds <- cv_type %>% 
+    str_extract("_x_\\d{1,2}") %>% 
+    str_remove("_x_") %>% 
+    as.numeric()
+  
+  fold_index <- n_fold + (n_repeat - 1) * n_folds
+  
+  
+  fold <- folds[fold_index, ]
+  rset <- manual_rset(fold$splits, fold$id)
+  return(rset)
+}
 
 tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
@@ -393,13 +416,12 @@ make_features <- function(job, folds, rec, cv_type) {
   
   if (cv_type != "boot") {
     
-    n_repeats <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
-    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
-    }
+    n_folds <- cv_type %>% 
+      str_extract("_x_\\d{1,2}") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
     
-    fold_index <- job$n_fold + (job$n_repeat - 1) * n_repeats
+    fold_index <- job$n_fold + (job$n_repeat - 1) * n_folds
     
     d_in <- analysis(folds$splits[[fold_index]])
     d_out <- assessment(folds$splits[[fold_index]])

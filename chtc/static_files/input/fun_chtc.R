@@ -320,12 +320,15 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     # use whole dataset (all folds)
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
+    # make rset for single held-in/held_out split
+    split <- make_rset(folds, job$n_repeat, job$n_fold, cv_type)
+    
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
       set_mode("classification") %>%
       tune_grid(preprocessor = rec,
-                resamples = folds,
+                resamples = split,
                 grid = grid_penalty,
                 # metrics assume that positive event it first level
                 # make sure this is true in recipe
@@ -333,15 +336,23 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                                      sens, yardstick::spec, ppv, npv))
     
     # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(penalty, .metric, .estimator) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
-      select(hp2 = penalty, .metric, mean) %>% 
-      pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>% 
+    # results <- collect_metrics(models) %>%
+    #   # summarise across repeats
+    #   group_by(penalty, .metric, .estimator) %>% 
+    #   summarise(mean = mean(mean), .groups = "drop") %>% 
+    #   select(hp2 = penalty, .metric, mean) %>% 
+    #   pivot_wider(., names_from = ".metric",
+    #               values_from = "mean") %>% 
+    #   relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+    #   bind_cols(job %>% select(-hp2), .) %>% 
+    #   relocate(hp2, .before = hp3) 
+    
+    results <- collect_metrics(models, summarise = FALSE) %>% 
+      rename(hp2 = penalty) %>% 
+      pivot_wider(., names_from = "metric",
+                  values_from = "estimate") %>%   
       relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job %>% select(-hp2), .) %>% 
+      bind_cols(job, .) %>% 
       relocate(hp2, .before = hp3) 
     
     return(results)

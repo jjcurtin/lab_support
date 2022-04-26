@@ -246,8 +246,6 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 
 
 
-# KW: I added functionality for kfold and group_kfold - just needs bootstrap.
-
 make_splits <- function(d, cv_type, group = NULL) {
   
   # d: (training) dataset to be resampled 
@@ -274,7 +272,8 @@ make_splits <- function(d, cv_type, group = NULL) {
     for (i in 1:n_repeats) {
       split <- d %>% 
         group_vfold_cv(group = all_of(group), v = n_folds) %>% 
-        mutate(n_repeat = i)
+        mutate(id = str_replace(id, "Resample", "Fold"),
+               id = str_c(str_c("Repeat", i), " ", id))
       
       splits <- if (i == 1)
         split

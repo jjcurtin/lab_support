@@ -35,7 +35,7 @@ d <- d %>%
 
 # create splits object ---------------
 set.seed(102030)
-splits <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
+splits <- if (str_detect(cv_type, "group")) {
   make_splits(d = d, cv_type = cv_type, group = group)
 } else { 
   make_splits(d = d, cv_type = cv_type)

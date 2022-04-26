@@ -273,7 +273,7 @@ make_splits <- function(d, cv_type, group = NULL) {
       split <- d %>% 
         group_vfold_cv(group = all_of(group), v = n_folds) %>% 
         mutate(id = str_replace(id, "Resample", "Fold"),
-               id = str_c(str_c("Repeat", str_pad(i, 2, "left", "0")), " ", id))
+               id = str_c(str_c("Repeat", str_pad(i, 2, "left", "0")), " ", id))  # assumes repeats < 100
       
       splits <- if (i == 1)
         split

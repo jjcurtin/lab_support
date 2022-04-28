@@ -87,6 +87,15 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
                                 resample)      
+      } else if (i == "xgboost") {
+        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
+                                n_fold = 1:cv_folds,
+                                algorithm = "xgboost",
+                                feature_set,
+                                hp1 = hp1_xgboost,
+                                hp2 = hp2_xgboost,
+                                hp3 = hp3_xgboost,
+                                resample)      
       }
       
       # bind jobs files
@@ -129,8 +138,16 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
                                 hp2 = NA_integer_,
                                 hp3 = NA_integer_,
                                 resample)      
+      } else if (i == "xgboost") {
+        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
+                                n_fold = NA_integer_,
+                                algorithm = "xgboost",
+                                feature_set,
+                                hp1 = hp1_xgboost,
+                                hp2 = hp2_xgboost,
+                                hp3 = hp3_xgboost,
+                                resample)   
       }
-      
       # bind jobs files
       jobs <- if (i == algorithm[1])
         jobs_tmp

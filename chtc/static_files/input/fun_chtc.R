@@ -354,6 +354,34 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     return(results)
   }
   
+  if (job$algorithm == "xgboost") {
+    
+    # extract fold associated with this job - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    # fit model on feat_in with job hyperparameter values 
+    model <- boost_tree(learn_rate = job$hp1,
+                        tree_depth = job$hp2,
+                        mtry = job$hp3,
+                        stop_iter = 50) %>% 
+      set_engine("xgboost",
+                 validation = 0.2) %>% 
+      set_mode("classification") %>%
+      fit(y ~ ., data = feat_in)
+    
+    # use get_metrics function to get a tibble that shows performance metrics
+    results <- get_metrics(model = model, feat_out = feat_out) %>% 
+      pivot_wider(., names_from = "metric",
+                  values_from = "estimate") %>%   
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+      bind_cols(job, .) 
+    
+    return(results)
+  }
+  
   if (job$algorithm == "knn") {
     # extract single fold associated with job
     features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)

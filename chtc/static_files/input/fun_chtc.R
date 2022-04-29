@@ -1,4 +1,4 @@
-suppressPackageStartupMessages({
+suppressWarnings(suppressPackageStartupMessages({
   require(dplyr)
   require(recipes)
   require(parsnip)
@@ -13,7 +13,7 @@ suppressPackageStartupMessages({
   require(kknn)
   require(vip)
   require(vroom)
-})
+}))
 
 
 # JC general notes.  Need to make assumption about outcome name or else pass it in as string

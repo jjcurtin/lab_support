@@ -176,18 +176,21 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
   # copy data to input folder as data_trn -----------------
-  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
-  if (length(chunks) == 2) {
-    fn <- str_c("data_trn.", chunks[[2]])
-  } else {
-    fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
-  }
-  check_copy <- file.copy(from = file.path(path_data, data_trn),
-                          to = file.path(path_jobs, name_job, "input", fn),
-                          overwrite = overwrite_jobs)
-  if (!check_copy) {
-    stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
-  }
+  # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
+  if(!is.null(data_trn)){
+    chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
+    if (length(chunks) == 2) {
+      fn <- str_c("data_trn.", chunks[[2]])
+    } else {
+      fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+    }
+    check_copy <- file.copy(from = file.path(path_data, data_trn),
+                            to = file.path(path_jobs, name_job, "input", fn),
+                            overwrite = overwrite_jobs)
+    if (!check_copy) {
+      stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
+    }
+  } else fn <- NULL # set to NULL because you do not want this written out in submit file
   
   # copy study specific training_controls to input folder -----------------
   check_copy <-file.copy(from = file.path(path_training_controls),
@@ -212,7 +215,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                           paste(tar, collapse = ', '), 
-                          ", fun_chtc.R, fit_chtc.R, training_controls.R, ", fn, ", jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
+                          ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add max idle jobs

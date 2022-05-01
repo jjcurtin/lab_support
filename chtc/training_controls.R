@@ -72,7 +72,7 @@ build_recipe <- function(d, job) {
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
     step_rm(label_num, subid, dttm_label) %>% 
-    step_string2factor(y, levels = c("no", "yes")) %>% 
+    step_string2factor(y, levels = c("yes", "no")) %>% # positive case should be first
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
     step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",

@@ -61,8 +61,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     
     for (i in algorithm) {
       if (i == "glmnet") { 
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
+        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
+                                n_fold = 1:cv_folds,
                                 algorithm = "glmnet",
                                 feature_set,
                                 hp1 = hp1_glmnet,

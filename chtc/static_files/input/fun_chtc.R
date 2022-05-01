@@ -61,8 +61,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     
     for (i in algorithm) {
       if (i == "glmnet") { 
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
+        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
+                                n_fold = 1:cv_folds,
                                 algorithm = "glmnet",
                                 feature_set,
                                 hp1 = hp1_glmnet,
@@ -272,20 +272,29 @@ make_splits <- function(d, cv_type, group = NULL) {
     # add bootstap splits here
   }
   
-  # kfold splits
-  if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
-    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+  
+  # get n_folds and n_repeats if any type of kfold
+  if (str_detect(cv_type, "kfold")) {
+    n_folds <- cv_type %>% 
+      str_extract("_x_\\d{1,2}") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
     
+    n_repeats <- cv_type %>% 
+      str_extract("\\d{1,3}_x_") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
+  }
+  
+  # standard kfold
+  if (str_detect(cv_type, "^kfold")) {  # starts with kfold
     splits <- d %>% 
       vfold_cv(v = n_folds, repeats = n_repeats) 
+  }
     
-    # grouped kfold splits 
-    # must specify grouping variable in training_controls.R
-  } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-    n_repeats <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
-    n_folds <- as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][4])
-    
+  # grouped kfold
+  if (str_detect(cv_type, "group")) {
+
     for (i in 1:n_repeats) {
       split <- d %>% 
         group_vfold_cv(group = all_of(group), v = n_folds) # %>% 
@@ -302,7 +311,21 @@ make_splits <- function(d, cv_type, group = NULL) {
   return(splits)
 }
 
-
+make_rset <- function(folds, n_repeat, n_fold, cv_type) {
+# used to make an rset object that contains a single split for use in tuning glmnet on CHTC  
+  
+  n_folds <- cv_type %>% 
+    str_extract("_x_\\d{1,2}") %>% 
+    str_remove("_x_") %>% 
+    as.numeric()
+  
+  fold_index <- n_fold + (n_repeat - 1) * n_folds
+  
+  
+  fold <- folds[fold_index, ]
+  rset <- manual_rset(fold$splits, fold$id)
+  return(rset)
+}
 
 tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
@@ -314,27 +337,28 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     # use whole dataset (all folds)
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
+    # make rset for single held-in/held_out split
+    split <- make_rset(folds, job$n_repeat, job$n_fold, cv_type)
+    
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
       set_mode("classification") %>%
       tune_grid(preprocessor = rec,
-                resamples = folds,
+                resamples = split,
                 grid = grid_penalty,
                 # metrics assume that positive event it first level
                 # make sure this is true in recipe
                 metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv))
     
-    # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(penalty, .metric, .estimator) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
-      select(hp2 = penalty, .metric, mean) %>% 
+    # create tibble of penalty and metrics returned 
+    results <- collect_metrics(models, summarize = FALSE) %>% 
+      rename(hp2 = penalty) %>% 
+      select(hp2, .metric, .estimate) %>% # use select to drop extra cols (.estimator, n, std_err, .config)
       pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>% 
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+                  values_from = ".estimate") %>%  
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
       bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
@@ -438,13 +462,12 @@ make_features <- function(job, folds, rec, cv_type) {
   
   if (cv_type != "boot") {
     
-    n_repeats <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
-    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
-    }
+    n_folds <- cv_type %>% 
+      str_extract("_x_\\d{1,2}") %>% 
+      str_remove("_x_") %>% 
+      as.numeric()
     
-    fold_index <- job$n_fold + (job$n_repeat - 1) * n_repeats
+    fold_index <- job$n_fold + (job$n_repeat - 1) * n_folds
     
     d_in <- analysis(folds$splits[[fold_index]])
     d_out <- assessment(folds$splits[[fold_index]])

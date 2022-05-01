@@ -335,24 +335,14 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
                 metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv))
     
-    # create tibble of penalty and metrics returned (avg over 10 folds for each penalty)
-    # results <- collect_metrics(models) %>%
-    #   # summarise across repeats
-    #   group_by(penalty, .metric, .estimator) %>% 
-    #   summarise(mean = mean(mean), .groups = "drop") %>% 
-    #   select(hp2 = penalty, .metric, mean) %>% 
-    #   pivot_wider(., names_from = ".metric",
-    #               values_from = "mean") %>% 
-    #   relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-    #   bind_cols(job %>% select(-hp2), .) %>% 
-    #   relocate(hp2, .before = hp3) 
-    
-    results <- collect_metrics(models, summarise = FALSE) %>% 
+    # create tibble of penalty and metrics returned 
+    results <- collect_metrics(models, summarize = FALSE) %>% 
       rename(hp2 = penalty) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) %>% 
+      select(hp2, .metric, .estimate) %>% # use select to drop extra cols (.estimator, n, std_err, .config)
+      pivot_wider(., names_from = ".metric",
+                  values_from = ".estimate") %>%  
+      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
+      bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
     return(results)

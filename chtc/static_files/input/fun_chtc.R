@@ -214,9 +214,16 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # update submit file from training controls -----------------
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
-                          paste(tar, collapse = ', '), 
-                          ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+                              paste(tar, collapse = ', '), 
+                              ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+  
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  
+  # add staging requirement if data_trn is null
+  if(is.null(data_trn)) {
+    staging_req <- str_c("Requirements = (Target.HasCHTCStaging == true)")
+    write(staging_req, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  } 
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)

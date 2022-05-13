@@ -222,7 +222,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # add requirement for loading glmnet/xgboost
   # also add staging requirement if data_trn is null
   if(is.null(data_trn)) {
-    staging_req <- str_c("Requirements = Target.HasCHTCStaging == true && HasChtcSoftware == true")
+    staging_req <- str_c("Requirements = (Target.HasCHTCStaging == true) && (HasChtcSoftware == true)")
     write(staging_req, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   } else {
     staging_req <- str_c("Requirements = (HasChtcSoftware == true)")

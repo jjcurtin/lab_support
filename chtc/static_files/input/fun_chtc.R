@@ -219,11 +219,15 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
-  # add staging requirement if data_trn is null
+  # add requirement for loading glmnet/xgboost
+  # also add staging requirement if data_trn is null
   if(is.null(data_trn)) {
-    staging_req <- str_c("Requirements = (Target.HasCHTCStaging == true)")
+    staging_req <- str_c("Requirements = Target.HasCHTCStaging == true && HasChtcSoftware == true")
     write(staging_req, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
-  } 
+  } else {
+    staging_req <- str_c("Requirements = (HasChtcSoftware == true)")
+    write(staging_req, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  }
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)

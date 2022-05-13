@@ -19,6 +19,10 @@ export PATH=$(pwd)/R/bin:$PATH
 export RHOME=$(pwd)/R
 export R_LIBS=$PWD/packages
 
+# Commands to enable modules, and then load an appropriate module (necessary to load glmnet and xgboost)
+export PATH ./etc/profile.d/modules.sh 
+module load GCC/8.3.0
+
 #run R script, passing in args
 Rscript fit_chtc.R $1
 

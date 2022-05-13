@@ -8,6 +8,11 @@
 # Therefore it is recommended you make your jobs and then drag the renamed data_trn file to the transfer server on WinSCP
 # cp /staging/username/data_trn.rds.xz ./
 
+# Commands to enable modules, and then load an appropriate module (necessary to load glmnet and xgboost)
+export PATH 
+. /etc/profile.d/modules.sh 
+module load GCC/8.3.0
+
 #untar R installation
 tar -xzf R402.tar.gz
 tar -xzf SLIBS.tar.gz
@@ -18,10 +23,6 @@ export LD_LIBRARY_PATH=$(pwd)/SS:$LD_LIBRARY_PATH
 export PATH=$(pwd)/R/bin:$PATH
 export RHOME=$(pwd)/R
 export R_LIBS=$PWD/packages
-
-# Commands to enable modules, and then load an appropriate module (necessary to load glmnet and xgboost)
-export PATH ./etc/profile.d/modules.sh 
-module load GCC/8.3.0
 
 #run R script, passing in args
 Rscript fit_chtc.R $1

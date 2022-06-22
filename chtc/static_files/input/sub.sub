@@ -3,12 +3,10 @@ universe = vanilla
 requirements = (OpSysMajorVer == 7)
 
 executable = execute.sh
-plusone = $(Process) + 1
-JobNum= $INT(plusone,%d)
-arguments = $(JobNum)
+arguments = $(job_num)
 
 log = $(Cluster).log
-error = error/err_$(JobNum).err
+error = error/err_$(job_num).err
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT

@@ -175,6 +175,12 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   jobs %>% 
     vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
+  # write text file of job nums to read into CHTC with submit script (for naming error files)
+  jobs %>% 
+    select(job_num) %>% 
+    write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), col_names = FALSE)
+    
+  
   # copy data to input folder as data_trn -----------------
   # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
   if(!is.null(data_trn)){
@@ -254,23 +260,9 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   write(glide_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add queue
-  queue_str <- str_c("queue ", nrow(jobs))
+  queue_str <- str_c("queue job_num from job_nums.txt")
   write(queue_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
-  # copy template aggregate script to output folder ---------------
-  check_copy <- file.copy(from = file.path(path_templates, "output", "post_chtc_processing_1.Rmd"),
-            to = file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"),
-            overwrite = overwrite_jobs) 
-  if (!check_copy) {
-    stop("Aggregate script not copied to output folder. Make sure you are running mak_jobs in an R project.")
-  }
-  
-  # Add source path for training_controls in post_processing Rmd
-  write(str_c("source('", path_training_controls, "')"), file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"), append = TRUE)
-  
-  file.append(file.path(path_jobs, name_job, "output", "post_chtc_processing.Rmd"),
-              file.path(path_templates, "output", "post_chtc_processing_2.Rmd")) %>% 
-    invisible()
 }
 
 

@@ -22,16 +22,10 @@ suppressWarnings(suppressPackageStartupMessages({
 
 
 # Can also have a Rmd script that takes all results and selects best model configuration 
-# and also displays hyperparameter plots - currently called post_chtc_processing.Rmd 
+# and also displays hyperparameter plots 
+# KW: currently called mak_training_metrics in scripts_parameterized 
 
-
-
-# NOTE: Currently glmnet does not have separate folds/splits - training function takes in whole splits
-# object and tunes for lambda using hyperparameters in training_controls.R
-
-# FIX: change collect_metrics to summarize = FALSE in tune_model for glmnet so that all 
-# fold estimates get returned. Need to test that results tibble still matches what is 
-# returned with collect_metrics. 
+ 
 
 # Only need to supply hyperparameters in training_controls.R for algorithms being used 
 make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
@@ -340,7 +334,6 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
   # rec: recipe (created manually or via build_recipe() function)
   
   if (job$algorithm == "glmnet") {
-    # use whole dataset (all folds)
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # make rset for single held-in/held_out split

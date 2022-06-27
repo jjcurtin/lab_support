@@ -221,7 +221,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   } else {
     transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                                 paste(tar, collapse = ', '), ", ", fn,
-                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
   }
     
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)

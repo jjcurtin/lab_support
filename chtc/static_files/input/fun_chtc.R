@@ -213,10 +213,17 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   
   # update submit file from training controls -----------------
   # add files to transfer
-  transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
-                              paste(tar, collapse = ', '), 
-                              ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
-  
+  if(is.null(data_trn)) {
+    # don't add data_trn to transfer riles if staging
+    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
+                                paste(tar, collapse = ', '), 
+                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+  } else {
+    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
+                                paste(tar, collapse = ', '), ", ", fn,
+                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+  }
+    
   write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
   # add requirement for loading glmnet/xgboost

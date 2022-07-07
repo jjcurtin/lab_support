@@ -413,6 +413,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     model <- boost_tree(learn_rate = job$hp1,
                         tree_depth = job$hp2,
                         mtry = job$hp3,
+                        trees = 1000,  # set high but use early stopping
                         stop_iter = 50) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
@@ -601,9 +602,10 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
   if (best_model$algorithm == "xgboost") {
     
     # fit model on feat_in with best_model hyperparameter values 
-    models <- boost_tree(learn_rate = job$hp1,
-                        tree_depth = job$hp2,
-                        mtry = job$hp3,
+    models <- boost_tree(learn_rate = best_model$hp1,
+                        tree_depth = best_model$hp2,
+                        mtry = best_model$hp3,
+                        trees = 1000,  # set high but use early stopping
                         stop_iter = 50) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 

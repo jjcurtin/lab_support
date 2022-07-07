@@ -13,4 +13,5 @@ names <- tibble(fn = list.files()) %>%   # could restrict list.files() to some p
   glimpse()
 
 # rename files.  Should return TRUE for all files
-file.rename(names$orig, names$new)
+file.rename(names$orig, names$new) %>% 
+  sum()

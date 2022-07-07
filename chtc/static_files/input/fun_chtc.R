@@ -699,6 +699,21 @@ fit_best_model <- function(best_model, rec, d) {
     return(fit_best)
   }
   
+  if (best_model$algorithm == "xgboost") {
+    
+    fit_best <- boost_tree(learn_rate = best_model$hp1,
+                           tree_depth = best_model$hp2,
+                           mtry = best_model$hp3,
+                           trees = 1000,  # set high but use early stopping
+                           stop_iter = 50) %>% 
+      set_engine("xgboost",
+                 validation = 0.2) %>% 
+      set_mode("classification") %>%
+      fit(y ~ ., data = feat)
+    
+    return(fit_best)
+  }
+  
   if (best_model$algorithm == "knn") {
     
     fit_best <- nearest_neighbor(neighbors = best_model$hp1) %>% 

@@ -598,6 +598,40 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
     return(list(results, predictions, models))
   }
   
+  if (best_model$algorithm == "xgboost") {
+    
+    # fit model on feat_in with best_model hyperparameter values 
+    models <- boost_tree(learn_rate = job$hp1,
+                        tree_depth = job$hp2,
+                        mtry = job$hp3,
+                        stop_iter = 50) %>% 
+      set_engine("xgboost",
+                 validation = 0.2) %>% 
+      set_mode("classification") %>%
+      fit_resamples(preprocessor = rec,
+                    resamples = folds,
+                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
+                                         sens, yardstick::spec, ppv, npv),
+                    control = ctrl)
+    
+    results <- collect_metrics(models) %>%
+      # summarise across repeats
+      group_by(.metric, .estimator, .config) %>% 
+      summarise(mean = mean(mean), .groups = "drop") %>% 
+      pivot_wider(., names_from = ".metric",
+                  values_from = "mean") %>%
+      select(-.estimator) %>% 
+      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
+    
+    
+    # Create a tibble of predictions
+    predictions <- collect_predictions(models)
+    
+    return(list(results, predictions, models))
+    
+  }
+  
+  
   if (best_model$algorithm == "knn") {
     
     # fit model - best_model provides number of neighbors

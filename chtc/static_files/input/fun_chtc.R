@@ -413,8 +413,8 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     model <- boost_tree(learn_rate = job$hp1,
                         tree_depth = job$hp2,
                         mtry = job$hp3,
-                        trees = 1000,  # set high but use early stopping
-                        stop_iter = 50) %>% 
+                        trees = 500,  # set high but use early stopping
+                        stop_iter = 25) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode("classification") %>%
@@ -605,8 +605,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
     models <- boost_tree(learn_rate = best_model$hp1,
                         tree_depth = best_model$hp2,
                         mtry = best_model$hp3,
-                        trees = 1000,  # set high but use early stopping
-                        stop_iter = 50) %>% 
+                        trees = 500,  # set high but use early stopping
+                        stop_iter = 25) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode("classification") %>%
@@ -704,8 +704,8 @@ fit_best_model <- function(best_model, rec, d) {
     fit_best <- boost_tree(learn_rate = best_model$hp1,
                            tree_depth = best_model$hp2,
                            mtry = best_model$hp3,
-                           trees = 1000,  # set high but use early stopping
-                           stop_iter = 50) %>% 
+                           trees = 500,  # set high but use early stopping
+                           stop_iter = 25) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode("classification") %>%

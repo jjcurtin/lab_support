@@ -531,7 +531,9 @@ get_metrics <- function(model, feat_out) {
   return(model_metrics)
 }
 
-tune_best_model <- function(best_model, rec, folds, cv_type) {
+eval_best_model <- function(best_model, rec, folds) {
+# evaluates best model configuration using resamples of data contained in folds.
+  
   
   # control grid to save predictions
   ctrl <- control_resamples(save_pred = TRUE, event_level = "first",  
@@ -548,22 +550,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)
-    
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(.metric, .estimator, .config) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
-      pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>%
-      select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
-    
-    
-    # Create a tibble of predictions
-    predictions <- collect_predictions(models)
-    
-    return(list(results, predictions, models))
   }
+
   
   if (best_model$algorithm == "random_forest") {
     
@@ -582,22 +570,8 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)
-    
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(.metric, .estimator, .config) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
-      pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>%
-      select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
-    
-    
-    # Create a tibble of predictions
-    predictions <- collect_predictions(models)
-    
-    return(list(results, predictions, models))
   }
+
   
   if (best_model$algorithm == "xgboost") {
     
@@ -615,22 +589,6 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                          sens, yardstick::spec, ppv, npv),
                     control = ctrl)
-    
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(.metric, .estimator, .config) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
-      pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>%
-      select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
-    
-    
-    # Create a tibble of predictions
-    predictions <- collect_predictions(models)
-    
-    return(list(results, predictions, models))
-    
   }
   
   
@@ -646,13 +604,11 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)
+  }
     
-    results <- collect_metrics(models) %>%
-      # summarise across repeats
-      group_by(.metric, .estimator, .config) %>% 
-      summarise(mean = mean(mean), .groups = "drop") %>% 
+    results <- collect_metrics(models, summarize = FALSE) %>%
       pivot_wider(., names_from = ".metric",
-                  values_from = "mean") %>%
+                  values_from = ".estimate") %>%
       select(-.estimator) %>% 
       bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
     
@@ -661,7 +617,7 @@ tune_best_model <- function(best_model, rec, folds, cv_type) {
     predictions <- collect_predictions(models)
     
     return(list(results, predictions, models))
-  }
+
 }
 
 fit_best_model <- function(best_model, rec, d) {

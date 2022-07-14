@@ -4,37 +4,54 @@
 # DO NOT EDIT DIRECTLY IN THIS SCRIPT - this script serves as a template with all 
 # possible parameters specified/demo'd
 
+#EDIT THIS
+study <- "messages"
+data_type <- "all"   # but still need to change more (e.g., feature set) to switch data_type
+window <- "1week"
+lead <- 0
+version <- "v1"
+algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
+
+
+
 
 # SET GLOBAL PARAMETERS --------
-data_trn <- "features_all_aggregate.csv" # can be csv or rds file, set to NULL if using staging file
-name_job <- "test" # the name of the job to set folder names
-feature_set <- c("feat_baseline_id", "feat_baseline_temporal", "feat_all", "feat_all_passive", "feat_logs") # 1+ feature sets
-algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
-resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none)
-# all resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
+feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
+data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz")
+resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
 cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
 # format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
-# determine where to pass in global cv_type parameter
 group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
 remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
 
-# CHANGE ALGORITHM-SPECIFIC HYPERPARAMETERS -------------------
-# Can remove or comment out hyperparameter variables if not using the algorithm 
-# if using the algorithm, you must provide the associated hyperparameters
-hp1_glmnet <- c(0.05, seq(.1, 1, length.out = 11)) # alpha (mixture) 
+
+# SET STUDY PATHS
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm) # the name of the job to set folder names
+path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
+path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
+path_project <- "./meta/ana_scripts"   # NULL if using staging data
+
+
+# SET ALGORITHM-SPECIFIC HYPERPARAMETERS
+hp1_glmnet <- c(0.05, seq(.1, 1, length.out = 10)) # alpha (mixture)
 hp2_glmnet_min <- -8 # min for penalty grid - will be passed into exp(seq(min, max, length.out = out))
 hp2_glmnet_max <- 2 # max for penalty grid
-hp2_glmnet_out <- 100 # length of penalty grid
-hp1_knn <- seq(5, 75, length.out = 15) # neighbors (must be integer)
-hp1_rf <- c(5, 10, 20, 50) # mtry (p/3 for reg or square root of p for class)
-hp2_rf <- c(2, 10, 20) # min_n
-hp3_rf <- 2800 # trees (10 x's number of predictors)
+hp2_glmnet_out <- 200 # length of penalty grid
 
-# CHANGE STUDY PATHS -------------------- 
-path_jobs <- "P:/studydata/risk/chtc/meta/jobs/training" # location of where you want your jobs to be setup
-path_data <- "P:/studydata/risk/data_processed/meta/features" # location of data set, NULL if using staging data
-path_project <- "./meta/ana_scripts"
+hp1_knn <- seq(5, 255, length.out = 26) # neighbors (must be integer)
+
+hp1_rf <- c(2, 10, 20, 30, 40) # mtry (p/3 for reg or square root of p for class)
+hp2_rf <- c(2, 15, 30) # min_n
+hp3_rf <- 1500 # trees (10 x's number of predictors)
+
+hp1_xgboost <- c(0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, .4)  # learn_rate
+hp2_xgboost <- c(1, 2, 3, 4) # tree_depth
+hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not needed)
+# trees = 100
+# early stopping = 10
+
+
 
 # CHANGE CHTC SPECIFIC CONTROLS
 tar <- c("chtc_train.tar.gz", "meta.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 

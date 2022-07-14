@@ -10,7 +10,7 @@ data_type <- "all"   # but still need to change more (e.g., feature set) to swit
 window <- "1week"
 lead <- 0
 version <- "v1"
-algorithm <- c("glmnet", "knn", "random_forest") # 1+ algorithm (glmnet, random_forest) 
+algorithm <- c("glmnet", "knn", "random_forest", "xgboost") # 1+ algorithm (glmnet, random_forest) 
 
 
 

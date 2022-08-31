@@ -317,7 +317,23 @@ make_splits <- function(d, cv_type, group = NULL) {
       nested_cv(outside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) , 
                 inside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)))
     
-    
+    # get train/test for outer loop fold 1
+    # out1_train <- training(splits$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # out1_test <- testing(splits$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # # get inner splits for outer loop fold 1
+    # out1_inners <- splits$inner_resamples[[1]] %>% 
+    #   glimpse
+    # 
+    # # get inner train/test fold 1 for outer fold 2
+    # out2_inner1_train <- training(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+    #  glimpse
   }
   
   return(splits)

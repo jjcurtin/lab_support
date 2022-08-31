@@ -306,6 +306,20 @@ make_splits <- function(d, cv_type, group = NULL) {
       group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) 
   }
   
+  # nested kfold
+  if (str_detect(cv_type, "nested")) {
+    
+    # TEMP LIMIT OF NESTED TO 1X10FOLD CV FOR INNER AND OUTER
+    n_folds <- 10
+    n_repeats <- 1
+    
+    splits <- d %>% 
+      nested_cv(outside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) , 
+                inside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)))
+    
+    
+  }
+  
   return(splits)
 }
 

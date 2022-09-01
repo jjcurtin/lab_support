@@ -307,7 +307,7 @@ make_splits <- function(d, cv_type, group = NULL) {
   }
   
   # nested kfold
-  if (str_detect(cv_type, "nested")) {
+  if (str_detect(cv_type, " ")) {
     
     # TEMP LIMIT OF NESTED TO 1X10FOLD CV FOR INNER AND OUTER
     n_folds <- 10

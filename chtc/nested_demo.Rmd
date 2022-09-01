@@ -1,0 +1,39 @@
+---
+title: "Nested demo"
+author: "Kendra Wyant"
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+output: html_document
+---
+
+Libraries and source functions
+```{r}
+suppressWarnings(suppressPackageStartupMessages({
+  require(dplyr)
+  require(vroom) 
+  require(tidyr)
+  require(stringr)
+  require(readr)
+})) 
+
+source("../lab_support/chtc/static_files/fun_chtc.R")
+```
+
+
+Load fake data for demo
+```{r}
+d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(100), x2 = rnorm(100), y = rbinom(100,1,.5))
+```
+
+Training control info
+```{r}
+cv_type <- "nested" # change variable name to resample_type? Values can be boot, kfold, or nested
+inner_resample <- "1_x_10" # can also be "boot"
+outer_resample <- "1_x_10" 
+group <- "subid" # NULL if not grouping
+```
+
+Make splits
+```{r}
+
+```
+

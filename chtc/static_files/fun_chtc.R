@@ -281,38 +281,32 @@ make_splits <- function(d, cv_type, group = NULL) {
   
   
   # get n_folds and n_repeats if any type of kfold
-  if (str_detect(cv_type, "kfold")) {
-    n_folds <- cv_type %>% 
-      str_extract("_x_\\d{1,2}") %>% 
-      str_remove("_x_") %>% 
-      as.numeric()
+  # if (str_detect(cv_type, "kfold")) {
+  #   n_folds <- cv_type %>% 
+  #     str_extract("_x_\\d{1,2}") %>% 
+  #     str_remove("_x_") %>% 
+  #     as.numeric()
+  #   
+  #   n_repeats <- cv_type %>% 
+  #     str_extract("\\d{1,3}_x_") %>% 
+  #     str_remove("_x_") %>% 
+  #     as.numeric()
+  # }
+  
     
-    n_repeats <- cv_type %>% 
-      str_extract("\\d{1,3}_x_") %>% 
-      str_remove("_x_") %>% 
-      as.numeric()
+  # kfold - includes grouped, and repeated kfold
+  if (cv_type == "kfold") {
+    if (!is.null(group)) {
+      splits <- d %>% 
+        group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) 
+    } else {
+      splits <- d %>% 
+        vfold_cv(v = n_folds, repeats = n_repeats) 
+    }
   }
   
-  # standard kfold
-  if (str_detect(cv_type, "^kfold")) {  # starts with kfold
-    splits <- d %>% 
-      vfold_cv(v = n_folds, repeats = n_repeats) 
-  }
+  if (cv_type == "nested") {
     
-  # grouped kfold
-  if (str_detect(cv_type, "group")) {
-
-    for (i in 1:n_repeats) {
-      split <- d %>% 
-        group_vfold_cv(group = all_of(group), v = n_folds) # %>% 
-        # mutate(id = str_replace(id, "Resample", "Fold"),
-        #        id = str_c(str_c("Repeat", str_pad(i, 2, "left", "0")), " ", id))  # assumes repeats < 100
-      
-      splits <- if (i == 1)
-        split
-      else
-        rbind(splits, split)
-    } 
   }
   
   return(splits)

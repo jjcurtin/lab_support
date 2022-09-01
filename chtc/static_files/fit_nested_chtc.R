@@ -32,16 +32,17 @@ job <- jobs %>%
 # # Set outcome variable to y
 # d <- d %>% 
 #   rename(y = {{y_col_name}})
-
+ 
 # TEMP FAKE DATA and stuff from training controls
-d <- tibble(subid = sort(rep(1:10, times = 10)), x1 = rnorm(100), x2 = rnorm(100), y = rbinom(100,1,.5))
+d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
+
 # START WITH THINKING ABOUT NAMES FOR THIS TYPE OF CV
-cv_type <- "group_nested kfold_1_x_10"
+cv_type <- "nested"
 group <- "subid"
 
 # create nested outer splits object ---------------
 set.seed(102030)
-outer_splits <- if (str_detect(cv_type, "group")) {
+splits <- if (str_detect(cv_type, "group")) {
   make_splits(d = d, cv_type = cv_type, group = group)
 } else { 
   make_splits(d = d, cv_type = cv_type)

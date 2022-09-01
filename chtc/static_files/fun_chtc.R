@@ -293,7 +293,7 @@ make_splits <- function(d, cv_type, group = NULL) {
   #     as.numeric()
   # }
   
-    
+  
   # kfold - includes grouped, and repeated kfold
   if (cv_type == "kfold") {
     if (!is.null(group)) {
@@ -306,6 +306,31 @@ make_splits <- function(d, cv_type, group = NULL) {
   }
   
   if (cv_type == "nested") {
+    # TEMP LIMIT OF NESTED TO 1X10FOLD CV FOR INNER AND OUTER
+    # n_folds <- 10
+    # n_repeats <- 1
+    
+    splits <- d %>% 
+      nested_cv(outside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) , 
+                inside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)))
+    
+    # get train/test for outer loop fold 1
+    # out1_train <- training(splits$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # out1_test <- testing(splits$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # # get inner splits for outer loop fold 1
+    # out1_inners <- splits$inner_resamples[[1]] %>% 
+    #   glimpse
+    # 
+    # # get inner train/test fold 1 for outer fold 2
+    # out2_inner1_train <- training(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+    #   glimpse
+    # 
+    # out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+    #  glimpse
     
   }
   
@@ -674,3 +699,4 @@ fit_best_model <- function(best_model, rec, d) {
     return(fit_best)
   }
 }
+

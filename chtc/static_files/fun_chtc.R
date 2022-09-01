@@ -37,19 +37,19 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # path_chtc <- "../lab_support/chtc"
   
   # create jobs tibble for K-fold ---------------
-  if (cv_type != "boot") {
+  if (resample_type != "boot") {
     
-    # Get repeats and folds from cv_type
-    cv_repeats <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
-    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][2])
+    # Get repeats and folds from resample_type
+    cv_repeats <- if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "group") {
+      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][3])
+    } else if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "kfold") {
+      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][2])
     }
     
-    cv_folds <- if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][4])
-    } else if (str_split(str_remove(cv_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(cv_type, "_x"), "_")[[1]][3])
+    cv_folds <- if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "group") {
+      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][4])
+    } else if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "kfold") {
+      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][3])
     }
     
     
@@ -102,7 +102,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   
   # modification for bootstrap jobs tibble (no repeats and folds)
   
-  if (cv_type == "boot") {
+  if (resample_type == "boot") {
     
     for (i in algorithm) {
       if (i == "glmnet") { 
@@ -270,32 +270,29 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 
 
 
-make_splits <- function(d, cv_type, group = NULL) {
+make_splits <- function(d, resample_type, resample = NULL, outer_resample = NULL, inner_resample = NULL, group = NULL) {
   
   # d: (training) dataset to be resampled 
+  # resample_type: can be boot, kfold, or nested
+  # resample: specifies for repeats and folds for CV (1_x_10; 10_x_10) or num splits for bootstrapping (100)
+  # inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
+  # outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
+  # group: specifies grouping variable for grouped cv and nested cv
+  
   
   # bootstrap splits
-  if (cv_type == "boot") {
-    # add bootstap splits here
+  if (resample_type == "boot") {
+    splits <- d %>% 
+      bootstraps(times = resample)
   }
-  
-  
-  # get n_folds and n_repeats if any type of kfold
-  # if (str_detect(cv_type, "kfold")) {
-  #   n_folds <- cv_type %>% 
-  #     str_extract("_x_\\d{1,2}") %>% 
-  #     str_remove("_x_") %>% 
-  #     as.numeric()
-  #   
-  #   n_repeats <- cv_type %>% 
-  #     str_extract("\\d{1,3}_x_") %>% 
-  #     str_remove("_x_") %>% 
-  #     as.numeric()
-  # }
-  
+
   
   # kfold - includes grouped, and repeated kfold
-  if (cv_type == "kfold") {
+  if (resample_type == "kfold") {
+    # get number of repeats and folds
+    n_repeats <- as.numeric(str_remove(resample, "_x_\\d{1,2}"))
+    n_folds <- as.numeric(str_remove(resample, "\\d{1,3}_x_"))
+    
     if (!is.null(group)) {
       splits <- d %>% 
         group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) 
@@ -304,16 +301,47 @@ make_splits <- function(d, cv_type, group = NULL) {
         vfold_cv(v = n_folds, repeats = n_repeats) 
     }
   }
+ 
   
-  if (cv_type == "nested") {
-    # TEMP LIMIT OF NESTED TO 1X10FOLD CV FOR INNER AND OUTER
-    # n_folds <- 10
-    # n_repeats <- 1
+  # nested   
+  if (resample_type == "nested") {
+    # get number of repeats and folds for outer cv loop
+    outer_n_repeats <- as.numeric(str_remove(outer_resample, "_x_\\d{1,2}"))
+    outer_n_folds <- as.numeric(str_remove(outer_resample, "\\d{1,3}_x_"))
     
-    splits <- d %>% 
-      nested_cv(outside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) , 
-                inside = group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)))
+    # get repeats/folds or bootstrap splits for inner loop
+    if (str_detect(inner_resample, "_x_")) {
+      inner_n_repeats <- as.numeric(str_remove(inner_resample, "_x_\\d{1,2}"))
+      inner_n_folds <- as.numeric(str_remove(inner_resample, "\\d{1,3}_x_"))
+    } else {
+      inner_boot_splits <- inner_resample
+    }
+
     
+    # create splits for nested cv
+    if (!is.null(group) & str_detect(inner_resample, "_x_")) {
+      # grouped cv
+      splits <- d %>% 
+        nested_cv(outside = group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, group = all_of(group)), 
+                  inside = group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(group)))
+    } else if (is.null(group) & str_detect(inner_resample, "_x_")) {
+      # ungrouped cv
+      splits <- d %>% 
+        nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
+                  inside = vfold_cv(v = inner_n_folds, repeats = inner_n_repeats))
+    }
+    
+    # create splits for nested cv with inner loop bootstrapping 
+    # not to be used when grouping
+    if (!str_detect(inner_resample, "_x_")) {
+      splits <- d %>% 
+        nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
+                  inside = bootstraps(times = inner_boot_splits))
+    }
+  }
+    
+    
+    # Demo code for extracting inner and outer cv resamples
     # get train/test for outer loop fold 1
     # out1_train <- training(splits$splits[[1]]) %>% 
     #   glimpse
@@ -331,16 +359,14 @@ make_splits <- function(d, cv_type, group = NULL) {
     # 
     # out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>% 
     #  glimpse
-    
-  }
   
   return(splits)
 }
 
-make_rset <- function(folds, n_repeat, n_fold, cv_type) {
+make_rset <- function(splits, n_repeat, n_fold, resample_type) {
 # used to make an rset object that contains a single split for use in tuning glmnet on CHTC  
   
-  n_folds <- cv_type %>% 
+  n_folds <- resample_type %>% 
     str_extract("_x_\\d{1,2}") %>% 
     str_remove("_x_") %>% 
     as.numeric()
@@ -348,22 +374,22 @@ make_rset <- function(folds, n_repeat, n_fold, cv_type) {
   fold_index <- n_fold + (n_repeat - 1) * n_folds
   
   
-  fold <- folds[fold_index, ]
-  rset <- manual_rset(fold$splits, fold$id)
+  split <- splits[fold_index, ]
+  rset <- manual_rset(split$splits, split$id)
   return(rset)
 }
 
-tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
+tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
-  # folds: rset object that contains all resamples
+  # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   
   if (job$algorithm == "glmnet") {
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # make rset for single held-in/held_out split
-    split <- make_rset(folds, job$n_repeat, job$n_fold, cv_type)
+    split <- make_rset(splits, job$n_repeat, job$n_fold, resample_type)
     
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
@@ -393,7 +419,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
   if (job$algorithm == "random_forest") {
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
+    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -424,7 +450,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
     
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
+    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -451,7 +477,7 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
   
   if (job$algorithm == "knn") {
     # extract single fold associated with job
-    features <- make_features(job = job, folds = folds, rec = rec, cv_type = cv_type)
+    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -478,28 +504,28 @@ tune_model <- function(job, rec, folds, cv_type, hp2_glmnet_min = NULL,
 
 # helper function for tune_model()
 # KW: still need to add section for bootstrap
-make_features <- function(job, folds, rec, cv_type) {
+make_features <- function(job, splits, rec, resample_type) {
   
-  # need to also pass in cv_type if becomes global parameter
+  # need to also pass in resample_type if becomes global parameter
   
   # job: single-row job-specific tibble
-  # folds: rset object that contains all resamples
+  # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   
-  if (cv_type != "boot") {
+  if (resample_type != "boot") {
     
-    n_folds <- cv_type %>% 
+    n_folds <- resample_type %>% 
       str_extract("_x_\\d{1,2}") %>% 
       str_remove("_x_") %>% 
       as.numeric()
     
     fold_index <- job$n_fold + (job$n_repeat - 1) * n_folds
     
-    d_in <- analysis(folds$splits[[fold_index]])
-    d_out <- assessment(folds$splits[[fold_index]])
+    d_in <- analysis(splits$splits[[fold_index]])
+    d_out <- assessment(splits$splits[[fold_index]])
   }
   
-  if (cv_type == "boot") {
+  if (resample_type == "boot") {
     
     # pull out bootstrap split here
     
@@ -550,8 +576,8 @@ get_metrics <- function(model, feat_out) {
   return(model_metrics)
 }
 
-eval_best_model <- function(best_model, rec, folds) {
-# evaluates best model configuration using resamples of data contained in folds.
+eval_best_model <- function(best_model, rec, splits) {
+# evaluates best model configuration using resamples of data contained in splits.
   
   
   # control grid to save predictions
@@ -565,7 +591,7 @@ eval_best_model <- function(best_model, rec, folds) {
       set_engine("glmnet") %>%
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
-                    resamples = folds,
+                    resamples = splits,
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)
@@ -585,7 +611,7 @@ eval_best_model <- function(best_model, rec, folds) {
                  seed = 102030) %>%
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
-                    resamples = folds,
+                    resamples = splits,
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)
@@ -604,7 +630,7 @@ eval_best_model <- function(best_model, rec, folds) {
                  validation = 0.2) %>% 
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
-                    resamples = folds,
+                    resamples = splits,
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                          sens, yardstick::spec, ppv, npv),
                     control = ctrl)
@@ -619,7 +645,7 @@ eval_best_model <- function(best_model, rec, folds) {
       set_engine("kknn") %>% 
       set_mode("classification") %>% 
       fit_resamples(preprocessor = rec,
-                    resamples = folds,
+                    resamples = splits,
                     metrics = metric_set(accuracy, bal_accuracy, roc_auc,
                                      sens, yardstick::spec, ppv, npv),
                     control = ctrl)

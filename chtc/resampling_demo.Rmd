@@ -1,0 +1,95 @@
+---
+title: "Resampling demo for CHTC models"
+author: "Kendra Wyant"
+date: '`r format(Sys.time(), "%Y-%m-%d")`'
+output: html_document
+---
+
+Libraries and source functions
+```{r}
+suppressWarnings(suppressPackageStartupMessages({
+  require(dplyr)
+  require(vroom) 
+  require(tidyr)
+  require(stringr)
+  require(readr)
+})) 
+
+source("../lab_support/chtc/static_files/fun_chtc.R")
+```
+
+
+Create fake data for demo
+```{r}
+d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
+```
+
+
+## Nested CV
+Training control info for nested grouped cv
+```{r}
+resample_type <- "nested" 
+inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
+outer_resample <- "1_x_10" 
+group <- "subid" # remove or set to NULL if not grouping
+```
+
+Make splits
+```{r}
+set.seed(102030)
+(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
+                      outer_resample = outer_resample, group = group))
+```
+
+Check subids are grouped
+```{r}
+
+```
+
+
+## Nested CV with inner loop bootstrapping
+Training control info for nested cv with bootstrapping
+```{r}
+resample_type <- "nested" 
+inner_resample <- "100" 
+outer_resample <- "1_x_10" 
+```
+
+Make splits
+```{r}
+set.seed(102030)
+(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
+                      outer_resample = outer_resample))
+```
+
+
+## CV
+Training control info for kfold
+```{r}
+resample_type <- "kfold" 
+resample <- "1_x_10" 
+group <- "subid" # can remove or set to NULL if not grouping
+```
+
+Make splits
+```{r}
+set.seed(102030)
+(splits <- make_splits(d = d, resample_type = resample_type, resample = resample, group = group))
+```
+
+
+
+## Bootstrapping
+Training control info for bootstrapping
+```{r}
+resample_type <- "boot" 
+resample <- "100" 
+```
+
+Make splits
+```{r}
+set.seed(102030)
+(splits <- make_splits(d = d, resample_type = resample_type, resample = resample))
+```
+
+

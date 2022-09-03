@@ -24,8 +24,7 @@ Create fake data for demo
 d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
 ```
 
-
-## Nested CV
+## Nested grouped CV
 Training control info for nested grouped cv
 ```{r}
 resample_type <- "nested" 
@@ -34,17 +33,80 @@ outer_resample <- "1_x_10"
 group <- "subid" # remove or set to NULL if not grouping
 ```
 
+Make splits    
+FIX: getting error with nested grouping variable - not getting error with other variations of resampling (see below)
+```{r}
+# set.seed(102030)
+# (splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
+#                       outer_resample = outer_resample, group = group))
+```
+
+Check subids are grouped   
+Outer groupings
+```{r}
+# # outer groupings for fold 1
+# out1_train <- training(splits$splits[[1]]) %>% 
+#   glimpse()
+# 
+# out1_test <- testing(splits$splits[[1]]) %>% 
+#   glimpse()
+# 
+# # check no test subids in train set
+# out1_test %>% 
+#   filter(subid %in% out1_train)
+```
+
+Inner groupings
+```{r}
+# (out1_inners <- splits$inner_resamples[[1]])
+# 
+# # get inner train/test fold 1 for outer fold 2
+# out2_inner1_train <- training(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+#   glimpse()
+#      
+# out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>% 
+#   glimpse()
+# 
+# # check no test subids in train set
+# out2_inner1_test %>% 
+#   filter(subid %in% out2_inner1_train)
+```
+
+## Nested ungrouped CV
+Training control info for nested ungrouped cv
+```{r}
+resample_type <- "nested" 
+inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
+outer_resample <- "1_x_10" 
+```
+
 Make splits
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
-                      outer_resample = outer_resample, group = group))
+(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample,
+                      outer_resample = outer_resample))
 ```
 
-Check subids are grouped
+Look at splits
 ```{r}
+# outer groupings for fold 1
+out1_train <- training(splits$splits[[1]]) %>%
+  glimpse()
 
+out1_test <- testing(splits$splits[[1]]) %>%
+  glimpse()
+
+# inner groupings
+(out1_inners <- splits$inner_resamples[[1]])
+
+# get inner train/test fold 1 for outer fold 2
+out2_inner1_train <- training(splits$inner_resamples[[2]]$splits[[1]]) %>%
+  glimpse()
+
+out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>%
+  glimpse()
 ```
+
 
 
 ## Nested CV with inner loop bootstrapping
@@ -62,9 +124,29 @@ set.seed(102030)
                       outer_resample = outer_resample))
 ```
 
+Look at splits
+```{r}
+# outer groupings for fold 1
+out1_train <- training(splits$splits[[1]]) %>%
+  glimpse()
+
+out1_test <- testing(splits$splits[[1]]) %>%
+  glimpse()
+
+# inner groupings
+(out1_inners <- splits$inner_resamples[[1]])
+
+# get inner train/test split 1 for outer fold 2
+out2_inner1_train <- training(splits$inner_resamples[[2]]$splits[[1]]) %>%
+  glimpse()
+
+out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>%
+  glimpse()
+```
+
 
 ## CV
-Training control info for kfold
+Training control info for grouped kfold
 ```{r}
 resample_type <- "kfold" 
 resample <- "1_x_10" 
@@ -76,6 +158,20 @@ Make splits
 set.seed(102030)
 (splits <- make_splits(d = d, resample_type = resample_type, resample = resample, group = group))
 ```
+
+Check splits are grouped
+```{r}
+split1_train <- training(splits$splits[[1]]) %>% 
+  glimpse()
+
+split1_test <- testing(splits$splits[[1]]) %>% 
+  glimpse()
+
+# no test subids in train split
+split1_test %>% 
+  filter(subid %in% split1_train)
+```
+
 
 
 

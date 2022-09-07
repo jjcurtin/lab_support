@@ -270,7 +270,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 
 
 
-make_splits <- function(d, resample_type, resample = NULL, outer_resample = NULL, inner_resample = NULL, group = NULL) {
+make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL) {
   
   # d: (training) dataset to be resampled 
   # resample_type: can be boot, kfold, or nested
@@ -318,22 +318,28 @@ make_splits <- function(d, resample_type, resample = NULL, outer_resample = NULL
     }
 
     
-    # create splits for nested cv
-    if (!is.null(group) & str_detect(inner_resample, "_x_")) {
-      # grouped cv
+    # create splits for grouped nested cv (requires inner and outer to be bootstrap)
+    if (!is.null(group)) {
+      # needed to create outer folds outside of nested_cv for some unknown reason!
+      outer_grouped_kfold <- d %>% 
+        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(group))
       splits <- d %>% 
-        nested_cv(outside = group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, group = all_of(group)), 
+        nested_cv(outside = outer_grouped_kfold, 
                   inside = group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(group)))
-    } else if (is.null(group) & str_detect(inner_resample, "_x_")) {
-      # ungrouped cv
+    } 
+    
+    # create splits for ungrouped nested cv with kfold inner
+    if (is.null(group) & str_detect(inner_resample, "_x_")) {
+
       splits <- d %>% 
         nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
                   inside = vfold_cv(v = inner_n_folds, repeats = inner_n_repeats))
     }
     
-    # create splits for nested cv with inner loop bootstrapping 
+    # create splits for ungrouped nested cv with bootstrapping inner
     # not to be used when grouping
-    if (!str_detect(inner_resample, "_x_")) {
+    if (is.null(group) & !str_detect(inner_resample, "_x_")) {
+      
       splits <- d %>% 
         nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
                   inside = bootstraps(times = inner_boot_splits))

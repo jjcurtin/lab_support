@@ -20,10 +20,16 @@ feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
 data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz")
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
-cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
-# format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
-group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
 remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
+
+
+# CV PARAMETERS
+# INSERT INSTRUCTIONS HERE
+cv_resample_type <- "nested" 
+cv_resample = NULL
+cv_inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
+cv_outer_resample <- "1_x_10" 
+cv_group <- "subid" # remove or set to NULL if not grouping
 
 
 # SET STUDY PATHS

@@ -9,7 +9,7 @@ suppressWarnings(suppressPackageStartupMessages({
   require(readr)
 })) 
 source("fun_chtc.R")
-source("training_controls.R")
+# source("training_controls.R")   # NEED TO UPDATE TRAINING CONTROLS FOR NEW PARAMETERS (SEE BELOW)
 
 # set up job---------
 # job_num_arg <- 3, 47, 91
@@ -34,23 +34,19 @@ job <- jobs %>%
 #   rename(y = {{y_col_name}})
  
 # TEMP FAKE DATA and stuff from training controls
-d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
+# KENDRA CREATE ON SERVER IN data_processed
+# d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
 
-# START WITH THINKING ABOUT NAMES FOR THIS TYPE OF CV
-cv_type <- "nested"
-group <- "subid"
 
 # create nested outer splits object ---------------
 set.seed(102030)
-splits <- if (str_detect(cv_type, "group")) {
-  make_splits(d = d, cv_type = cv_type, group = group)
-} else { 
-  make_splits(d = d, cv_type = cv_type)
-}
+splits <- d %>% 
+  make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
 
 # build recipe ----------------
-rec <- recipe(y ~ ., data = d)   # TEMP
-#rec <- build_recipe(d = d, job = job)
+# rec <- recipe(y ~ ., data = d)   # KEDRA MOVE TO TRAINING CONTROLS
+rec <- build_recipe(d = d, job = job)
 
 
 # remove nzv if specified in training controls

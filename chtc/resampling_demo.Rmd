@@ -27,18 +27,20 @@ d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300
 ## Nested grouped CV
 Training control info for nested grouped cv
 ```{r}
-resample_type <- "nested" 
-inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
-outer_resample <- "1_x_10" 
-group <- "subid" # remove or set to NULL if not grouping
+cv_resample_type <- "nested" 
+cv_resample <- NULL # NULL because using nested cv
+cv_inner_resample <- "1_x_10" # for grouped nested cv - inner will always be kfold
+cv_outer_resample <- "1_x_10" 
+cv_group <- "subid" 
 ```
 
 Make splits    
-FIX: getting error with nested grouping variable - not getting error with other variations of resampling (see below)
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
-                       outer_resample = outer_resample, group = group))
+splits <- d %>% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits
 ```
 
 Check subids are grouped   
@@ -58,6 +60,7 @@ out1_test %>%
 
 Inner groupings
 ```{r}
+# splits for one outer fold
 (out1_inners <- splits$inner_resamples[[1]])
 
 # get inner train/test fold 1 for outer fold 2
@@ -75,16 +78,20 @@ out2_inner1_test %>%
 ## Nested ungrouped CV
 Training control info for nested ungrouped cv
 ```{r}
-resample_type <- "nested" 
-inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
-outer_resample <- "1_x_10" 
+cv_resample_type <- "nested" 
+cv_resample <- NULL 
+cv_inner_resample <- "1_x_10" 
+cv_outer_resample <- "1_x_10" 
+cv_group <- NULL # set to NULL because not using grouping id 
 ```
 
-Make splits
+Make splits    
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample,
-                      outer_resample = outer_resample))
+splits <- d %>% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits
 ```
 
 Look at splits
@@ -112,16 +119,20 @@ out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>%
 ## Nested CV with inner loop bootstrapping
 Training control info for nested cv with bootstrapping
 ```{r}
-resample_type <- "nested" 
-inner_resample <- "100" 
-outer_resample <- "1_x_10" 
+cv_resample_type <- "nested" 
+cv_resample <- NULL 
+cv_inner_resample <- 100
+cv_outer_resample <- "1_x_10" 
+cv_group <- NULL 
 ```
 
-Make splits
+Make splits    
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
-                      outer_resample = outer_resample))
+splits <- d %>% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits
 ```
 
 Look at splits
@@ -146,17 +157,22 @@ out2_inner1_test <- testing(splits$inner_resamples[[2]]$splits[[1]]) %>%
 
 
 ## CV
-Training control info for grouped kfold
+Training control info for non-nested grouped kfold
 ```{r}
-resample_type <- "kfold" 
-resample <- "1_x_10" 
-group <- "subid" # can remove or set to NULL if not grouping
+cv_resample_type <- "kfold" 
+cv_resample <- "1_x_10" 
+cv_inner_resample <- NULL
+cv_outer_resample <- NULL
+cv_group <- "subid"
 ```
 
-Make splits
+Make splits    
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, resample = resample, group = group))
+splits <- d %>% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits
 ```
 
 Check splits are grouped
@@ -176,16 +192,22 @@ split1_test %>%
 
 
 ## Bootstrapping
-Training control info for bootstrapping
+Training control info for non-nested bootstrapping
 ```{r}
-resample_type <- "boot" 
-resample <- "100" 
+cv_resample_type <- "boot" 
+cv_resample <- "100" 
+cv_inner_resample <- NULL
+cv_outer_resample <- NULL
+cv_group <- NULL
 ```
 
-Make splits
+Make splits    
 ```{r}
 set.seed(102030)
-(splits <- make_splits(d = d, resample_type = resample_type, resample = resample))
+splits <- d %>% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits
 ```
 
 

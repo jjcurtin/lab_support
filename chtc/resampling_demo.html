@@ -11,7 +11,7 @@
 
 <meta name="author" content="Kendra Wyant" />
 
-<meta name="date" content="2022-09-03" />
+<meta name="date" content="2022-09-08" />
 
 <title>Resampling demo for CHTC models</title>
 
@@ -365,7 +365,7 @@ pre code {
 
 <h1 class="title toc-ignore">Resampling demo for CHTC models</h1>
 <h4 class="author">Kendra Wyant</h4>
-<h4 class="date">2022-09-03</h4>
+<h4 class="date">2022-09-08</h4>
 
 </div>
 
@@ -385,52 +385,111 @@ source(&quot;../lab_support/chtc/static_files/fun_chtc.R&quot;)</code></pre>
 <div id="nested-grouped-cv" class="section level2">
 <h2>Nested grouped CV</h2>
 <p>Training control info for nested grouped cv</p>
-<pre class="r"><code>resample_type &lt;- &quot;nested&quot; 
-inner_resample &lt;- &quot;1_x_10&quot; # can also be a single number for bootstrapping (i.e., 100)
-outer_resample &lt;- &quot;1_x_10&quot; 
-group &lt;- &quot;subid&quot; # remove or set to NULL if not grouping</code></pre>
-<p>Make splits<br />
-FIX: getting error with nested grouping variable - not getting error
-with other variations of resampling (see below)</p>
-<pre class="r"><code># set.seed(102030)
-# (splits &lt;- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
-#                       outer_resample = outer_resample, group = group))</code></pre>
+<pre class="r"><code>cv_resample_type &lt;- &quot;nested&quot; 
+cv_resample &lt;- NULL # NULL because using nested cv
+cv_inner_resample &lt;- &quot;1_x_10&quot; # for grouped nested cv - inner will always be kfold
+cv_outer_resample &lt;- &quot;1_x_10&quot; 
+cv_group &lt;- &quot;subid&quot; </code></pre>
+<p>Make splits</p>
+<pre class="r"><code>set.seed(102030)
+splits &lt;- d %&gt;% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits</code></pre>
+<pre><code>## # Nested resampling:
+## #  outer: `outer_grouped_kfold`
+## #  inner: Group 10-fold cross-validation
+## # A tibble: 10 × 3
+##    splits           id         inner_resamples          
+##    &lt;list&gt;           &lt;chr&gt;      &lt;list&gt;                   
+##  1 &lt;split [270/30]&gt; Resample01 &lt;group_vfold_cv [10 × 2]&gt;
+##  2 &lt;split [270/30]&gt; Resample02 &lt;group_vfold_cv [10 × 2]&gt;
+##  3 &lt;split [270/30]&gt; Resample03 &lt;group_vfold_cv [10 × 2]&gt;
+##  4 &lt;split [270/30]&gt; Resample04 &lt;group_vfold_cv [10 × 2]&gt;
+##  5 &lt;split [270/30]&gt; Resample05 &lt;group_vfold_cv [10 × 2]&gt;
+##  6 &lt;split [270/30]&gt; Resample06 &lt;group_vfold_cv [10 × 2]&gt;
+##  7 &lt;split [270/30]&gt; Resample07 &lt;group_vfold_cv [10 × 2]&gt;
+##  8 &lt;split [270/30]&gt; Resample08 &lt;group_vfold_cv [10 × 2]&gt;
+##  9 &lt;split [270/30]&gt; Resample09 &lt;group_vfold_cv [10 × 2]&gt;
+## 10 &lt;split [270/30]&gt; Resample10 &lt;group_vfold_cv [10 × 2]&gt;</code></pre>
 <p>Check subids are grouped<br />
 Outer groupings</p>
-<pre class="r"><code># # outer groupings for fold 1
-# out1_train &lt;- training(splits$splits[[1]]) %&gt;% 
-#   glimpse()
-# 
-# out1_test &lt;- testing(splits$splits[[1]]) %&gt;% 
-#   glimpse()
-# 
-# # check no test subids in train set
-# out1_test %&gt;% 
-#   filter(subid %in% out1_train)</code></pre>
+<pre class="r"><code># outer groupings for fold 1
+out1_train &lt;- training(splits$splits[[1]]) %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 270
+## Columns: 4
+## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3…
+## $ x1    &lt;dbl&gt; -0.06064087, 0.95009269, 0.76646350, -2.33963566, -0.28646597, 0…
+## $ x2    &lt;dbl&gt; -0.04171232, -1.57097684, 1.29641303, -1.24420745, 0.94625572, -…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1…</code></pre>
+<pre class="r"><code>out1_test &lt;- testing(splits$splits[[1]]) %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 30
+## Columns: 4
+## $ subid &lt;int&gt; 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 11, …
+## $ x1    &lt;dbl&gt; 0.34927833, 0.35706603, -1.09978223, 2.12091909, 2.06472281, -1.…
+## $ x2    &lt;dbl&gt; -0.82547917, -2.01125780, -2.33421847, 0.94664663, 0.30892890, -…
+## $ y     &lt;int&gt; 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0…</code></pre>
+<pre class="r"><code># check no test subids in train set
+out1_test %&gt;%
+  filter(subid %in% out1_train)</code></pre>
+<pre><code>## # A tibble: 0 × 4
+## # … with 4 variables: subid &lt;int&gt;, x1 &lt;dbl&gt;, x2 &lt;dbl&gt;, y &lt;int&gt;</code></pre>
 <p>Inner groupings</p>
-<pre class="r"><code># (out1_inners &lt;- splits$inner_resamples[[1]])
-# 
-# # get inner train/test fold 1 for outer fold 2
-# out2_inner1_train &lt;- training(splits$inner_resamples[[2]]$splits[[1]]) %&gt;% 
-#   glimpse()
-#      
-# out2_inner1_test &lt;- testing(splits$inner_resamples[[2]]$splits[[1]]) %&gt;% 
-#   glimpse()
-# 
-# # check no test subids in train set
-# out2_inner1_test %&gt;% 
-#   filter(subid %in% out2_inner1_train)</code></pre>
+<pre class="r"><code># splits for one outer fold
+(out1_inners &lt;- splits$inner_resamples[[1]])</code></pre>
+<pre><code>## # Group 10-fold cross-validation 
+## # A tibble: 10 × 2
+##    splits           id        
+##    &lt;list&gt;           &lt;chr&gt;     
+##  1 &lt;split [240/30]&gt; Resample01
+##  2 &lt;split [240/30]&gt; Resample02
+##  3 &lt;split [240/30]&gt; Resample03
+##  4 &lt;split [240/30]&gt; Resample04
+##  5 &lt;split [240/30]&gt; Resample05
+##  6 &lt;split [240/30]&gt; Resample06
+##  7 &lt;split [240/30]&gt; Resample07
+##  8 &lt;split [250/20]&gt; Resample08
+##  9 &lt;split [250/20]&gt; Resample09
+## 10 &lt;split [250/20]&gt; Resample10</code></pre>
+<pre class="r"><code># get inner train/test fold 1 for outer fold 2
+out2_inner1_train &lt;- training(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 240
+## Columns: 4
+## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3…
+## $ x1    &lt;dbl&gt; -0.06064087, 0.95009269, 0.76646350, -2.33963566, -0.28646597, 0…
+## $ x2    &lt;dbl&gt; -0.04171232, -1.57097684, 1.29641303, -1.24420745, 0.94625572, -…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1…</code></pre>
+<pre class="r"><code>out2_inner1_test &lt;- testing(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
+  glimpse()</code></pre>
+<pre><code>## Rows: 30
+## Columns: 4
+## $ subid &lt;int&gt; 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 24, 24, 24, 24, 24, 24, …
+## $ x1    &lt;dbl&gt; -1.4252281, 0.1560396, -0.7979004, -1.8809305, 0.1756131, -0.626…
+## $ x2    &lt;dbl&gt; -0.485000605, 1.400015822, 0.330766287, 0.718642764, 0.032627527…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0…</code></pre>
+<pre class="r"><code># check no test subids in train set
+out2_inner1_test %&gt;%
+  filter(subid %in% out2_inner1_train)</code></pre>
+<pre><code>## # A tibble: 0 × 4
+## # … with 4 variables: subid &lt;int&gt;, x1 &lt;dbl&gt;, x2 &lt;dbl&gt;, y &lt;int&gt;</code></pre>
 </div>
 <div id="nested-ungrouped-cv" class="section level2">
 <h2>Nested ungrouped CV</h2>
 <p>Training control info for nested ungrouped cv</p>
-<pre class="r"><code>resample_type &lt;- &quot;nested&quot; 
-inner_resample &lt;- &quot;1_x_10&quot; # can also be a single number for bootstrapping (i.e., 100)
-outer_resample &lt;- &quot;1_x_10&quot; </code></pre>
+<pre class="r"><code>cv_resample_type &lt;- &quot;nested&quot; 
+cv_resample &lt;- NULL 
+cv_inner_resample &lt;- &quot;1_x_10&quot; 
+cv_outer_resample &lt;- &quot;1_x_10&quot; 
+cv_group &lt;- NULL # set to NULL because not using grouping id </code></pre>
 <p>Make splits</p>
 <pre class="r"><code>set.seed(102030)
-(splits &lt;- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample,
-                      outer_resample = outer_resample))</code></pre>
+splits &lt;- d %&gt;% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits</code></pre>
 <pre><code>## # Nested resampling:
 ## #  outer: 10-fold cross-validation
 ## #  inner: 10-fold cross-validation
@@ -454,17 +513,17 @@ out1_train &lt;- training(splits$splits[[1]]) %&gt;%
 <pre><code>## Rows: 270
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3…
-## $ x1    &lt;dbl&gt; -0.436551256, -0.008961829, 0.007259126, -0.754340389, 1.5439740…
-## $ x2    &lt;dbl&gt; 1.03514906, -0.12870369, -1.85280507, 0.08469133, 0.41340930, -2…
-## $ y     &lt;int&gt; 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1…</code></pre>
+## $ x1    &lt;dbl&gt; -0.06064087, 0.95009269, 0.76646350, -2.33963566, -0.28646597, 0…
+## $ x2    &lt;dbl&gt; -0.04171232, -1.57097684, 1.29641303, -1.24420745, 0.94625572, -…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1…</code></pre>
 <pre class="r"><code>out1_test &lt;- testing(splits$splits[[1]]) %&gt;%
   glimpse()</code></pre>
 <pre><code>## Rows: 30
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 2, 3, 3, 3, 4, 4, 5, 6, 6, 6, 7, 10, 11, 11, 15, 15, 16, 18, …
-## $ x1    &lt;dbl&gt; 0.06203427, -0.63537116, 1.72968707, -1.16892942, -1.32425065, 0…
-## $ x2    &lt;dbl&gt; 0.118931251, 0.119912780, -0.830086536, 0.493930273, 1.667149736…
-## $ y     &lt;int&gt; 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1…</code></pre>
+## $ x1    &lt;dbl&gt; 0.79620030, 0.03503146, -0.52713558, -2.24433582, 1.99910742, -1…
+## $ x2    &lt;dbl&gt; -0.28062453, -1.10235725, -0.64954869, -0.46080211, -0.27176436,…
+## $ y     &lt;int&gt; 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0…</code></pre>
 <pre class="r"><code># inner groupings
 (out1_inners &lt;- splits$inner_resamples[[1]])</code></pre>
 <pre><code>## #  10-fold cross-validation 
@@ -487,28 +546,32 @@ out2_inner1_train &lt;- training(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
 <pre><code>## Rows: 243
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3…
-## $ x1    &lt;dbl&gt; -0.008961829, -0.754340389, 1.543974001, 0.062034271, 1.27862082…
-## $ x2    &lt;dbl&gt; -0.12870369, 0.08469133, 0.41340930, 0.11893125, -2.39956410, -0…
-## $ y     &lt;int&gt; 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0…</code></pre>
+## $ x1    &lt;dbl&gt; 0.95009269, -2.33963566, -0.28646597, 0.79620030, 0.93977090, -1…
+## $ x2    &lt;dbl&gt; -1.57097684, -1.24420745, 0.94625572, -0.28062453, -1.11288177, …
+## $ y     &lt;int&gt; 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0…</code></pre>
 <pre class="r"><code>out2_inner1_test &lt;- testing(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
   glimpse()</code></pre>
 <pre><code>## Rows: 27
 ## Columns: 4
 ## $ subid &lt;int&gt; 2, 2, 4, 5, 6, 8, 8, 9, 9, 11, 13, 13, 15, 15, 16, 19, 19, 20, 2…
-## $ x1    &lt;dbl&gt; 1.51304747, -0.63537116, -1.50722899, -0.44720865, 0.23184920, -…
-## $ x2    &lt;dbl&gt; 0.551258238, 0.119912780, -0.787780041, 1.036644477, 0.575119715…
-## $ y     &lt;int&gt; 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1…</code></pre>
+## $ x1    &lt;dbl&gt; 0.15880784, 0.03503146, -1.91266894, -1.23157625, 0.54209831, 0.…
+## $ x2    &lt;dbl&gt; -0.39546549, -1.10235725, -0.83076601, -1.49808017, 1.05987875, …
+## $ y     &lt;int&gt; 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0…</code></pre>
 </div>
 <div id="nested-cv-with-inner-loop-bootstrapping" class="section level2">
 <h2>Nested CV with inner loop bootstrapping</h2>
 <p>Training control info for nested cv with bootstrapping</p>
-<pre class="r"><code>resample_type &lt;- &quot;nested&quot; 
-inner_resample &lt;- &quot;100&quot; 
-outer_resample &lt;- &quot;1_x_10&quot; </code></pre>
+<pre class="r"><code>cv_resample_type &lt;- &quot;nested&quot; 
+cv_resample &lt;- NULL 
+cv_inner_resample &lt;- 100
+cv_outer_resample &lt;- &quot;1_x_10&quot; 
+cv_group &lt;- NULL </code></pre>
 <p>Make splits</p>
 <pre class="r"><code>set.seed(102030)
-(splits &lt;- make_splits(d = d, resample_type = resample_type, inner_resample = inner_resample, 
-                      outer_resample = outer_resample))</code></pre>
+splits &lt;- d %&gt;% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits</code></pre>
 <pre><code>## # Nested resampling:
 ## #  outer: 10-fold cross-validation
 ## #  inner: Bootstrap sampling
@@ -532,17 +595,17 @@ out1_train &lt;- training(splits$splits[[1]]) %&gt;%
 <pre><code>## Rows: 270
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3…
-## $ x1    &lt;dbl&gt; -0.436551256, -0.008961829, 0.007259126, -0.754340389, 1.5439740…
-## $ x2    &lt;dbl&gt; 1.03514906, -0.12870369, -1.85280507, 0.08469133, 0.41340930, -2…
-## $ y     &lt;int&gt; 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1…</code></pre>
+## $ x1    &lt;dbl&gt; -0.06064087, 0.95009269, 0.76646350, -2.33963566, -0.28646597, 0…
+## $ x2    &lt;dbl&gt; -0.04171232, -1.57097684, 1.29641303, -1.24420745, 0.94625572, -…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1…</code></pre>
 <pre class="r"><code>out1_test &lt;- testing(splits$splits[[1]]) %&gt;%
   glimpse()</code></pre>
 <pre><code>## Rows: 30
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 2, 3, 3, 3, 4, 4, 5, 6, 6, 6, 7, 10, 11, 11, 15, 15, 16, 18, …
-## $ x1    &lt;dbl&gt; 0.06203427, -0.63537116, 1.72968707, -1.16892942, -1.32425065, 0…
-## $ x2    &lt;dbl&gt; 0.118931251, 0.119912780, -0.830086536, 0.493930273, 1.667149736…
-## $ y     &lt;int&gt; 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1…</code></pre>
+## $ x1    &lt;dbl&gt; 0.79620030, 0.03503146, -0.52713558, -2.24433582, 1.99910742, -1…
+## $ x2    &lt;dbl&gt; -0.28062453, -1.10235725, -0.64954869, -0.46080211, -0.27176436,…
+## $ y     &lt;int&gt; 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0…</code></pre>
 <pre class="r"><code># inner groupings
 (out1_inners &lt;- splits$inner_resamples[[1]])</code></pre>
 <pre><code>## # Bootstrap sampling 
@@ -566,27 +629,32 @@ out2_inner1_train &lt;- training(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
 <pre><code>## Rows: 270
 ## Columns: 4
 ## $ subid &lt;int&gt; 18, 29, 17, 4, 27, 7, 2, 3, 1, 16, 18, 17, 10, 2, 7, 20, 11, 23,…
-## $ x1    &lt;dbl&gt; -0.03132074, 0.75628479, 2.96277897, 0.50348544, 0.37888328, 1.9…
-## $ x2    &lt;dbl&gt; 1.252205631, 0.008726543, -1.249742923, -2.969001558, -0.1177643…
-## $ y     &lt;int&gt; 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1…</code></pre>
+## $ x1    &lt;dbl&gt; -0.80657359, 1.04228644, -1.48279375, -0.59593239, -0.54685153, …
+## $ x2    &lt;dbl&gt; 0.19277939, -0.42124236, -1.19657948, 0.02512421, 0.40062384, -1…
+## $ y     &lt;int&gt; 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0…</code></pre>
 <pre class="r"><code>out2_inner1_test &lt;- testing(splits$inner_resamples[[2]]$splits[[1]]) %&gt;%
   glimpse()</code></pre>
 <pre><code>## Rows: 100
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 6, 6, 6, 7, 7, 7…
-## $ x1    &lt;dbl&gt; -0.75434039, 0.06203427, 1.27862083, 0.74240006, -0.06900179, -0…
-## $ x2    &lt;dbl&gt; 0.08469133, 0.11893125, -2.39956410, -0.84360718, -0.40136537, 0…
-## $ y     &lt;int&gt; 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0…</code></pre>
+## $ x1    &lt;dbl&gt; -2.33963566, 0.79620030, 0.93977090, -1.38630780, -0.66560545, 0…
+## $ x2    &lt;dbl&gt; -1.24420745, -0.28062453, -1.11288177, 0.10539949, -1.62236693, …
+## $ y     &lt;int&gt; 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0…</code></pre>
 </div>
 <div id="cv" class="section level2">
 <h2>CV</h2>
-<p>Training control info for grouped kfold</p>
-<pre class="r"><code>resample_type &lt;- &quot;kfold&quot; 
-resample &lt;- &quot;1_x_10&quot; 
-group &lt;- &quot;subid&quot; # can remove or set to NULL if not grouping</code></pre>
+<p>Training control info for non-nested grouped kfold</p>
+<pre class="r"><code>cv_resample_type &lt;- &quot;kfold&quot; 
+cv_resample &lt;- &quot;1_x_10&quot; 
+cv_inner_resample &lt;- NULL
+cv_outer_resample &lt;- NULL
+cv_group &lt;- &quot;subid&quot;</code></pre>
 <p>Make splits</p>
 <pre class="r"><code>set.seed(102030)
-(splits &lt;- make_splits(d = d, resample_type = resample_type, resample = resample, group = group))</code></pre>
+splits &lt;- d %&gt;% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits</code></pre>
 <pre><code>## # Group 10-fold cross-validation 
 ## # A tibble: 10 × 2
 ##    splits           id        
@@ -607,17 +675,17 @@ group &lt;- &quot;subid&quot; # can remove or set to NULL if not grouping</code>
 <pre><code>## Rows: 270
 ## Columns: 4
 ## $ subid &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3…
-## $ x1    &lt;dbl&gt; -0.436551256, -0.008961829, 0.007259126, -0.754340389, 1.5439740…
-## $ x2    &lt;dbl&gt; 1.03514906, -0.12870369, -1.85280507, 0.08469133, 0.41340930, 0.…
-## $ y     &lt;int&gt; 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0…</code></pre>
+## $ x1    &lt;dbl&gt; -0.06064087, 0.95009269, 0.76646350, -2.33963566, -0.28646597, 0…
+## $ x2    &lt;dbl&gt; -0.04171232, -1.57097684, 1.29641303, -1.24420745, 0.94625572, -…
+## $ y     &lt;int&gt; 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1…</code></pre>
 <pre class="r"><code>split1_test &lt;- testing(splits$splits[[1]]) %&gt;% 
   glimpse()</code></pre>
 <pre><code>## Rows: 30
 ## Columns: 4
 ## $ subid &lt;int&gt; 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 11, …
-## $ x1    &lt;dbl&gt; 0.81032853, -0.12260958, -0.41435111, -0.92498138, 0.39381407, 1…
-## $ x2    &lt;dbl&gt; -0.157617024, 2.785696338, 1.139775939, -0.048504153, -0.2908419…
-## $ y     &lt;int&gt; 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0…</code></pre>
+## $ x1    &lt;dbl&gt; 0.34927833, 0.35706603, -1.09978223, 2.12091909, 2.06472281, -1.…
+## $ x2    &lt;dbl&gt; -0.82547917, -2.01125780, -2.33421847, 0.94664663, 0.30892890, -…
+## $ y     &lt;int&gt; 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0…</code></pre>
 <pre class="r"><code># no test subids in train split
 split1_test %&gt;% 
   filter(subid %in% split1_train)</code></pre>
@@ -626,12 +694,18 @@ split1_test %&gt;%
 </div>
 <div id="bootstrapping" class="section level2">
 <h2>Bootstrapping</h2>
-<p>Training control info for bootstrapping</p>
-<pre class="r"><code>resample_type &lt;- &quot;boot&quot; 
-resample &lt;- &quot;100&quot; </code></pre>
+<p>Training control info for non-nested bootstrapping</p>
+<pre class="r"><code>cv_resample_type &lt;- &quot;boot&quot; 
+cv_resample &lt;- &quot;100&quot; 
+cv_inner_resample &lt;- NULL
+cv_outer_resample &lt;- NULL
+cv_group &lt;- NULL</code></pre>
 <p>Make splits</p>
 <pre class="r"><code>set.seed(102030)
-(splits &lt;- make_splits(d = d, resample_type = resample_type, resample = resample))</code></pre>
+splits &lt;- d %&gt;% 
+    make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
+splits</code></pre>
 <pre><code>## # Bootstrap sampling 
 ## # A tibble: 100 × 2
 ##    splits            id          

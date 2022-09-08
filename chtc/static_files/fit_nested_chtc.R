@@ -1,4 +1,4 @@
-# Do Nested CV on CHTC
+# Fit model at chtc
 
 # libraries & source functions file ----------------
 suppressWarnings(suppressPackageStartupMessages({
@@ -9,34 +9,30 @@ suppressWarnings(suppressPackageStartupMessages({
   require(readr)
 })) 
 source("fun_chtc.R")
-# source("training_controls.R")   # NEED TO UPDATE TRAINING CONTROLS FOR NEW PARAMETERS (SEE BELOW)
+source("training_controls.R")  
 
-# set up job---------
-# job_num_arg <- 3, 47, 91
+# set up job ---------
+# job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-jobs <- vroom("jobs.csv", col_types = "iiiccdddc")
+jobs <- vroom("jobs.csv", col_types = "iiiiccdddc")
 
 job <- jobs %>% 
   filter(job_num == job_num_arg)
 
 # read in data train --------------- 
-# fn <- str_subset(list.files(), "^data_trn")
-# if (str_detect(fn, ".rds")) {
-#   d <- read_rds(fn)
-# } else {
-#   d <- vroom(fn, show_col_types = FALSE) 
-# }
-# 
-# # Set outcome variable to y
-# d <- d %>% 
-#   rename(y = {{y_col_name}})
+fn <- str_subset(list.files(), "^data_trn")
+if (str_detect(fn, ".rds")) {
+  d <- read_rds(fn)
+} else {
+  d <- vroom(fn, show_col_types = FALSE)
+}
  
-# TEMP FAKE DATA and stuff from training controls
-# KENDRA CREATE ON SERVER IN data_processed
-# d <- tibble(subid = sort(rep(1:30, times = 10)), x1 = rnorm(300), x2 = rnorm(300), y = rbinom(300,1,.5))
-
+# # Set outcome variable to y
+d <- d %>%
+  rename(y = {{y_col_name}})
+ 
 
 # create nested outer splits object ---------------
 set.seed(102030)
@@ -45,8 +41,13 @@ splits <- d %>%
 
 
 # build recipe ----------------
-# rec <- recipe(y ~ ., data = d)   # KEDRA MOVE TO TRAINING CONTROLS
 rec <- build_recipe(d = d, job = job)
+
+# make features on d to get n_feats ----------------
+# count before removing nzv
+feat_all <-  rec %>% 
+  prep(training = d, strings_as_factors = FALSE) %>% 
+  bake(new_data = NULL)
 
 
 # remove nzv if specified in training controls

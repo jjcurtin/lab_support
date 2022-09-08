@@ -33,130 +33,109 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   source(path_training_controls)
   
   # relative paths should work from any repo project if a local copy of lab_support exists
-  path_templates <- "../lab_support/chtc/static_files"
-  # path_chtc <- "../lab_support/chtc"
+  path_chtc <- "../lab_support/chtc"
   
-  # create jobs tibble for K-fold ---------------
-  if (resample_type != "boot") {
+
+  # Get split indices from cv resample parameters
+  if (cv_resample_type == "boot") {
+    split_num <- 1:cv_resample 
+    # set nested split_num parameters to NA
+    outer_split_num <- NA
+    inner_split_num <- NA
+  }
+  
+  if (cv_resample_type == "kfold") {
+    n_repeats <- as.numeric(str_remove(cv_resample, "_x_\\d{1,2}"))
+    n_folds <- as.numeric(str_remove(cv_resample, "\\d{1,3}_x_"))
     
-    # Get repeats and folds from resample_type
-    cv_repeats <- if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][3])
-    } else if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][2])
-    }
+    split_num <- 1:(n_repeats * n_folds)
     
-    cv_folds <- if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "group") {
-      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][4])
-    } else if (str_split(str_remove(resample_type, "_x"), "_")[[1]][1] == "kfold") {
-      as.numeric(str_split(str_remove(resample_type, "_x"), "_")[[1]][3])
-    }
+    # set nested split_num parameters to NA
+    outer_split_num <- NA
+    inner_split_num <- NA
+  }
+  
+  if (cv_resample_type == "nested") {
+    # set split_num to NA and use outer_split_num and inner_split_num
+    split_num <- NA
     
+    # outer cv loop - always will be kfold
+    outer_n_repeats <- as.numeric(str_remove(cv_outer_resample, "_x_\\d{1,2}"))
+    outer_n_folds <- as.numeric(str_remove(cv_outer_resample, "\\d{1,3}_x_"))
     
-    for (i in algorithm) {
-      if (i == "glmnet") { 
-        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
-                                n_fold = 1:cv_folds,
-                                algorithm = "glmnet",
-                                feature_set,
-                                hp1 = hp1_glmnet,
-                                hp2 = NA_integer_,
-                                hp3 = NA_integer_,
-                                resample)
-      } else if (i == "random_forest") {
-        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
-                                n_fold = 1:cv_folds,
-                                algorithm = "random_forest",
-                                feature_set,
-                                hp1 = hp1_rf,
-                                hp2 = hp2_rf,
-                                hp3 = hp3_rf,
-                                resample)
-      } else if (i == "knn") {
-        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
-                                n_fold = 1:cv_folds,
-                                algorithm = "knn",
-                                feature_set,
-                                hp1 = hp1_knn,
-                                hp2 = NA_integer_,
-                                hp3 = NA_integer_,
-                                resample)      
-      } else if (i == "xgboost") {
-        jobs_tmp <- expand_grid(n_repeat = 1:cv_repeats,
-                                n_fold = 1:cv_folds,
-                                algorithm = "xgboost",
-                                feature_set,
-                                hp1 = hp1_xgboost,
-                                hp2 = hp2_xgboost,
-                                hp3 = hp3_xgboost,
-                                resample)      
-      }
+    outer_split_num <- 1:(outer_n_repeats * outer_n_folds)
+    
+    # inner cv loop - can be kfold or bootstrap
+    if (str_detect(cv_inner_resample, "_x_")) {
+      inner_n_repeats <- as.numeric(str_remove(cv_inner_resample, "_x_\\d{1,2}"))
+      inner_n_folds <- as.numeric(str_remove(cv_inner_resample, "\\d{1,3}_x_"))
       
-      # bind jobs files
-      jobs <- if (i == algorithm[1])
-        jobs_tmp
-      else
-        rbind(jobs, jobs_tmp)
-    }
-  }
-  
-  # modification for bootstrap jobs tibble (no repeats and folds)
-  
-  if (resample_type == "boot") {
+      inner_split_num <- 1:(inner_n_repeats * inner_n_folds)
+    } 
     
-    for (i in algorithm) {
-      if (i == "glmnet") { 
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
-                                algorithm = "glmnet",
-                                feature_set,
-                                hp1 = hp1_glmnet,
-                                hp2 = NA_integer_,
-                                hp3 = NA_integer_,
-                                resample)
-      } else if (i == "random_forest") {
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
-                                algorithm = "random_forest",
-                                feature_set,
-                                hp1 = hp1_rf,
-                                hp2 = hp2_rf,
-                                hp3 = hp3_rf,
-                                resample)
-      } else if (i == "knn") {
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
-                                algorithm = "knn",
-                                feature_set,
-                                hp1 = hp1_knn,
-                                hp2 = NA_integer_,
-                                hp3 = NA_integer_,
-                                resample)      
-      } else if (i == "xgboost") {
-        jobs_tmp <- expand_grid(n_repeat = NA_integer_,
-                                n_fold = NA_integer_,
-                                algorithm = "xgboost",
-                                feature_set,
-                                hp1 = hp1_xgboost,
-                                hp2 = hp2_xgboost,
-                                hp3 = hp3_xgboost,
-                                resample)   
-      }
-      # bind jobs files
-      jobs <- if (i == algorithm[1])
-        jobs_tmp
-      else
-        rbind(jobs, jobs_tmp)
+    if (!str_detect(cv_inner_resample, "_x_")) {
+      inner_split_num <- 1:cv_inner_resample
     }
     
   }
   
   
-  # add job num to file --------------- 
+  # create jobs tibble
+  # NOTE: I removed looping through multiple algorithms in a single jobs file on 9/8/22
+  if (algorithm == "glmnet") { 
+      jobs <- expand_grid(split_num = split_num,
+                          outer_split_num = outer_split_num,
+                          inner_split_num = inner_split_num,
+                          algorithm = algorithm,
+                          feature_set,
+                          hp1 = hp1_glmnet,
+                          hp2 = NA_integer_, # hp2 will be tuned in fit script and written over in results csv
+                          hp3 = NA_integer_,
+                          resample)
+  } 
+  
+  if (algorithm == "random_forest") {
+      jobs <- expand_grid(split_num = split_num,
+                          outer_split_num = outer_split_num,
+                          inner_split_num = inner_split_num,
+                          algorithm = algorithm,
+                          feature_set,
+                          hp1 = hp1_rf,
+                          hp2 = hp2_rf,
+                          hp3 = hp3_rf,
+                          resample)
+  } 
+  
+  if (algorithm == "knn") {
+      jobs <- expand_grid(split_num = split_num,
+                          outer_split_num = outer_split_num,
+                          inner_split_num = inner_split_num,
+                          algorithm = algorithm,
+                          feature_set,
+                          hp1 = hp1_knn,
+                          hp2 = NA_integer_,
+                          hp3 = NA_integer_,
+                          resample)      
+  }  
+  
+  if (algorithm == "xgboost") {
+      jobs <- expand_grid(split_num = split_num,
+                          outer_split_num = outer_split_num,
+                          inner_split_num = inner_split_num,
+                          algorithm = algorithm,
+                          feature_set,
+                          hp1 = hp1_xgboost,
+                          hp2 = hp2_xgboost,
+                          hp3 = hp3_xgboost,
+                          resample)      
+  }
+  
+  
+  # add job num to tibble
   jobs <- jobs %>% 
-    rownames_to_column("job_num") 
+    tibble::rownames_to_column("job_num") 
   
-  # create new job directory (if it does not already exist) -------------------
+  # create new job directory (if it does not already exist) 
   if (!dir.exists(file.path(path_jobs, name_job))) {
     dir.create(file.path(path_jobs, name_job))
     dir.create(file.path(path_jobs, name_job, "input"))
@@ -165,7 +144,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     message("Job folder already exists. No new folders created.")
   }
   
-  # write jobs file to input folder ---------------
+  # write jobs file to input folder 
   jobs %>% 
     vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
@@ -175,7 +154,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), col_names = FALSE)
     
   
-  # copy data to input folder as data_trn -----------------
+  # copy data to input folder as data_trn 
   # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
   if(!is.null(data_trn)){
     chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
@@ -190,9 +169,9 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     if (!check_copy) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
-  } else fn <- NULL # set to NULL because you do not want this written out in submit file
+  } else fn <- NULL # set to NULL because you do not want this written out in submit file (for chtc staging)
   
-  # copy study specific training_controls to input folder -----------------
+  # copy study specific training_controls to input folder 
   check_copy <-file.copy(from = file.path(path_training_controls),
             to = file.path(path_jobs, name_job, "input", "training_controls.R"),
             overwrite = overwrite_jobs) 
@@ -200,8 +179,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
   
-  # copy template R and unix files to input folder -----------------
-  check_copy <- file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
+  # copy static R and unix chtc files to input folder 
+  check_copy <- file.copy(from = file.path(path_chtc, "static_files", c(list.files(file.path(path_chtc, "static_files")))),
             to = file.path(path_jobs, name_job, "input"),
             recursive = TRUE,
             overwrite = overwrite_jobs) 
@@ -211,7 +190,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     }
   }
   
-  # update submit file from training controls -----------------
+  # update submit file from training controls 
   # add files to transfer
   if(is.null(data_trn)) {
     # don't add data_trn to transfer riles if staging
@@ -281,21 +260,21 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   
   
   # bootstrap splits
-  if (resample_type == "boot") {
+  if (cv_resample_type == "boot") {
     splits <- d %>% 
-      bootstraps(times = resample)
+      bootstraps(times = cv_resample)
   }
 
   
   # kfold - includes grouped, and repeated kfold
-  if (resample_type == "kfold") {
+  if (cv_resample_type == "kfold") {
     # get number of repeats and folds
-    n_repeats <- as.numeric(str_remove(resample, "_x_\\d{1,2}"))
-    n_folds <- as.numeric(str_remove(resample, "\\d{1,3}_x_"))
+    n_repeats <- as.numeric(str_remove(cv_resample, "_x_\\d{1,2}"))
+    n_folds <- as.numeric(str_remove(cv_resample, "\\d{1,3}_x_"))
     
-    if (!is.null(group)) {
+    if (!is.null(cv_group)) {
       splits <- d %>% 
-        group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(group)) 
+        group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(cv_group)) 
     } else {
       splits <- d %>% 
         vfold_cv(v = n_folds, repeats = n_repeats) 
@@ -304,32 +283,32 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
  
   
   # nested   
-  if (resample_type == "nested") {
+  if (cv_resample_type == "nested") {
     # get number of repeats and folds for outer cv loop
-    outer_n_repeats <- as.numeric(str_remove(outer_resample, "_x_\\d{1,2}"))
-    outer_n_folds <- as.numeric(str_remove(outer_resample, "\\d{1,3}_x_"))
+    outer_n_repeats <- as.numeric(str_remove(cv_outer_resample, "_x_\\d{1,2}"))
+    outer_n_folds <- as.numeric(str_remove(cv_outer_resample, "\\d{1,3}_x_"))
     
     # get repeats/folds or bootstrap splits for inner loop
-    if (str_detect(inner_resample, "_x_")) {
-      inner_n_repeats <- as.numeric(str_remove(inner_resample, "_x_\\d{1,2}"))
-      inner_n_folds <- as.numeric(str_remove(inner_resample, "\\d{1,3}_x_"))
+    if (str_detect(cv_inner_resample, "_x_")) {
+      inner_n_repeats <- as.numeric(str_remove(cv_inner_resample, "_x_\\d{1,2}"))
+      inner_n_folds <- as.numeric(str_remove(cv_inner_resample, "\\d{1,3}_x_"))
     } else {
-      inner_boot_splits <- inner_resample
+      inner_boot_splits <- cv_inner_resample
     }
 
     
-    # create splits for grouped nested cv (requires inner and outer to be bootstrap)
-    if (!is.null(group)) {
+    # create splits for grouped nested cv (requires inner and outer to be kfold)
+    if (!is.null(cv_group)) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
-        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(group))
+        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(cv_group))
       splits <- d %>% 
         nested_cv(outside = outer_grouped_kfold, 
-                  inside = group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(group)))
+                  inside = group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(cv_group)))
     } 
     
     # create splits for ungrouped nested cv with kfold inner
-    if (is.null(group) & str_detect(inner_resample, "_x_")) {
+    if (is.null(cv_group) & str_detect(cv_inner_resample, "_x_")) {
 
       splits <- d %>% 
         nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
@@ -338,7 +317,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
     
     # create splits for ungrouped nested cv with bootstrapping inner
     # not to be used when grouping
-    if (is.null(group) & !str_detect(inner_resample, "_x_")) {
+    if (is.null(cv_group) & !str_detect(cv_inner_resample, "_x_")) {
       
       splits <- d %>% 
         nested_cv(outside = vfold_cv(v = outer_n_folds, repeats = outer_n_repeats) , 
@@ -512,6 +491,10 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
 # KW: still need to add section for bootstrap
 make_features <- function(job, splits, rec, resample_type) {
   
+  
+  # NEED TO UPDATE BASED ON NEW JOBS PARAMETERS
+  
+  
   # need to also pass in resample_type if becomes global parameter
   
   # job: single-row job-specific tibble
@@ -525,10 +508,10 @@ make_features <- function(job, splits, rec, resample_type) {
       str_remove("_x_") %>% 
       as.numeric()
     
-    fold_index <- job$n_fold + (job$n_repeat - 1) * n_folds
+    split_index <- job$n_fold + (job$n_repeat - 1) * n_folds
     
-    d_in <- analysis(splits$splits[[fold_index]])
-    d_out <- assessment(splits$splits[[fold_index]])
+    d_in <- analysis(splits$splits[[split_index]])
+    d_out <- assessment(splits$splits[[split_index]])
   }
   
   if (resample_type == "boot") {

@@ -10,33 +10,35 @@ data_type <- "all"   # but still need to change more (e.g., feature set) to swit
 window <- "1week"
 lead <- 0
 version <- "v1"
-algorithm <- c("glmnet", "knn", "random_forest", "xgboost") # 1+ algorithm (glmnet, random_forest) 
+algorithm <- "glmnet" # specify one algorithm per training control file - can be glmnet, knn, random_forest, xgboost
 
 
 
 
 # SET GLOBAL PARAMETERS --------
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
-data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz")
+data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
 remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
 
 
 # CV PARAMETERS
-# INSERT INSTRUCTIONS HERE
-cv_resample_type <- "nested" 
-cv_resample = NULL
+# All cv parameters must have a value or be set to NULL
+# cv_resample will be used to specify kfold and bootstrapping splits (non-nested)
+# nested cv should use cv_inner_resample and cv_outer_resample instead of cv_resample
+# see resampling demo in lab_support/chtc for examples
+cv_resample_type <- "nested" # can be boot, kfold, or nested
+cv_resample = NULL # can be repeats_x_folds (e.g., 1_x_10, 10_x_10) or number of bootstraps (e.g., 100)
 cv_inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
-cv_outer_resample <- "1_x_10" 
-cv_group <- "subid" # remove or set to NULL if not grouping
+cv_outer_resample <- "1_x_10" # outer resample will always be kfold
+cv_group <- "subid" # set to NULL if not grouping
 
 
 # SET STUDY PATHS
 name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
-path_project <- "./meta/ana_scripts"   # NULL if using staging data
 
 
 # SET ALGORITHM-SPECIFIC HYPERPARAMETERS

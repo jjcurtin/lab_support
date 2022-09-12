@@ -201,7 +201,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   }
   
   # copy template R and unix files to input folder -----------------
-  check_copy <- file.copy(from = file.path(path_templates, "input", c(list.files(file.path(path_templates, "input")))),
+  check_copy <- file.copy(from = file.path(path_templates, c(list.files(file.path(path_templates)))),
             to = file.path(path_jobs, name_job, "input"),
             recursive = TRUE,
             overwrite = overwrite_jobs) 
@@ -214,7 +214,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # update submit file from training controls -----------------
   # add files to transfer
   if(is.null(data_trn)) {
-    # don't add data_trn to transfer riles if staging
+    # don't add data_trn to transfer files if staging
     transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
                                 paste(tar, collapse = ', '), 
                                 ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)

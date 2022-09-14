@@ -252,7 +252,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL) {
   
   # d: (training) dataset to be resampled 
-  # resample_type: can be boot, kfold, or nested
+  # cv_resample_type: can be boot, kfold, or nested
   # resample: specifies for repeats and folds for CV (1_x_10; 10_x_10) or num splits for bootstrapping (100)
   # inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
   # outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
@@ -348,23 +348,28 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   return(splits)
 }
 
-make_rset <- function(splits, n_repeat, n_fold, resample_type) {
+make_rset <- function(splits, cv_resample_type, split_num = NULL, inner_split_num = NULL, outer_split_num = NULL) {
 # used to make an rset object that contains a single split for use in tuning glmnet on CHTC  
   
-  n_folds <- resample_type %>% 
-    str_extract("_x_\\d{1,2}") %>% 
-    str_remove("_x_") %>% 
-    as.numeric()
+  if (cv_resample_type == "nested") {
+    split <- splits$inner_resamples[[outer_split_num]] %>% 
+      slice(inner_split_num) 
+  }
   
-  fold_index <- n_fold + (n_repeat - 1) * n_folds
+  if (cv_resample_type == "kfold") {
+    split <- splits %>% 
+      slice(split_num)
+  }
+
+  if (cv_resample_type == "boot") {
+    stop("Make rset does not work for bootstrap resamples")
+  }
   
-  
-  split <- splits[fold_index, ]
   rset <- manual_rset(split$splits, split$id)
   return(rset)
 }
 
-tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
+tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
   # splits: rset object that contains all resamples
@@ -374,7 +379,9 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
     
     # make rset for single held-in/held_out split
-    split <- make_rset(splits, job$n_repeat, job$n_fold, resample_type)
+    # does not work for bootstrapping
+    split <- make_rset(splits, cv_resample_type = cv_resample_type, split_num = job$split_num,
+                       inner_split_num = job$inner_split_num, outer_split_num = job$outer_split_num)
     
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
@@ -404,7 +411,7 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
   if (job$algorithm == "random_forest") {
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -435,7 +442,7 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
     
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -462,7 +469,7 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
   
   if (job$algorithm == "knn") {
     # extract single fold associated with job
-    features <- make_features(job = job, splits = splits, rec = rec, resample_type = resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -489,21 +496,21 @@ tune_model <- function(job, rec, splits, resample_type, hp2_glmnet_min = NULL,
 
 # helper function for tune_model()
 # KW: still need to add section for bootstrap
-make_features <- function(job, splits, rec, resample_type) {
+make_features <- function(job, splits, rec, cv_resample_type) {
   
   
   # NEED TO UPDATE BASED ON NEW JOBS PARAMETERS
   
   
-  # need to also pass in resample_type if becomes global parameter
+  # need to also pass in cv_resample_type if becomes global parameter
   
   # job: single-row job-specific tibble
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   
-  if (resample_type != "boot") {
+  if (cv_resample_type != "boot") {
     
-    n_folds <- resample_type %>% 
+    n_folds <- cv_resample_type %>% 
       str_extract("_x_\\d{1,2}") %>% 
       str_remove("_x_") %>% 
       as.numeric()
@@ -514,7 +521,7 @@ make_features <- function(job, splits, rec, resample_type) {
     d_out <- assessment(splits$splits[[split_index]])
   }
   
-  if (resample_type == "boot") {
+  if (cv_resample_type == "boot") {
     
     # pull out bootstrap split here
     

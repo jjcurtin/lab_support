@@ -498,27 +498,24 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
 # KW: still need to add section for bootstrap
 make_features <- function(job, splits, rec, cv_resample_type) {
   
-  
-  # NEED TO UPDATE BASED ON NEW JOBS PARAMETERS
-  
-  
-  # need to also pass in cv_resample_type if becomes global parameter
-  
+
   # job: single-row job-specific tibble
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
+  # cv_resample_type: either boot, kfold, or nested
   
-  if (cv_resample_type != "boot") {
+  if (cv_resample_type == "kfold") {
     
-    n_folds <- cv_resample_type %>% 
-      str_extract("_x_\\d{1,2}") %>% 
-      str_remove("_x_") %>% 
-      as.numeric()
+    d_in <- training(splits$splits[[job$split_num]])
+    d_out <- testing(splits$splits[[job$split_num]])
+  }
+  
+  
+  if (cv_resample_type == "nested") {
     
-    split_index <- job$n_fold + (job$n_repeat - 1) * n_folds
-    
-    d_in <- analysis(splits$splits[[split_index]])
-    d_out <- assessment(splits$splits[[split_index]])
+    d_in <- training(splits$inner_resamples[[job$outer_split_num]]$splits[[job$inner_split_num]])
+
+    d_out <- testing(splits$inner_resamples[[job$outer_split_num]]$splits[[job$inner_split_num]]) 
   }
   
   if (cv_resample_type == "boot") {

@@ -1,4 +1,4 @@
-# fit model at chtc 
+# Fit model at chtc
 
 # libraries & source functions file ----------------
 suppressWarnings(suppressPackageStartupMessages({
@@ -9,14 +9,14 @@ suppressWarnings(suppressPackageStartupMessages({
   require(readr)
 })) 
 source("fun_chtc.R")
-source("training_controls.R")
+source("training_controls.R")  
 
-# set up job---------
-# job_num_arg <- 3, 47, 91
+# set up job ---------
+# job_num_arg <- 1
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-jobs <- vroom("jobs.csv", col_types = "iiiccdddc")
+jobs <- vroom("jobs.csv", col_types = "iiiiccdddc")
 
 job <- jobs %>% 
   filter(job_num == job_num_arg)
@@ -26,30 +26,29 @@ fn <- str_subset(list.files(), "^data_trn")
 if (str_detect(fn, ".rds")) {
   d <- read_rds(fn)
 } else {
-  d <- vroom(fn, show_col_types = FALSE) 
+  d <- vroom(fn, show_col_types = FALSE)
 }
-
-# Set outcome variable to y
-d <- d %>% 
+ 
+# # Set outcome variable to y
+d <- d %>%
   rename(y = {{y_col_name}})
+ 
 
-# create splits object ---------------
+# create nested outer splits object ---------------
 set.seed(102030)
-splits <- if (str_detect(cv_type, "group")) {
-  make_splits(d = d, cv_type = cv_type, group = group)
-} else { 
-  make_splits(d = d, cv_type = cv_type)
-}
+splits <- d %>% 
+  make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+
 
 # build recipe ----------------
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------
-#count before removing nzv
+# count before removing nzv
 feat_all <-  rec %>% 
-  step_rm(has_role(match = "id variable")) %>% 
   prep(training = d, strings_as_factors = FALSE) %>% 
   bake(new_data = NULL)
+
 
 # remove nzv if specified in training controls
 if (remove_nzv) {

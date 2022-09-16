@@ -569,18 +569,18 @@ get_metrics <- function(model, feat_out) {
   return(model_metrics)
 }
 
-eval_best_model <- function(best_model, rec, splits) {
+eval_best_model <- function(config_best, rec, splits) {
 # evaluates best model configuration using resamples of data contained in splits.
   
   
   # control grid to save predictions
-  ctrl <- control_resamples(save_pred = TRUE, event_level = "first",  
+  ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
                             extract = function (x) extract_fit_parsnip(x) %>% tidy())
   
-  if (best_model$algorithm == "glmnet") {
+  if (config_best$algorithm == "glmnet") {
     
-    models <- logistic_reg(penalty = best_model$hp2,
-                          mixture = best_model$hp1) %>%
+    models <- logistic_reg(penalty = config_best$hp2,
+                          mixture = config_best$hp1) %>%
       set_engine("glmnet") %>%
       set_mode("classification") %>%
       fit_resamples(preprocessor = rec,
@@ -591,12 +591,12 @@ eval_best_model <- function(best_model, rec, splits) {
   }
 
   
-  if (best_model$algorithm == "random_forest") {
+  if (config_best$algorithm == "random_forest") {
     
-    # fit model on feat_in with best_model hyperparameter values 
-    models <- rand_forest(mtry = best_model$hp1,
-                         min_n = best_model$hp2,
-                         trees = best_model$hp3) %>%
+    # fit model on feat_in with config_best hyperparameter values 
+    models <- rand_forest(mtry = config_best$hp1,
+                         min_n = config_best$hp2,
+                         trees = config_best$hp3) %>%
       set_engine("ranger",
                  importance = "none",
                  respect.unordered.factors = "order",
@@ -611,12 +611,12 @@ eval_best_model <- function(best_model, rec, splits) {
   }
 
   
-  if (best_model$algorithm == "xgboost") {
+  if (config_best$algorithm == "xgboost") {
     
-    # fit model on feat_in with best_model hyperparameter values 
-    models <- boost_tree(learn_rate = best_model$hp1,
-                        tree_depth = best_model$hp2,
-                        mtry = best_model$hp3,
+    # fit model on feat_in with config_best hyperparameter values 
+    models <- boost_tree(learn_rate = config_best$hp1,
+                        tree_depth = config_best$hp2,
+                        mtry = config_best$hp3,
                         trees = 100,  # set high but use early stopping
                         stop_iter = 10) %>% 
       set_engine("xgboost",
@@ -630,11 +630,11 @@ eval_best_model <- function(best_model, rec, splits) {
   }
   
   
-  if (best_model$algorithm == "knn") {
+  if (config_best$algorithm == "knn") {
     
-    # fit model - best_model provides number of neighbors
+    # fit model - config_best provides number of neighbors
     
-    models <- nearest_neighbor(neighbors = best_model$hp1) %>% 
+    models <- nearest_neighbor(neighbors = config_best$hp1) %>% 
       set_engine("kknn") %>% 
       set_mode("classification") %>% 
       fit_resamples(preprocessor = rec,
@@ -648,7 +648,7 @@ eval_best_model <- function(best_model, rec, splits) {
       pivot_wider(., names_from = ".metric",
                   values_from = ".estimate") %>%
       select(-.estimator) %>% 
-      bind_cols(best_model %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
+      bind_cols(config_best %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
     
     
     # Create a tibble of predictions

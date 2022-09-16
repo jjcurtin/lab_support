@@ -58,7 +58,7 @@ hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not n
 
 
 # CHANGE CHTC SPECIFIC CONTROLS
-tar <- c("chtc_train.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
+tar <- c("train.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
 max_idle <- 1000 # according to CHTC we should set this at 1000 to not flood the server. It will not limit the number of jobs running at one time 
 request_cpus <- 1 
 request_memory <- "8000MB"

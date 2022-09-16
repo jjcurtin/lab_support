@@ -83,7 +83,9 @@ build_recipe <- function(d, job) {
   
 # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
-    step_rm(subid)
+    step_rm(subid) %>% 
+    step_mutate(y = if_else(y == 1, "pos", "neg")) %>% 
+    step_string2factor(y, levels = c("pos", "neg"))
   
   # algorithm specific steps
   if (algorithm == "glmnet" | algorithm == "knn") {

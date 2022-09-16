@@ -559,7 +559,7 @@ get_metrics <- function(model, feat_out) {
   
   roc <- tibble(truth = feat_out$y,
                 prob = predict(model, feat_out,
-                              type = "prob")$.pred_yes) %>% 
+                              type = "prob")$.pred_pos) %>% 
     roc_auc(prob, truth = truth, event_level = "first") %>% 
     select(metric = .metric, 
            estimate = .estimate)

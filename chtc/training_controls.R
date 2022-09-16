@@ -62,7 +62,7 @@ hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not n
 
 
 # CHANGE CHTC SPECIFIC CONTROLS
-tar <- c("train.tar.gz", "meta.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
+tar <- c("train.tar.gz", "other_project_specific.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
 max_idle <- 1000 # according to CHTC we should set this at 1000 to not flood the server. It will not limit the number of jobs running at one time 
 request_cpus <- 1 
 request_memory <- "8000MB"
@@ -97,7 +97,9 @@ build_recipe <- function(d, job) {
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
     step_rm(label_num, subid, dttm_label) %>% 
-    step_string2factor(y, levels = c("yes", "no")) %>% # positive case should be first
+    # MUST CHANGE DICHOTMOUS OUTCOME TO POS/NEG VALUES
+    step_mutate(y = if_else(y == "yes", "pos", "neg")) %>% 
+    step_string2factor(y, levels = c("pos", "neg")) %>% # positive case should be first
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
     step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",

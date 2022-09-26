@@ -10,6 +10,7 @@ data_type <- "all"   # but still need to change more (e.g., feature set) to swit
 window <- "1week"
 lead <- 0
 version <- "v1"
+cv <- "kfold"  # for name_job
 algorithm <- c("glmnet", "knn", "random_forest", "xgboost") # 1+ algorithm (glmnet, random_forest) 
 
 
@@ -27,7 +28,7 @@ remove_nzv <- TRUE # using as variable instead of in recipe to be able to calcul
 
 
 # SET STUDY PATHS
-name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm) # the name of the job to set folder names
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
 path_project <- "./meta/ana_scripts"   # NULL if using staging data

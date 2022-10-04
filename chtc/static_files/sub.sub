@@ -1,6 +1,6 @@
 # sub.sub
 universe = vanilla
-requirements = (OpSysMajorVer == 7)
+requirements = (OpSysMajorVer == 8)
 
 executable = execute.sh
 arguments = $(job_num)

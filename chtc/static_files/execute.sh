@@ -9,12 +9,13 @@
 # cp /staging/username/data_trn.rds.xz ./
 
 # Commands to enable modules, and then load an appropriate module (necessary to load glmnet and xgboost)
-export PATH 
-. /etc/profile.d/modules.sh 
-module load GCC/8.3.0
+# 10/4/22: Not currently needed with CHTC OS 8 
+# export PATH 
+# . /etc/profile.d/modules.sh 
+# module load GCC/8.3.0
 
 #untar R installation
-tar -xzf R402.tar.gz
+tar -xzf R413.tar.gz
 tar -xzf SLIBS.tar.gz
 tar -xzf train.tar.gz
 export LD_LIBRARY_PATH=$(pwd)/SS:$LD_LIBRARY_PATH

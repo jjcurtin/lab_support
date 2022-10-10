@@ -10,28 +10,36 @@ data_type <- "all"   # but still need to change more (e.g., feature set) to swit
 window <- "1week"
 lead <- 0
 version <- "v1"
-cv <- "kfold"  # for name_job
-algorithm <- c("glmnet", "knn", "random_forest", "xgboost") # 1+ algorithm (glmnet, random_forest) 
+algorithm <- "glmnet" # specify one algorithm per training control file - can be glmnet, knn, random_forest, xgboost
+
 
 
 
 
 # SET GLOBAL PARAMETERS --------
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
-data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz")
+data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
-cv_type <- "group_kfold_1_x_10" # cv type - can be boot, group_kfold, or kfold
-# format for kfold should be kfold_n_repeats_x_n_folds (e.g., kfold_1_x_10, group_kfold_10_x_10)
-group <- "subid" # grouping variable for grouped k-fold - remove if not using group_kfold
 remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
+
+
+# CV PARAMETERS
+# All cv parameters must have a value or be set to NULL
+# cv_resample will be used to specify kfold and bootstrapping splits (non-nested)
+# nested cv should use cv_inner_resample and cv_outer_resample instead of cv_resample
+# see resampling demo in lab_support/chtc for examples
+cv_resample_type <- "nested" # can be boot, kfold, or nested
+cv_resample = NULL # can be repeats_x_folds (e.g., 1_x_10, 10_x_10) or number of bootstraps (e.g., 100)
+cv_inner_resample <- "1_x_10" # can also be a single number for bootstrapping (i.e., 100)
+cv_outer_resample <- "1_x_10" # outer resample will always be kfold
+cv_group <- "subid" # set to NULL if not grouping
 
 
 # SET STUDY PATHS
 name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
-path_project <- "./meta/ana_scripts"   # NULL if using staging data
 
 
 # SET ALGORITHM-SPECIFIC HYPERPARAMETERS
@@ -55,7 +63,7 @@ hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not n
 
 
 # CHANGE CHTC SPECIFIC CONTROLS
-tar <- c("chtc_train.tar.gz", "meta.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
+tar <- c("train.tar.gz", "other_project_specific.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
 max_idle <- 1000 # according to CHTC we should set this at 1000 to not flood the server. It will not limit the number of jobs running at one time 
 request_cpus <- 1 
 request_memory <- "8000MB"
@@ -90,7 +98,9 @@ build_recipe <- function(d, job) {
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
     step_rm(label_num, subid, dttm_label) %>% 
-    step_string2factor(y, levels = c("yes", "no")) %>% # positive case should be first
+    # MUST CHANGE DICHOTMOUS OUTCOME TO POS/NEG VALUES
+    step_mutate(y = if_else(y == "yes", "pos", "neg")) %>% 
+    step_string2factor(y, levels = c("pos", "neg")) %>% # positive case should be first
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
     step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",

@@ -33,6 +33,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   source(path_training_controls)
   
   # relative paths should work from any repo project if a local copy of lab_support exists
+
   path_chtc <- "../lab_support/chtc"
   
 
@@ -143,8 +144,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   } else {
     message("Job folder already exists. No new folders created.")
   }
-  
-  # write jobs file to input folder 
+
+  # write jobs file to input folder
   jobs %>% 
     vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
   
@@ -154,6 +155,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), col_names = FALSE)
     
   
+
   # copy data to input folder as data_trn 
   # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
   if(!is.null(data_trn)){
@@ -190,15 +192,15 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     }
   }
   
-  # update submit file from training controls 
+  # update submit file from training controls -----------------
   # add files to transfer
   if(is.null(data_trn)) {
-    # don't add data_trn to transfer riles if staging
-    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
+    # don't add data_trn to transfer files if staging
+    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
                                 paste(tar, collapse = ', '), 
                                 ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
   } else {
-    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/R402.tar.gz, ",
+    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
                                 paste(tar, collapse = ', '), ", ", fn,
                                 ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
   }
@@ -244,8 +246,6 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   write(queue_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
   
 }
-
-
 
 
 
@@ -519,7 +519,7 @@ make_features <- function(job, splits, rec, cv_resample_type) {
   }
   
   if (cv_resample_type == "boot") {
-    
+   
     # pull out bootstrap split here
     
   }
@@ -649,6 +649,7 @@ eval_best_model <- function(config_best, rec, splits) {
                   values_from = ".estimate") %>%
       select(-.estimator) %>% 
       bind_cols(config_best %>% select(algorithm, feature_set, hp1, hp2, hp3, resample), .)
+
     
     
     # Create a tibble of predictions
@@ -718,4 +719,3 @@ fit_best_model <- function(best_model, rec, d) {
     return(fit_best)
   }
 }
-

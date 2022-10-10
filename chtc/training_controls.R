@@ -15,6 +15,7 @@ algorithm <- "glmnet" # specify one algorithm per training control file - can be
 
 
 
+
 # SET GLOBAL PARAMETERS --------
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
 data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
@@ -36,7 +37,7 @@ cv_group <- "subid" # set to NULL if not grouping
 
 
 # SET STUDY PATHS
-name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm) # the name of the job to set folder names
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
 

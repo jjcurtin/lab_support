@@ -21,6 +21,8 @@ feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
 data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
+y_level_pos <- "" # character string of the outcome variable's positive level (e.g., "yes", "abstinent")
+y_level_neg <- "" # character string of the outcome variable's negative level (e.g., "no", "smoking")
 remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
 
 
@@ -104,8 +106,9 @@ build_recipe <- function(d, job) {
   rec <- recipe(y ~ ., data = d) %>%
     step_rm(label_num, subid, dttm_label) %>% 
     # MUST CHANGE DICHOTMOUS OUTCOME TO POS/NEG VALUES
-    step_mutate(y = if_else(y == "yes", "pos", "neg")) %>% 
+    step_mutate(y = if_else(y == !!y_level_pos, "pos", "neg")) %>% 
     step_string2factor(y, levels = c("pos", "neg")) %>% # positive case should be first
+    step_relevel(y, ref_level = "pos") %>% # confirming positive case is set as first level
     # reference group will be first level in factor - specify levels to choose reference group
     step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
     step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",

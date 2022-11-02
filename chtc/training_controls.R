@@ -36,8 +36,13 @@ cv_outer_resample <- "1_x_10" # outer resample will always be kfold
 cv_group <- "subid" # set to NULL if not grouping
 
 
+cv_name <- if_else(cv_resample_type == "nested",
+                   str_c(cv_resample_type, "_", cv_inner_resample, "_",
+                         cv_outer_resample),
+                   str_c(cv_resample_type, "_", cv_resample))
+
 # SET STUDY PATHS
-name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv) # the name of the job to set folder names
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv_name) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
 

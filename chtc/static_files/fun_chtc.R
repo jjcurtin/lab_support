@@ -365,7 +365,7 @@ make_rset <- function(splits, cv_resample_type, split_num = NULL, inner_split_nu
   return(rset)
 }
 
-tune_model <- function(job, rec, splits, mode, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
+tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
   # splits: rset object that contains all resamples

@@ -58,7 +58,7 @@ if (remove_nzv) {
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
-  tune_model(job = job, rec = rec, splits = splits, cv_resample_type = cv_resample_type, 
+  tune_model(job = job, rec = rec, splits = splits, ml_mode = ml_mode, cv_resample_type = cv_resample_type, 
              hp2_glmnet_min = hp2_glmnet_min, hp2_glmnet_max = hp2_glmnet_max, 
              hp2_glmnet_out = hp2_glmnet_out)
 } else {

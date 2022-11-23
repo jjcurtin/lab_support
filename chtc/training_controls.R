@@ -17,6 +17,8 @@ algorithm <- "glmnet" # specify one algorithm per training control file - can be
 
 
 # SET GLOBAL PARAMETERS --------
+ml_mode <- "regression"   # regression or classification
+
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
 data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
 resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)

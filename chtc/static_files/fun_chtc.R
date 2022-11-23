@@ -365,11 +365,23 @@ make_rset <- function(splits, cv_resample_type, split_num = NULL, inner_split_nu
   return(rset)
 }
 
-tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL,
+tune_model <- function(job, rec, splits, mode, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
+  
+  # set metrics for regression or classification
+  if (ml_model == "regression") {
+    mode_metrics <- metric_set(rmse, rsq)
+  }
+  
+  if (ml_model == "classification") {
+    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+                               sens, yardstick::spec, ppv, npv)
+  }
+  
+  
   
   if (job$algorithm == "glmnet") {
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
@@ -382,14 +394,13 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
     models <- logistic_reg(penalty = tune(),
                            mixture = job$hp1) %>%
       set_engine("glmnet") %>%
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       tune_grid(preprocessor = rec,
                 resamples = split,
                 grid = grid_penalty,
                 # metrics assume that positive event it first level
                 # make sure this is true in recipe
-                metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv))
+                metrics = mode_metrics)
     
     # create tibble of penalty and metrics returned 
     results <- collect_metrics(models, summarize = FALSE) %>% 
@@ -420,7 +431,7 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ .,
           data = feat_in)
     
@@ -450,7 +461,7 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
                         stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
@@ -472,7 +483,7 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
     # fit model - job provides number of neighbors
     model <- nearest_neighbor(neighbors = job$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit(y ~ .,
           data = feat_in)
     
@@ -534,33 +545,41 @@ make_features <- function(job, splits, rec, cv_resample_type) {
 }
 
 # helper function for tune_model()
-# KW: note this only works on binary yes, no outcome (y)
-get_metrics <- function(model, feat_out) {
+get_metrics <- function(model, feat_out, ml_mode) {
   
   # model: single model object 
   # feat_out: feature matrix built from held-out data
   
-  preds <- predict(model, feat_out, type = "class")$.pred_class
   
-  cm <- tibble(truth = feat_out$y,
-               estimate = preds) %>% 
-    conf_mat(truth, estimate)
+  if (ml_mode == "classification") {
+    preds <- predict(model, feat_out, type = "class")$.pred_class
+    
+    cm <- tibble(truth = feat_out$y,
+                 estimate = preds) %>% 
+      conf_mat(truth, estimate)
+    
+    model_metrics <- cm %>% 
+      summary(event_level = "first") %>%   # make sure this is true in recipe
+      select(metric = .metric,
+             estimate = .estimate) %>% 
+      filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
+      suppressWarnings() # warning not about metrics we are returning
+    
+    roc <- tibble(truth = feat_out$y,
+                  prob = predict(model, feat_out,
+                                type = "prob")$.pred_pos) %>% 
+      roc_auc(prob, truth = truth, event_level = "first") %>% 
+      select(metric = .metric, 
+             estimate = .estimate)
+    
+    model_metrics <- bind_rows(model_metrics, roc)
+  }
   
-  model_metrics <- cm %>% 
-    summary(event_level = "first") %>%   # make sure this is true in recipe
-    select(metric = .metric,
-           estimate = .estimate) %>% 
-    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
-    suppressWarnings() # warning not about metrics we are returning
-  
-  roc <- tibble(truth = feat_out$y,
-                prob = predict(model, feat_out,
-                              type = "prob")$.pred_pos) %>% 
-    roc_auc(prob, truth = truth, event_level = "first") %>% 
-    select(metric = .metric, 
-           estimate = .estimate)
-  
-  model_metrics <- bind_rows(model_metrics, roc)
+  if (ml_mode == "regression") {
+    
+   #  UPDATE NEXT for Frank and Penny
+    
+  }
   
   return(model_metrics)
 }

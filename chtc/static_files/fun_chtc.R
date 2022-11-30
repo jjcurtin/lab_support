@@ -372,11 +372,11 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
   # rec: recipe (created manually or via build_recipe() function)
   
   # set metrics for regression or classification
-  if (ml_model == "regression") {
+  if (ml_mode == "regression") {
     mode_metrics <- metric_set(rmse, rsq)
   }
   
-  if (ml_model == "classification") {
+  if (ml_mode == "classification") {
     mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
                                sens, yardstick::spec, ppv, npv)
   }

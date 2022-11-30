@@ -391,24 +391,38 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     split <- make_rset(splits, cv_resample_type = cv_resample_type, split_num = job$split_num,
                        inner_split_num = job$inner_split_num, outer_split_num = job$outer_split_num)
     
-    models <- logistic_reg(penalty = tune(),
+    if (ml_mode == "classification") {
+      models <- logistic_reg(penalty = tune(),
+                             mixture = job$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode("classification") %>%
+        tune_grid(preprocessor = rec,
+                  resamples = split,
+                  grid = grid_penalty,
+                  # metrics assume that positive event it first level
+                  # make sure this is true in recipe
+                  metrics = mode_metrics)
+    } else {
+      models <- linear_reg(penalty = tune(),
                            mixture = job$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode(ml_mode) %>%
-      tune_grid(preprocessor = rec,
-                resamples = split,
-                grid = grid_penalty,
-                # metrics assume that positive event it first level
-                # make sure this is true in recipe
-                metrics = mode_metrics)
-    
+        set_engine("glmnet") %>%
+        set_mode("regression") %>%
+        tune_grid(preprocessor = rec,
+                  resamples = split,
+                  grid = grid_penalty,
+                  # metrics assume that positive event it first level
+                  # make sure this is true in recipe
+                  metrics = mode_metrics)
+      
+      
+    }
     # create tibble of penalty and metrics returned 
     results <- collect_metrics(models, summarize = FALSE) %>% 
       rename(hp2 = penalty) %>% 
       select(hp2, .metric, .estimate) %>% # use select to drop extra cols (.estimator, n, std_err, .config)
       pivot_wider(., names_from = ".metric",
                   values_from = ".estimate") %>%  
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
+      # relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
       bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
@@ -436,11 +450,16 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
           data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results)
   }
@@ -465,11 +484,16 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
       fit(y ~ ., data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results)
   }
@@ -488,11 +512,16 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
           data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results) 
   }
@@ -577,8 +606,12 @@ get_metrics <- function(model, feat_out, ml_mode) {
   
   if (ml_mode == "regression") {
     
-   #  UPDATE NEXT for Frank and Penny
+    preds <- predict(model, feat_out)$.pred
+    rmse_model <- rmse_vec(truth = feat_out$y, estimate = preds)
+    rsq_model <- rsq_vec(truth = feat_out$y, estimate = preds)
+   
     
+    model_metrics <- tibble(rsq = rsq_model, rmse = rmse_model)
   }
   
   return(model_metrics)

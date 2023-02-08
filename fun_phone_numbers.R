@@ -14,33 +14,33 @@ check_country_code <- function(number) {
   # Function checks if a number is a valid international (non-US) number.
   # Number is expected to be a character string with no symbols
   # Returns true or false
-  
+
   # Check number is in proper format
   if (is.na(number)) {
     stop("No number detected (NA).")
   }
-  
+
   if (!str_detect(number, "[0-9]")) {
     stop("You entered the number ", number,
          ". This function expects a formatted number with no text characters.")
   }
-  
+
   if (str_detect(number, "[[:space:]-\\(\\).+]")) {
     stop("You entered the number ", number,
          ". This function expects a formatted number with no punctuation.")
   }
- 
+
   match <- NULL
-  
+
   #  Mexico
   #  Country code 52
   #  pattern - 10 digit number plus country code 52 and has valid area code
   if (nchar(number) == 12 && str_detect(number, "^52") && !str_detect(number, "[[:alpha:]*#]")) {
     # check area code - code can be 2 or 3 digits
-    code_2_digits <- str_sub(number, 3, 4) %in% c ("55", "56", "81", "33") 
-    code_3_digits <- str_sub(number, 3, 5) %in% 
-      c("221", "222", "223", "224", "225", "226", "227", "228", "229", "231", "232", 
-        "233", "235", "236", "237", "238", "241", "243", "244", "245", "246", "247", 
+    code_2_digits <- str_sub(number, 3, 4) %in% c ("55", "56", "81", "33")
+    code_3_digits <- str_sub(number, 3, 5) %in%
+      c("221", "222", "223", "224", "225", "226", "227", "228", "229", "231", "232",
+        "233", "235", "236", "237", "238", "241", "243", "244", "245", "246", "247",
         "248", "249", "271", "272", "273", "274", "275", "276", "278", "279", "281",
         "282", "283", "284", "285", "287", "288", "294", "296", "297", "311", "312",
         "313", "314", "315", "316", "317", "318", "319", "321", "322", "323", "324",
@@ -48,20 +48,20 @@ check_country_code <- function(number) {
         "347", "348", "349", "351", "352", "353", "354", "355", "356", "357", "358",
         "359", "371", "372", "373", "374", "375", "376", "377", "378", "381", "382",
         "383", "384", "385", "386", "387", "388", "389", "391", "392", "393", "394",
-        "395") 
+        "395")
     # This is only like a third of possible area codes. Can enter all of them later
-    
+
     # for now just check on number of digits and country code
-    
+
     # if(code_2_digits | code_3_digits) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     # }
   }
-  
+
   ## Africa
-  
+
   ## Asia
   #  India
   #  Country code 91
@@ -70,85 +70,85 @@ check_country_code <- function(number) {
     # check area code - code can be 2, 3, or 4 digits
     # FIX: these area codes are for landlines, there are no specific area codes on mobile phones
     code_2_digits <- str_sub(number, 3, 4) %in% c ("79", "80", "44", "11", "40", "33", "22",
-                                                   "11", "20") 
+                                                   "11", "20")
     code_3_digits <- str_sub(number, 3, 5) %in% c("080", "562", "145", "144", "183", "265",
                                                   "755", "151", "747", "172", "422", "135",
                                                   "141", "181", "512", "744", "522", "821",
                                                   "612", "145", "281", "144", "177", "194",
                                                   "261", "294", "265")
-    code_4_digits <- str_sub(number, 3, 6) %in% c("2432", "2982", "1462", "5644", "1482", 
+    code_4_digits <- str_sub(number, 3, 6) %in% c("2432", "2982", "1462", "5644", "1482",
                                                   "8572", "6432", "5642", "5619", "8252",
                                                   "2974", "1362", "1582", "7462")
-    
+
     # if(code_2_digits | code_3_digits | code_4_digits) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     # }
   }
-  
+
   #  Cambodia
   #  Country code 855
   #  pattern - 8 or 9 digit phone number plus 855 country code and with valid area code
-  if ((nchar(number) == 12 | nchar(number) == 11) && str_detect(number, "^855") && 
+  if ((nchar(number) == 12 | nchar(number) == 11) && str_detect(number, "^855") &&
       !str_detect(number, "[[:alpha:]*#]")) {
     # check mobile phone provider access code
     check_code <- str_sub(number, 4, 5) %in% c("23", "24", "25", "26", "32", "33", "34",
                                                "35", "36", "42", "43", "44", "52", "53",
                                                "54", "55", "62", "63", "64", "65", "72",
                                                "73", "74", "75", "11", "12", "14", "17",
-                                               "61", "76", "77", "78", "79", "85", "89", 
+                                               "61", "76", "77", "78", "79", "85", "89",
                                                "92", "95", "99", "38", "39", "18", "31",
-                                               "60", "66", "67", "68", "71", "88", "90", 
-                                               "97", "13", "80", "83", "84", "10", "15", 
+                                               "60", "66", "67", "68", "71", "88", "90",
+                                               "97", "13", "80", "83", "84", "10", "15",
                                                "16", "69", "70", "81", "86", "87", "93",
                                                "96", "98")
-    
+
     if(check_code) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   ## Oceania
-  
+
   ## Europe
   #  UK
   #  Country code 44
-  #  pattern - 9 or 10 numbers plus country code 44 
+  #  pattern - 9 or 10 numbers plus country code 44
   #  all UK mobile phones are 10 digits, but landlines may be 9 or 10 digits
-  if (str_detect(number, "^44") && (nchar(number) == 12 | nchar(number) == 11) && 
+  if (str_detect(number, "^44") && (nchar(number) == 12 | nchar(number) == 11) &&
       !str_detect(number, "[[:alpha:]*#]")) {
-    # area codes are 2, 3, 4, or 5, digits in length. 
+    # area codes are 2, 3, 4, or 5, digits in length.
     # Geographic area codes start with a 1 or 2, mobile phones start with 7
     # can also start with 3, 5, or 8 though
     # length of number and country code is likely sufficient check for now
-    
+
     if(is.null(match)) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   #  Iran
   #  Country code 98
   #  pattern - 10 numbers plus country code 98 and valid area code
-  if (str_detect(number, "^98") && nchar(number) == 12 && 
+  if (str_detect(number, "^98") && nchar(number) == 12 &&
       !str_detect(number, "[[:alpha:]*#]")) {
     # check area code
-    check_code <- (str_sub(number(2, 3) %in% c("11", "13", "17", "21", "23", "24", "25", 
+    check_code <- (str_sub(number(2, 3) %in% c("11", "13", "17", "21", "23", "24", "25",
                                                "26", "28", "31", "34", "35", "38", "41",
                                                "44", "45", "51", "54", "56", "58", "61",
                                                "66", "71", "74", "76", "77", "81", "83",
                                                "84", "86", "87")))
-    
+
     if(check_code) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # Russia
   # Country code 7
   # pattern 10 numbers plus country code 7 and valid area code
@@ -168,16 +168,16 @@ check_country_code <- function(number) {
                                                 "349", "394", "482", "345", "341", "842",
                                                 "492", "844", "817", "473", "485", "884")) |
       # non-geographic area codes for mobile networks (900 - 969, except 954, and 972-999)
-      (as.numeric(str_sub(number, 2, 4)) >= 900 && as.numeric(str_sub(number, 2, 4)) <= 999 && 
+      (as.numeric(str_sub(number, 2, 4)) >= 900 && as.numeric(str_sub(number, 2, 4)) <= 999 &&
          !as.numeric(str_sub(number, 2, 4)) %in% c(954, 970, 971))
-    
+
     if(check_code) {
       if (is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   #  Ireland
   #  Country Code 353
   #  pattern - 7-9 numbers plus country code 353
@@ -188,35 +188,35 @@ check_country_code <- function(number) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   #  France
   #  Country code 33
   #  pattern - 9 digit phone number plus country code 33
   if (nchar(number) == 11 && str_detect(number, "^33") && !str_detect(number, "[[:alpha:]*#]")) {
-    # add area code check 
+    # add area code check
     if(is.null(match)) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   #  Germany
   #  Country code 49
   #  pattern - 10 - 11 digit number plus country code 49
-  #  FIX: this pattern is for landlines only - "There used to be no fixed lengths for either area codes 
+  #  FIX: this pattern is for landlines only - "There used to be no fixed lengths for either area codes
   #  or subscriber telephone numbers, meaning that some subscriber numbers may be as short as two digits."
-  
+
   if ((nchar(number) == 12 || nchar(number) == 13) && str_detect(number, "^49") && !str_detect(number, "[[:alpha:]*#]")) {
-    # area codes very complex, will add here 
+    # area codes very complex, will add here
     # https://en.wikipedia.org/wiki/List_of_dialling_codes_in_Germany#017
     if(is.null(match)) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   #  Norway
   #  Country code 47
   #  pattern - 8 digit number plus country code 47
-  # interacts with some valid US numbers - need to add more specific pattern, for 
+  # interacts with some valid US numbers - need to add more specific pattern, for
   # now using a failed check for North American area code
   if (nchar(number) == 10 && str_detect(number, "^47") && !check_area_code(number) &&
       !str_detect(number, "[[:alpha:]*#]")) {
@@ -225,31 +225,31 @@ check_country_code <- function(number) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   #  Belgium
   #  Country code 32
   #  pattern - 9 digit number with country code 32 and valid area code
   if (nchar(number) == 11 && str_detect(number, "^32") && !str_detect(number, "[[:alpha:]*#]")) {
     # check area code - code can be 1 or 2 digits
-    code_1_digit <- str_sub(number, 3, 3) %in% c ("3", "2", "9", "4") 
+    code_1_digit <- str_sub(number, 3, 3) %in% c ("3", "2", "9", "4")
     code_2_digits <- str_sub(number, 3, 4) %in% c("53", "63", "68", "65", "19", "50", "71",
                                                   "60", "83", "52", "13", "82", "69", "86",
                                                   "89", "11", "85", "57", "56", "64", "16",
                                                   "61", "84", "15", "81", "67", "54", "59",
                                                   "51", "55", "80", "12", "14", "87", "58",
                                                   "10")
-    
+
     if(code_1_digit | code_2_digits) {
       if(is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   #  Switzerland
   #  Country code 41
   #  pattern - 9 digit number plus country code 41 and with valid area code
-  if ((nchar(number) == 11 | nchar(number) == 12) && str_detect(number, "^41") && 
+  if ((nchar(number) == 11 | nchar(number) == 12) && str_detect(number, "^41") &&
       !str_detect(number, "[[:alpha:]*#]")) {
     # check area code
     code_2_digits <- str_sub(number, 3, 4) %in% c("21", "22", "24", "26", "27", "31", "32",
@@ -257,47 +257,47 @@ check_country_code <- function(number) {
                                                   "55", "56", "58", "61", "62", "71", "74",
                                                   "75", "76", "77", "78", "79", "81", "91")
     code_3_digits <- str_sub(number, 3, 4) %in% c("800", "840", "842", "844", "848")
-    
+
     if(code_2_digits | code_3_digits) {
       if(is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # Palestine
   # Country code 970 or 972
   # pattern 8 or 9 numbers plus 970 or 972 country code
-  if ((nchar(number) == 11 || nchar(number) == 12) && 
-      (str_detect(number, "^970") || str_detect(number, "^972")) && 
+  if ((nchar(number) == 11 || nchar(number) == 12) &&
+      (str_detect(number, "^970") || str_detect(number, "^972")) &&
       !str_detect(number, "[[:alpha:]*#]")) {
     # add area code or more specific checks here
-    
+
     if(is.null(match)) {
       match <- TRUE
     } else stop(number, " matches multiple pre-defined patterns")
   }
-  
+
   ## Central America
-  
+
   ## South America
   #  Columbia
   #  Country code 57
   #  pattern - 10 digit number plus country code 57 and has valid mobile phone access code
   if (nchar(number) == 12 && str_detect(number, "^57") && !str_detect(number, "[[:alpha:]*#]")) {
     # check mobile phone provider access code
-    check_code <- str_sub(number, 3, 5) %in% c("300", "301", "302", "304", "305", "310", 
-                                               "311", "312", "313", "314", "320", "321", 
+    check_code <- str_sub(number, 3, 5) %in% c("300", "301", "302", "304", "305", "310",
+                                               "311", "312", "313", "314", "320", "321",
                                                "322", "323", "315", "316", "317", "318",
                                                "319", "324", "350", "351")
-    
+
     if(check_code) {
       if(is.null(match)) {
         match <- TRUE
       } else stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   if (is.null(match)) {
     return(FALSE)
   } else return(match)
@@ -349,7 +349,7 @@ check_area_code <- function(number) {
   # initialize vector of US area codes
   # full db of area codes at https://nationalnanpa.com/reports/reports_npa.html
   # area_code_db.csv and area_code_codebook.xls in lab_support/data
-  
+
   us_codes <-
     as.character(
       c(201, 202, 203, 205, 206, 207, 208, 209, 210, 212, 213, 214, 215, 216, 217, 218,
@@ -378,14 +378,14 @@ check_area_code <- function(number) {
         # North American toll free area codes
         800, 833, 844, 855, 866, 877, 888,
         # Canadian area codes
-        587, 780, 825, 403, 250, 604, 236, 778, 204, 431, 506, 709, 867, 249, 343, 416, 
-        519, 647, 905, 365, 548, 705, 226, 289, 613, 807, 437, 902, 782, 438, 418, 450, 
+        587, 780, 825, 403, 250, 604, 236, 778, 204, 431, 506, 709, 867, 249, 343, 416,
+        519, 647, 905, 365, 548, 705, 226, 289, 613, 807, 437, 902, 782, 438, 418, 450,
         367, 579, 873, 514, 581, 819, 306, 639,
         # United States territories (Puerto Rico, Guam, etc.)
         340, 670, 671, 684, 787, 939,
         # Carribean area codes (from Carribean nations with +1 international code)
         # https://en.wikipedia.org/wiki/List_of_country_calling_codes#Zone_1:_North_American_Numbering_Plan
-        242, 246, 264, 268, 284, 345, 441, 473, 649, 658, 876, 664, 721, 758, 767, 784, 
+        242, 246, 264, 268, 284, 345, 441, 473, 649, 658, 876, 664, 721, 758, 767, 784,
         809, 829, 849, 868, 869,
         # Personal communication services
         500, 521, 522, 523, 524, 533, 544, 566, 577, 588))
@@ -404,8 +404,8 @@ extract_number <- function(number, print_warning = FALSE) {
 
   # Numbers that match multiple patterns will generate error.
   # Numbers that do not match any pattern are returned as is (but without
-  # spaces, dashes, and ()) 
-  
+  # spaces, dashes, and ())
+
   # To print warnings for unmatched numbers set print_warning = TRUE
 
   # Can use function in tidy pipeline with following code:
@@ -425,12 +425,12 @@ extract_number <- function(number, print_warning = FALSE) {
   if (str_detect(number, "^[[:alnum:]._-]+@[[:alnum:].-]+.[:alpha:]$")) {
     return(number)
   }
-  
+
   # pattern - names or numbers with no numbers
   if (str_detect(number, "[[:alpha:]]") && !str_detect(number, "[0-9]")) {
     return(number)
   }
-  
+
 
   # pattern - amber alert/commercial mobile alert system - relevant only for SMS
   # (?i) is case-insensitive modifier
@@ -444,23 +444,23 @@ extract_number <- function(number, print_warning = FALSE) {
 
     number <- str_remove_all(number, "[[:space:]-\\(\\).+]")
   }
-  
+
   # remove invisible unicode left to right character
   # special case seen in IOS
   if(str_detect(number, "^\u200E")) {
     number <- str_remove(number, "\u200E")
-  } 
+  }
 
   # will copy number to formatted number to allow detection of multiple pattern matches.
   # Not needed yet but may be when numbers can match both US & Non-US numbers
   formatted_number <- NULL
-  
+
   # Remove 00 standard prefix for international dialing (from outside US)
   # HANDLE - think through if this affects anything else
   if (str_detect(number, "^00")) {
     number <- str_remove(number, "00")
   }
-  
+
   # Remove 011 prefix needed for international dialing in North America
   if (str_detect(number, "^011")) {
     number <- str_remove(number, "011")
@@ -469,7 +469,7 @@ extract_number <- function(number, print_warning = FALSE) {
   if (str_detect(number, "^11")) {
     number <- str_remove(number, "11")
   }
-  
+
   # US numbers - removes US country code and returns 10 digit number
   # Pattern - US numbers with 1 country code
   if (nchar(number) == 11 && str_detect(number, "^1") && !str_detect(number, "[[:alpha:][:punct:]]")
@@ -493,16 +493,26 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
-  
+
   # pattern - *67 plus 10 digit US phone number - blocks number
-  if (nchar(number) == 13 && str_detect(number, "\\*67") && check_area_code(str_sub(number, 4, 13))) {
+  if (nchar(number) == 13 && str_detect(number, "^\\*67") && check_area_code(str_sub(number, 4, 13))) {
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "\\*67")
     } else {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
+  # pattern - *67 AFTER 10 digit US phone number - added to handle numbers followed by automenu commands (* plus digits). 2023_0207 (SEW)
+  if (nchar(number) == 13 && str_detect(number, "\\*[:digit:]+$") && check_area_code(str_sub(number, 1, 10))) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*67")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+
+
   # pattern - *67 plus 10 digit US number plus country code 1
   if (nchar(number) == 14 && str_detect(number, "\\*671") && check_area_code(str_sub(number, 5, 14))) {
     if(is.null(formatted_number)) {
@@ -511,7 +521,7 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
   # pattern - *67 plus 7 digit US phone number - blocks number
   if (nchar(number) == 10 && str_detect(number, "^\\*67")) {
     if(is.null(formatted_number)) {
@@ -520,7 +530,15 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-  
+
+  # pattern - *67 AFTER 7 digit US phone number - not sure what this accomplishes but it's breaking Risk2 code
+  if (nchar(number) == 10 && str_detect(number, "\\*67$")) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*67")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
 
   # pattern - N11 numbers (https://en.wikipedia.org/wiki/N11_code)
   # 211: Community services and information
@@ -614,12 +632,12 @@ extract_number <- function(number, print_warning = FALSE) {
     }
   }
 
-  
+
   # HANDLE - group messages
   # These show up in my android logs as multiple numbers separated by ~
 
   # I think these are in IOS data as being separated by ;
- 
+
 
   # HANDLE - Check non-US country codes
   if (str_detect(number, "[0-9]") && !str_detect(number, "[[:alpha:][:punct:]]") &&
@@ -630,7 +648,7 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
-    
+
   # Pattern - 7 digit US numbers with no area code
   # This may eventually interact with non-US numbers?
   # Can we get a list of all know US exchanges?

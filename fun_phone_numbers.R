@@ -504,7 +504,7 @@ extract_number <- function(number, print_warning = FALSE) {
   }
 
   # pattern - *67 AFTER 10 digit US phone number - added to handle numbers followed by automenu commands (* plus digits). 2023_0207 (SEW)
-  if (nchar(number) == 13 && str_detect(number, "\\*[:digit:]+$") && check_area_code(str_sub(number, 1, 10))) {
+  if (nchar(number) == 13 && str_detect(number, "[:digit:]+\\*[:digit:]+$") && check_area_code(str_sub(number, 1, 10))) {
     if(is.null(formatted_number)) {
       formatted_number <- str_remove(number, "\\*67")
     } else {

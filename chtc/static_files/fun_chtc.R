@@ -617,25 +617,50 @@ get_metrics <- function(model, feat_out, ml_mode) {
   return(model_metrics)
 }
 
-eval_best_model <- function(config_best, rec, splits) {
+eval_best_model <- function(config_best, rec, splits, ml_mode) {
 # evaluates best model configuration using resamples of data contained in splits.
   
+  # set metrics for regression or classification
+  if (ml_mode == "regression") {
+    mode_metrics <- metric_set(rmse, rsq)
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, 
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  }
   
-  # control grid to save predictions
-  ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
-                            extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  if (ml_mode == "classification") {
+    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+                               sens, yardstick::spec, ppv, npv)
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, 
+                              event_level = "second",
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  }
+  
   
   if (config_best$algorithm == "glmnet") {
     
-    models <- logistic_reg(penalty = config_best$hp2,
-                          mixture = config_best$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode("classification") %>%
-      fit_resamples(preprocessor = rec,
-                    resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
-                    control = ctrl)
+    # Doing branch because need logistic_reg vs. linear_reg
+    # Can fix later with more generic code
+    if (ml_mode == "classification") {
+      models <- logistic_reg(penalty = config_best$hp2,
+                            mixture = config_best$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit_resamples(preprocessor = rec,
+                      resamples = splits,
+                      metrics = mode_metrics,
+                      control = ctrl)
+      } else {
+        models <- linear_reg(penalty = config_best$hp2,
+                               mixture = config_best$hp1) %>%
+          set_engine("glmnet") %>%
+          set_mode(ml_mode) %>%
+          fit_resamples(preprocessor = rec,
+                        resamples = splits,
+                        metrics = mode_metrics,
+                        control = ctrl)
+      }
   }
 
   
@@ -645,17 +670,16 @@ eval_best_model <- function(config_best, rec, splits) {
     models <- rand_forest(mtry = config_best$hp1,
                          min_n = config_best$hp2,
                          trees = config_best$hp3) %>%
-      set_engine("ranger",
-                 importance = "none",
-                 respect.unordered.factors = "order",
-                 oob.error = FALSE,
-                 seed = 102030) %>%
-      set_mode("classification") %>%
-      fit_resamples(preprocessor = rec,
-                    resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
-                    control = ctrl)
+        set_engine("ranger",
+                   importance = "none",
+                   respect.unordered.factors = "order",
+                   oob.error = FALSE,
+                   seed = 102030) %>%
+        set_mode(ml_mode) %>%
+        fit_resamples(preprocessor = rec,
+                      resamples = splits,
+                      metrics = mode_metrics,
+                      control = ctrl)
   }
 
   
@@ -669,11 +693,10 @@ eval_best_model <- function(config_best, rec, splits) {
                         stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit_resamples(preprocessor = rec,
                     resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                         sens, yardstick::spec, ppv, npv),
+                    metrics = mode_metrics,
                     control = ctrl)
   }
   
@@ -684,11 +707,10 @@ eval_best_model <- function(config_best, rec, splits) {
     
     models <- nearest_neighbor(neighbors = config_best$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit_resamples(preprocessor = rec,
                     resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
+                    metrics = mode_metrics,
                     control = ctrl)
   }
     

@@ -620,12 +620,15 @@ get_metrics <- function(model, feat_out, ml_mode) {
 eval_best_model <- function(config_best, rec, splits, ml_mode) {
 # evaluates best model configuration using resamples of data contained in splits.
   
-  # set metrics for regression or classification
+  # specific setup for regression or classification
   if (ml_mode == "regression") {
     mode_metrics <- metric_set(rmse, rsq)
     # control grid to save predictions
     ctrl <- control_resamples(save_pred = TRUE, 
                               extract = function (x) extract_fit_parsnip(x) %>% tidy())
+    # add resample to best_config to make consistent with classification
+    config_best <- config_best %>% 
+      mutate(resample = NA)
   }
   
   if (ml_mode == "classification") {

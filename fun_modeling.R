@@ -41,7 +41,7 @@ print_responses <- function(name, column){
 # Used to tidy the responses/levels/labels for categorical variables
 tidy_responses <- function(column){
   column <- factor(column)
-  levels(column) <- make_clean_names(levels(column)) # from janitor package
+  levels(column) <- janitor::make_clean_names(levels(column), use_make_names = FALSE) 
   as.character(column)
 }
 

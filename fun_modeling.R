@@ -197,6 +197,9 @@ get_estimate <- function(the_fit, the_term){
     pull(estimate)
 }
 
+# prep a recipe and bake some data
+# By default, this function will glimpse your new features
+# Set glimpse_it to FALSE to suppress this
 make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
 
   features <- rec %>%

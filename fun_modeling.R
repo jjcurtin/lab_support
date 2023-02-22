@@ -197,7 +197,7 @@ get_estimate <- function(the_fit, the_term){
     pull(estimate)
 }
 
-make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = FALSE){
+make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
 
   features <- rec %>%
     prep(training = data_trn, strings_as_factors = FALSE) %>%

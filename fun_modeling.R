@@ -27,8 +27,14 @@ kurt_na <- partial(e1071::kurtosis, na.rm = TRUE)
 skim_all <- skim_with(numeric = sfl(skew = skew_na, kurtosis = kurt_na))
 
 
+# provides simple table with counts and proportions
+count_prop <- function(df, var, sort = FALSE) {
+  df %>% count({{ var }}, sort = sort) %>% 
+    mutate(prop = n / sum(n))
+}
 
-# Somewhat unformated printing of text responses for categorical variables.
+
+# Somewhat unformatted printing of text responses for categorical variables.
 # Used primarily to confirm that responses are valid and tidy
 print_responses <- function(name, column){
   unique(column) %>%

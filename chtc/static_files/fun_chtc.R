@@ -732,7 +732,8 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
 
 }
 
-fit_best_model <- function(best_model, rec, d) {
+fit_best_model <- function(best_model, rec, d, ml_mode) {
+  
   
   # make features for full dataset
   feat <- rec %>% 
@@ -741,11 +742,19 @@ fit_best_model <- function(best_model, rec, d) {
   
   if (best_model$algorithm == "glmnet") {
     
-    fit_best <- logistic_reg(penalty = best_model$hp2,
-                           mixture = best_model$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode("classification") %>%
-      fit(y ~ ., data = feat)
+    if (ml_mode == "classification") {
+      fit_best <- logistic_reg(penalty = best_model$hp2,
+                             mixture = best_model$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit(y ~ ., data = feat)
+    } else {
+      fit_best <- linear_reg(penalty = best_model$hp2,
+                               mixture = best_model$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit(y ~ ., data = feat)     
+    }
     
     return(fit_best)
   }
@@ -760,7 +769,7 @@ fit_best_model <- function(best_model, rec, d) {
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
     
@@ -776,7 +785,7 @@ fit_best_model <- function(best_model, rec, d) {
                            stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
     return(fit_best)
@@ -786,7 +795,7 @@ fit_best_model <- function(best_model, rec, d) {
     
     fit_best <- nearest_neighbor(neighbors = best_model$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit(y ~ ., data = feat)
     
     return(fit_best)

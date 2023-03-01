@@ -570,7 +570,7 @@ eval_best_model <- function(config_best, rec, splits) {
   
   
   # control grid to save predictions
-  ctrl <- control_resamples(save_pred = TRUE, event_level = "second",  
+  ctrl <- control_resamples(save_pred = TRUE, event_level = "first",  
                             extract = function (x) extract_fit_parsnip(x) %>% tidy())
   
   if (config_best$algorithm == "glmnet") {

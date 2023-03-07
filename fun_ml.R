@@ -5,11 +5,7 @@
 
 # Required libraries----------------------------------
 library(tidyverse)
-library(janitor)
-library(cowplot)
-library(kableExtra)
-library(skimr) # for use of skim_with()
-# library(e1071)  # for use of skewness(), kurtosis() in skim
+library(tidymodels)
 
 
 get_estimate <- function(the_fit, the_term){

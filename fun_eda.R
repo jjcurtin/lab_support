@@ -4,6 +4,7 @@
 
 library(tidyverse)
 library(skimr) # for use of skim_with()
+library(janitor)
 
 # Provide summary statistics for cleaning EDA
 skim_some <- skim_with(numeric = sfl(mean = NULL, sd = NULL, p25 = NULL, p50 = NULL, p75 = NULL, hist = NULL))

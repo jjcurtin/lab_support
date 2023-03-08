@@ -38,3 +38,10 @@ tidy_responses <- function(column){
   levels(column) <- janitor::make_clean_names(levels(column), use_make_names = FALSE) 
   as.character(column)
 }
+
+print_kbl <- function(data, height = "500px", align = "r", digits = 2, caption = NULL){
+  data %>%
+    kableExtra::kbl(align = align, digits = digits, caption = caption) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+    kableExtra::scroll_box(height = height, width = "100%")
+}

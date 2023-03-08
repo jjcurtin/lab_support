@@ -1,3 +1,7 @@
+#NOTE: This function has been moved to fun_eda.R collection
+# It will be removed from lab support repo once 2023 IAML course is complete
+
+
 # Prints a dataframe or other table-like object with nice formatting
 # Defaults to a output box for height = "500px"
 # Might want to use height = "100%" if only printing a few rows

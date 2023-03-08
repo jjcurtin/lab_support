@@ -16,18 +16,6 @@ suppressWarnings(suppressPackageStartupMessages({
 }))
 
 
-# JC general notes.  Need to make assumption about outcome name or else pass it in as string
-# KW: functions currently set where outcome variable is y - in training_controls there is a 
-# variable for the outcome name in the dataset. In the recipe this is changed to y.   
-
-
-# Can also have a Rmd script that takes all results and selects best model configuration 
-# and also displays hyperparameter plots 
-# KW: currently called mak_training_metrics in scripts_parameterized 
-
- 
-
-# Only need to supply hyperparameters in training_controls.R for algorithms being used 
 make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # read in study specific controls
   source(path_training_controls)
@@ -82,7 +70,6 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   
   
   # create jobs tibble
-  # NOTE: I removed looping through multiple algorithms in a single jobs file on 9/8/22
   if (algorithm == "glmnet") { 
       jobs <- expand_grid(split_num = split_num,
                           outer_split_num = outer_split_num,
@@ -90,7 +77,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
                           algorithm = algorithm,
                           feature_set,
                           hp1 = hp1_glmnet,
-                          hp2 = NA_integer_, # hp2 will be tuned in fit script and written over in results csv
+                          # hp2 will be tuned in fit script and written over in results csv
+                          hp2 = NA_integer_, 
                           hp3 = NA_integer_,
                           resample)
   } 

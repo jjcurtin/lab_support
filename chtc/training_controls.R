@@ -80,6 +80,21 @@ request_disk <- "1000000KB" # this is pretty large - necessary for meta
 flock <- FALSE
 glide <- FALSE
 
+# Class training data ---------
+# Script should have a single function that classes all variables in the
+# training set as they should be set up prior to recipe
+# Numeric predictors set to numeric, nominal variables (unordered and ordered) set 
+# to factor with levels ordered correctly.
+
+class_data <- function (df){
+
+# uncomment and update as needed
+# df <- df %>% 
+#   mutate(x1 = factor(x1, levels = c("l1", "l2", "l3")))
+
+
+  return(df)
+}
 
 # BUILD RECIPE ---------
 

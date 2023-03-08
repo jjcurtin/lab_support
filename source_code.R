@@ -1,5 +1,11 @@
 # EDA------------------
 devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
 
-# print_kbl()---------------
-devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/print_kbl.R?raw=true")
+# Plotting------------------
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_plots.R?raw=true")
+
+# CHTC support functions-------------
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/chtc/static_files/fun_chtc.R?raw=true")
+
+
+

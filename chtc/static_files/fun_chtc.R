@@ -365,11 +365,23 @@ make_rset <- function(splits, cv_resample_type, split_num = NULL, inner_split_nu
   return(rset)
 }
 
-tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL,
+tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
   # job: single-row job-specific tibble from jobs
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
+  
+  # set metrics for regression or classification
+  if (ml_mode == "regression") {
+    mode_metrics <- metric_set(rmse, rsq)
+  }
+  
+  if (ml_mode == "classification") {
+    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+                               sens, yardstick::spec, ppv, npv)
+  }
+  
+  
   
   if (job$algorithm == "glmnet") {
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
@@ -379,25 +391,38 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
     split <- make_rset(splits, cv_resample_type = cv_resample_type, split_num = job$split_num,
                        inner_split_num = job$inner_split_num, outer_split_num = job$outer_split_num)
     
-    models <- logistic_reg(penalty = tune(),
+    if (ml_mode == "classification") {
+      models <- logistic_reg(penalty = tune(),
+                             mixture = job$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode("classification") %>%
+        tune_grid(preprocessor = rec,
+                  resamples = split,
+                  grid = grid_penalty,
+                  # metrics assume that positive event it first level
+                  # make sure this is true in recipe
+                  metrics = mode_metrics)
+    } else {
+      models <- linear_reg(penalty = tune(),
                            mixture = job$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode("classification") %>%
-      tune_grid(preprocessor = rec,
-                resamples = split,
-                grid = grid_penalty,
-                # metrics assume that positive event it first level
-                # make sure this is true in recipe
-                metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv))
-    
+        set_engine("glmnet") %>%
+        set_mode("regression") %>%
+        tune_grid(preprocessor = rec,
+                  resamples = split,
+                  grid = grid_penalty,
+                  # metrics assume that positive event it first level
+                  # make sure this is true in recipe
+                  metrics = mode_metrics)
+      
+      
+    }
     # create tibble of penalty and metrics returned 
     results <- collect_metrics(models, summarize = FALSE) %>% 
       rename(hp2 = penalty) %>% 
       select(hp2, .metric, .estimate) %>% # use select to drop extra cols (.estimator, n, std_err, .config)
       pivot_wider(., names_from = ".metric",
                   values_from = ".estimate") %>%  
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
+      # relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
       bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
@@ -420,16 +445,21 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ .,
           data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results)
   }
@@ -450,15 +480,20 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
                         stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results)
   }
@@ -472,16 +507,21 @@ tune_model <- function(job, rec, splits, cv_resample_type, hp2_glmnet_min = NULL
     # fit model - job provides number of neighbors
     model <- nearest_neighbor(neighbors = job$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit(y ~ .,
           data = feat_in)
     
     # use get_metrics function to get a tibble that shows performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out) %>% 
-      pivot_wider(., names_from = "metric",
-                  values_from = "estimate") %>%   
-      relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-      bind_cols(job, .) 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(job, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(job, .) 
+    }
     
     return(results) 
   }
@@ -534,56 +574,96 @@ make_features <- function(job, splits, rec, cv_resample_type) {
 }
 
 # helper function for tune_model()
-# KW: note this only works on binary yes, no outcome (y)
-get_metrics <- function(model, feat_out) {
+get_metrics <- function(model, feat_out, ml_mode) {
   
   # model: single model object 
   # feat_out: feature matrix built from held-out data
   
-  preds <- predict(model, feat_out, type = "class")$.pred_class
   
-  cm <- tibble(truth = feat_out$y,
-               estimate = preds) %>% 
-    conf_mat(truth, estimate)
+  if (ml_mode == "classification") {
+    preds <- predict(model, feat_out, type = "class")$.pred_class
+    
+    cm <- tibble(truth = feat_out$y,
+                 estimate = preds) %>% 
+      conf_mat(truth, estimate)
+    
+    model_metrics <- cm %>% 
+      summary(event_level = "first") %>%   # make sure this is true in recipe
+      select(metric = .metric,
+             estimate = .estimate) %>% 
+      filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
+      suppressWarnings() # warning not about metrics we are returning
+    
+    roc <- tibble(truth = feat_out$y,
+                  prob = predict(model, feat_out,
+                                type = "prob")$.pred_pos) %>% 
+      roc_auc(prob, truth = truth, event_level = "first") %>% 
+      select(metric = .metric, 
+             estimate = .estimate)
+    
+    model_metrics <- bind_rows(model_metrics, roc)
+  }
   
-  model_metrics <- cm %>% 
-    summary(event_level = "first") %>%   # make sure this is true in recipe
-    select(metric = .metric,
-           estimate = .estimate) %>% 
-    filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
-    suppressWarnings() # warning not about metrics we are returning
-  
-  roc <- tibble(truth = feat_out$y,
-                prob = predict(model, feat_out,
-                              type = "prob")$.pred_pos) %>% 
-    roc_auc(prob, truth = truth, event_level = "first") %>% 
-    select(metric = .metric, 
-           estimate = .estimate)
-  
-  model_metrics <- bind_rows(model_metrics, roc)
+  if (ml_mode == "regression") {
+    
+    preds <- predict(model, feat_out)$.pred
+    rmse_model <- rmse_vec(truth = feat_out$y, estimate = preds)
+    rsq_model <- rsq_vec(truth = feat_out$y, estimate = preds)
+   
+    
+    model_metrics <- tibble(rsq = rsq_model, rmse = rmse_model)
+  }
   
   return(model_metrics)
 }
 
-eval_best_model <- function(config_best, rec, splits) {
+eval_best_model <- function(config_best, rec, splits, ml_mode) {
 # evaluates best model configuration using resamples of data contained in splits.
   
+  # specific setup for regression or classification
+  if (ml_mode == "regression") {
+    mode_metrics <- metric_set(rmse, rsq)
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, 
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+    # add resample to best_config to make consistent with classification
+    config_best <- config_best %>% 
+      mutate(resample = NA)
+  }
   
-  # control grid to save predictions
-  ctrl <- control_resamples(save_pred = TRUE, event_level = "first",  
-                            extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  if (ml_mode == "classification") {
+    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+                               sens, yardstick::spec, ppv, npv)
+    # control grid to save predictions
+    ctrl <- control_resamples(save_pred = TRUE, 
+                              event_level = "first",
+                              extract = function (x) extract_fit_parsnip(x) %>% tidy())
+  }
+  
   
   if (config_best$algorithm == "glmnet") {
     
-    models <- logistic_reg(penalty = config_best$hp2,
-                          mixture = config_best$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode("classification") %>%
-      fit_resamples(preprocessor = rec,
-                    resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
-                    control = ctrl)
+    # Doing branch because need logistic_reg vs. linear_reg
+    # Can fix later with more generic code
+    if (ml_mode == "classification") {
+      models <- logistic_reg(penalty = config_best$hp2,
+                            mixture = config_best$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit_resamples(preprocessor = rec,
+                      resamples = splits,
+                      metrics = mode_metrics,
+                      control = ctrl)
+      } else {
+        models <- linear_reg(penalty = config_best$hp2,
+                               mixture = config_best$hp1) %>%
+          set_engine("glmnet") %>%
+          set_mode(ml_mode) %>%
+          fit_resamples(preprocessor = rec,
+                        resamples = splits,
+                        metrics = mode_metrics,
+                        control = ctrl)
+      }
   }
 
   
@@ -593,17 +673,16 @@ eval_best_model <- function(config_best, rec, splits) {
     models <- rand_forest(mtry = config_best$hp1,
                          min_n = config_best$hp2,
                          trees = config_best$hp3) %>%
-      set_engine("ranger",
-                 importance = "none",
-                 respect.unordered.factors = "order",
-                 oob.error = FALSE,
-                 seed = 102030) %>%
-      set_mode("classification") %>%
-      fit_resamples(preprocessor = rec,
-                    resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
-                    control = ctrl)
+        set_engine("ranger",
+                   importance = "none",
+                   respect.unordered.factors = "order",
+                   oob.error = FALSE,
+                   seed = 102030) %>%
+        set_mode(ml_mode) %>%
+        fit_resamples(preprocessor = rec,
+                      resamples = splits,
+                      metrics = mode_metrics,
+                      control = ctrl)
   }
 
   
@@ -617,11 +696,10 @@ eval_best_model <- function(config_best, rec, splits) {
                         stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit_resamples(preprocessor = rec,
                     resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                         sens, yardstick::spec, ppv, npv),
+                    metrics = mode_metrics,
                     control = ctrl)
   }
   
@@ -632,11 +710,10 @@ eval_best_model <- function(config_best, rec, splits) {
     
     models <- nearest_neighbor(neighbors = config_best$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit_resamples(preprocessor = rec,
                     resamples = splits,
-                    metrics = metric_set(accuracy, bal_accuracy, roc_auc,
-                                     sens, yardstick::spec, ppv, npv),
+                    metrics = mode_metrics,
                     control = ctrl)
   }
     
@@ -655,7 +732,8 @@ eval_best_model <- function(config_best, rec, splits) {
 
 }
 
-fit_best_model <- function(best_model, rec, d) {
+fit_best_model <- function(best_model, rec, d, ml_mode) {
+  
   
   # make features for full dataset
   feat <- rec %>% 
@@ -664,11 +742,19 @@ fit_best_model <- function(best_model, rec, d) {
   
   if (best_model$algorithm == "glmnet") {
     
-    fit_best <- logistic_reg(penalty = best_model$hp2,
-                           mixture = best_model$hp1) %>%
-      set_engine("glmnet") %>%
-      set_mode("classification") %>%
-      fit(y ~ ., data = feat)
+    if (ml_mode == "classification") {
+      fit_best <- logistic_reg(penalty = best_model$hp2,
+                             mixture = best_model$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit(y ~ ., data = feat)
+    } else {
+      fit_best <- linear_reg(penalty = best_model$hp2,
+                               mixture = best_model$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode(ml_mode) %>%
+        fit(y ~ ., data = feat)     
+    }
     
     return(fit_best)
   }
@@ -683,7 +769,7 @@ fit_best_model <- function(best_model, rec, d) {
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
     
@@ -699,7 +785,7 @@ fit_best_model <- function(best_model, rec, d) {
                            stop_iter = 10) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
-      set_mode("classification") %>%
+      set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
     return(fit_best)
@@ -709,9 +795,161 @@ fit_best_model <- function(best_model, rec, d) {
     
     fit_best <- nearest_neighbor(neighbors = best_model$hp1) %>% 
       set_engine("kknn") %>% 
-      set_mode("classification") %>% 
+      set_mode(ml_mode) %>% 
       fit(y ~ ., data = feat)
     
     return(fit_best)
   }
 }
+
+convert_log <- function (log_file, jobs_file) {
+  
+  # function takes in a text CHTC log file and jobs file and outputs a tibble with one row per job
+  
+  # convert text file to tibble
+  log <- enframe(log_file, name = NULL, value = "raw_text") 
+  
+  # pull out job submissions
+  job_start <- log %>% 
+    filter(str_detect(raw_text, "Job submitted from host:")) 
+  
+  # get job number
+  job_start <- job_start %>% 
+    rowwise() %>% 
+    mutate(job_num = as.numeric(str_split(raw_text, "\\.")[[1]][2]) + 1) 
+  
+  # get submission time
+  job_start <- job_start %>% 
+    mutate(submission_dttm = str_split(str_split(raw_text, "\\) ")[[1]][2], " Job submitted")[[1]][1],
+           submission_dttm = as_datetime(submission_dttm, tz = "America/Chicago")) %>% 
+    ungroup()
+  
+  # pull out job executions
+  job_execute <- log %>% 
+    filter(str_detect(raw_text, "Job executing on host:")) 
+  
+  # get job number
+  job_execute <- job_execute %>% 
+    rowwise() %>% 
+    mutate(job_num = as.numeric(str_split(raw_text, "\\.")[[1]][2]) + 1) 
+  
+  # get execution time
+  job_execute <- job_execute %>% 
+    mutate(execution_dttm = str_split(str_split(raw_text, "\\) ")[[1]][2], " Job executing")[[1]][1],
+           execution_dttm = as_datetime(execution_dttm, tz = "America/Chicago")) %>% 
+    ungroup()
+  
+  # only keep last execution time (duplicates may be caused from held and released jobs)
+  job_execute <- job_execute %>% 
+    group_by(job_num) %>% 
+    arrange(desc(execution_dttm)) %>% 
+    slice(1) %>% 
+    ungroup()
+  
+  # merge into final log
+  final_log <- job_start %>% 
+    select(-raw_text) %>% 
+    full_join(job_execute %>% 
+                select(-raw_text), by = c("job_num"))
+  
+  # pull out job terminations
+  job_terminate <- log %>% 
+    filter(str_detect(raw_text, "Job terminated") & str_detect(raw_text, "^[0-9]") )
+  
+  # get job number
+  job_terminate <- job_terminate %>% 
+    rowwise() %>% 
+    mutate(job_num = as.numeric(str_split(raw_text, "\\.")[[1]][2]) + 1) 
+  
+  # get termination time
+  job_terminate <- job_terminate %>% 
+    mutate(termination_dttm = str_split(str_split(raw_text, "\\) ")[[1]][2], " Job terminated")[[1]][1],
+           termination_dttm = as_datetime(termination_dttm, tz = "America/Chicago")) %>% 
+    ungroup()
+  
+  # merge into final log
+  final_log <- final_log %>% 
+    full_join(job_terminate %>% 
+                select(-raw_text), by = c("job_num"))
+  
+  # calculate total run time
+  final_log <- final_log %>% 
+    mutate(run_time = difftime(termination_dttm, execution_dttm, units = "mins"))
+  
+  
+  # get CPU usage, disk usage, memory usage
+  row_indexes <- which(log$raw_text %in% job_terminate$raw_text)
+  
+  usage <- foreach (i = row_indexes, .combine = "rbind") %do% {
+    log_i <- log %>% 
+      slice(i:(i + 16)) 
+    
+    # get cpus
+    cpus <- log_i %>% 
+      filter(str_detect(raw_text, "Cpus")) %>% 
+      pull(raw_text)
+    
+    cpus <- str_split(cpus, " ") %>% 
+      unlist() %>% 
+      enframe(name = NULL, value = "split_text") %>% 
+      filter(split_text != "\t" & split_text != "") %>% 
+      unlist(use.names = FALSE)
+    
+    cpus_usage <- cpus[3]
+    cpus_requested <- cpus[4]
+    cpus_allocated <- cpus[5]
+    
+    # get disk
+    disk <- log_i %>% 
+      filter(str_detect(raw_text, "Disk")) %>% 
+      pull(raw_text)
+    
+    disk <- str_split(disk, " ") %>% 
+      unlist() %>% 
+      enframe(name = NULL, value = "split_text") %>% 
+      filter(split_text != "\t" & split_text != "") %>% 
+      unlist(use.names = FALSE)
+    
+    disk_usage <- disk[4]
+    disk_requested <- disk[5]
+    disk_allocated <- disk[6]
+    
+    # get memory
+    memory <- log_i %>% 
+      filter(str_detect(raw_text, "Memory")) %>% 
+      pull(raw_text)
+    
+    memory <- str_split(memory, " ") %>% 
+      unlist() %>% 
+      enframe(name = NULL, value = "split_text") %>% 
+      filter(split_text != "\t" & split_text != "") %>% 
+      unlist(use.names = FALSE)
+    
+    memory_usage <- memory[4]
+    memory_requested <- memory[5]
+    memory_allocated <- memory[6]
+    
+    # get job num
+    job_num <- log_i %>% 
+      slice(1) %>% 
+      mutate(job_num = as.numeric(str_split(raw_text, "\\.")[[1]][2]) + 1) %>% 
+      pull(job_num)
+    
+    # create tibble
+    tibble_i <- tibble(job_num, cpus_usage, cpus_requested, cpus_allocated, 
+                       disk_usage, disk_requested, disk_allocated, 
+                       memory_usage, memory_requested, memory_allocated) %>% 
+      mutate(across(cpus_usage:memory_allocated, ~ as.numeric(.x)))
+  }
+  
+  # merge into final log
+  final_log <- final_log %>% 
+    full_join(usage, by = "job_num") 
+  
+  # merge with jobs file
+  final_log <- jobs_file %>% 
+    left_join(final_log, by = "job_num")
+  
+  return(final_log)
+}
+

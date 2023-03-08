@@ -28,6 +28,8 @@ if (str_detect(fn, ".rds")) {
 } else {
   d <- vroom(fn, show_col_types = FALSE)
 }
+
+d <- class_data(d)  # set column classes
  
 # # Set outcome variable to y
 d <- d %>%

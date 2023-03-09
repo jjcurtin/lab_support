@@ -753,7 +753,7 @@ fit_best_model <- function(best_model, rec, d, ml_mode) {
                           min_n = best_model$hp2,
                           trees = best_model$hp3) %>%
       set_engine("ranger",
-                 importance = "permutation",
+                 importance = "impurity",
                  respect.unordered.factors = "order",
                  oob.error = FALSE,
                  seed = 102030) %>%

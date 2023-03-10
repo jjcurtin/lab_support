@@ -1,13 +1,12 @@
-# Notes: -------------------------------------------------------------------
-# This script includes functions that are useful for machine learning and other modeling and analysis projects
+# Notes: This script includes functions that are useful for machine learning and other modeling and analysis projects
 
 # Author:  John Curtin (jjcurtin@wisc.edu)
 
-# Required libraries----------------------------------
+# Required libraries
 library(tidyverse)
 library(tidymodels)
 
-
+# pull out a coefficient from a fitted parametric model
 get_estimate <- function(the_fit, the_term){
 
   the_fit %>%
@@ -32,6 +31,7 @@ make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
   return(features)
 }
 
+# makes a plot of observed (truth) vs estimate (predicted) plot
 plot_truth <- function(truth, estimate) {
 
   ggplot(mapping = aes(x = truth, y = estimate)) +
@@ -41,6 +41,7 @@ plot_truth <- function(truth, estimate) {
     coord_obs_pred()   # scale axes uniformly
 }
 
+# makes a hyperparameter plot for a model with up to 2 hyperparameters
 plot_hyperparameters <- function(tune_fit, hp1, hp2 = NULL, metric = NULL, log_hp1 = FALSE) {
 
   data <- collect_metrics(tune_fit)
@@ -69,10 +70,7 @@ plot_hyperparameters <- function(tune_fit, hp1, hp2 = NULL, metric = NULL, log_h
 
 }
 
-
-
 #modified code from Kuhn described here: https://github.com/topepo/caret/issues/116
-
 get_lambdas <- function(x, y, len = 50, model = "LASSO") {
   require(glmnet)
 

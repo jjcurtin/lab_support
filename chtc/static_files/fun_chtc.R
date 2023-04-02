@@ -21,7 +21,6 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   source(path_training_controls)
   
   # relative paths should work from any repo project if a local copy of lab_support exists
-
   path_chtc <- "../lab_support/chtc"
   
 
@@ -170,7 +169,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   }
   
   # copy static R and unix chtc files to input folder 
-  check_copy <- file.copy(from = file.path(path_chtc, "static_files", c(list.files(file.path(path_chtc, "static_files")))),
+  check_copy <- file.copy(from = file.path(path_chtc, "static_files", 
+                                           c(list.files(file.path(path_chtc, "static_files")))),
             to = file.path(path_jobs, name_job, "input"),
             recursive = TRUE,
             overwrite = overwrite_jobs) 

@@ -147,9 +147,16 @@ bayesian_correlated_t_test <- function(cv_fits_full, cv_fits_compact, rope_min, 
 }
 
 
-get_vip <- function(model, x, y, varname, pred_function, loss_function){
+get_vip <- function(model, x, y, varname, fun_pred, fun_loss, n_reps = 2, compare = "diff"){
   
+  loss <- fun_loss(truth = y, estimate = pred_function(model, x))
   
+  perm_losses <- foreach(rep = 1:n_reps, .combine='c') %do% {
+    x %>% 
+      mutate(across(contains(varname), sample)) %>% 
+      fun_pred(model, .) %>% 
+      fun_loss(truth = y, estimate = .)
+  }
   
-  
+  losses <- loss - perm_losses
 }

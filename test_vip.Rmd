@@ -1,8 +1,13 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 ```{r}
 library(tidyverse)
 library(tidymodels)
 
-theme_set(theme_half_open())
+#theme_set(theme_half_open())
 
 # source class functions
 devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_ml.R?raw=true")
@@ -24,7 +29,9 @@ if(n_core > 2) {
 
 
 ```{r u9-compare-1}
-data_all <- read_csv(file.path(path_data, "cleveland.csv"), col_names = FALSE, na = "?",col_types = cols()) %>% 
+#file.path(path_data, "cleveland.csv"
+fn <- file.choose()
+data_all <- read_csv(fn, col_names = FALSE, na = "?",col_types = cols()) %>% 
   rename(age = X1,
          sex = X2,
          cp = X3,
@@ -80,7 +87,7 @@ features <- rec %>%
   make_features(data_all, data_all, FALSE)
 
 x <- features %>% select(-disease)  # x features
-y <- features %>% select(disease) # outcome
+y <- features %>% pull(disease) # outcome
 ```
 
 
@@ -112,20 +119,15 @@ fit_full <-
   fit(disease ~ ., data = features)
 ```
 
-
-```{r predictor_function}
-# only needed for classification models
-predict_wrapper <- function(model, newdata) {
-  predict(model, newdata, type = "prob") %>%  # set type = "prob" for probabilities
-    dplyr::select(yes = .pred_yes, no = .pred_no)
-  
+A predictor function for AUC
+* need it to return
+```{r}
+predictor <- function(model, x){
+  predict(model, x, type = "prob") %>% 
+    pull(.pred_yes)
 }
 
-# make iml predictor function
-predictor <- Predictor$new(model = fit_full, 
-                           data = x, 
-                           y = y,
-                           predict.fun = predict_wrapper)  
-                           # No need to set predict.fun for regression models
 ```
+
+
 

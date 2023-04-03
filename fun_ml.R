@@ -145,3 +145,11 @@ bayesian_correlated_t_test <- function(cv_fits_full, cv_fits_compact, rope_min, 
 
   return(results)
 }
+
+
+get_vip <- function(model, x, y, varname, pred_function, loss_function){
+  
+  
+  
+  
+}

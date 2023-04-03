@@ -1,0 +1,131 @@
+```{r}
+library(tidyverse)
+library(tidymodels)
+
+theme_set(theme_half_open())
+
+# source class functions
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_ml.R?raw=true")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_plots.R?raw=true")
+
+# handle paths
+library(here)
+path_data <- "./data"
+
+# parallel processing
+ library(doParallel)
+n_core <- detectCores(logical = FALSE)
+if(n_core > 2) {
+  cl <- makePSOCKcluster(n_core - 1)
+  registerDoParallel(cl)
+}
+```
+
+
+```{r u9-compare-1}
+data_all <- read_csv(file.path(path_data, "cleveland.csv"), col_names = FALSE, na = "?",col_types = cols()) %>% 
+  rename(age = X1,
+         sex = X2,
+         cp = X3,
+         rest_bp = X4,
+         chol = X5,
+         fbs = X6,
+         rest_ecg = X7,
+         exer_max_hr = X8,
+         exer_ang = X9,
+         exer_st_depress = X10,
+         exer_st_slope = X11,
+         ca = X12,
+         thal = X13,
+         disease = X14) %>% 
+  mutate(disease = if_else(disease == 0, "no", "yes"),
+         disease = factor(disease, levels = c("yes", "no")),  # pos event first
+         sex = factor(if_else(sex == 0, "female", "male")),
+         fbs = factor(if_else(fbs == 0, "normal", "elevated")),
+         exer_ang = factor(if_else(exer_ang == 0, "no", "yes")),
+         exer_st_slope = dplyr::recode(exer_st_slope, 
+                                       `1` = "upslope", 
+                                       `2` = "flat", 
+                                       `3` = "downslope"),
+         exer_st_slope = factor(exer_st_slope),
+         cp = dplyr::recode(cp, 
+                            `1` = "typ_ang", 
+                            `2` = "atyp_ang", 
+                            `3` = "non_anginal", 
+                            `4` = "non_anginal"),
+         cp = factor(cp),
+         rest_ecg = dplyr::recode(rest_ecg, 
+                                  `0` = "normal", 
+                                  `1` = "wave_abn", 
+                                  `2` = "ventric_hypertrophy"),
+         rest_ecg = factor(rest_ecg),
+         thal = dplyr::recode(thal, 
+                              `3` = "normal", 
+                              `6` = "fixeddefect", 
+                              `7` = "reversabledefect"),
+         thal = factor(thal)) %>% 
+  glimpse()
+```
+
+```{r}
+rec <- recipe(disease ~ ., data = data_all) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_impute_mode(all_nominal_predictors()) %>%   
+  step_dummy(all_nominal_predictors()) %>% 
+  step_normalize(all_predictors())
+
+
+features <- rec %>% 
+  make_features(data_all, data_all, FALSE)
+
+x <- features %>% select(-disease)  # x features
+y <- features %>% select(disease) # outcome
+```
+
+
+
+```{r}
+set.seed(123456)
+splits <- data_all %>% 
+  vfold_cv(k = 10, strata = "disease")
+```
+
+```{r u9-compare-5, cache=TRUE}
+grid_glmnet <- expand_grid(penalty = exp(seq(-8, 2, length.out = 300)),
+                           mixture = c(0, .025, .05, .1, .2, .4, .6, .8, 1))
+fits_full <- 
+  logistic_reg(penalty = tune(),
+               mixture = tune()) %>% 
+  set_engine("glmnet") %>% 
+  tune_grid(preprocessor = rec,
+            resamples = splits,
+            grid = grid_glmnet,
+            metrics = metric_set(accuracy))
+
+hp_best_full <- select_best(fits_full, n = 1)
+
+fit_full <- 
+  logistic_reg(penalty = hp_best_full$penalty,
+               mixture = hp_best_full$mixture) %>% 
+  set_engine("glmnet") %>% 
+  fit(disease ~ ., data = features)
+```
+
+
+```{r predictor_function}
+# only needed for classification models
+predict_wrapper <- function(model, newdata) {
+  predict(model, newdata, type = "prob") %>%  # set type = "prob" for probabilities
+    dplyr::select(yes = .pred_yes, no = .pred_no)
+  
+}
+
+# make iml predictor function
+predictor <- Predictor$new(model = fit_full, 
+                           data = x, 
+                           y = y,
+                           predict.fun = predict_wrapper)  
+                           # No need to set predict.fun for regression models
+```
+

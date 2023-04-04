@@ -166,7 +166,7 @@ bayesian_correlated_t_test <- function(cv_fits_full, cv_fits_compact, rope_min, 
 get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20, 
                     compare = "diff"){
   
-  metric <- fun_metric(truth = y, estimate = pred_function(model, x))
+  metric <- fun_metric(truth = y, estimate = fun_pred(model, x))
   
   metrics_perm <- foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 

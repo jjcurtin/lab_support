@@ -146,17 +146,54 @@ bayesian_correlated_t_test <- function(cv_fits_full, cv_fits_compact, rope_min, 
   return(results)
 }
 
-
-get_vip <- function(model, x, y, varname, fun_pred, fun_loss, n_reps = 2, compare = "diff"){
+# Calculate variable importance for one variable or set of variables
+# model is parsnip model
+# x are features
+# y is outcome (factor for classification)
+# var_string is used to match to column names using contains(var_string)
+# fun_metric is any metric function of similar form to the _vec functions in yardstick
+#   e.g. roc_auc_vec, rmse_vec, accuracy_vec
+# fun_pred is a prediction function that provides the appropriate estimate to
+#   use with fun_metric.  See example below for roc_auc_vec
+# n_reps is the number of permutations
+# compare sets the order of contrast.  diff = metric - metrics_perm; 
+#    diff_rev = metrics_perm - metric
+# sample prediction function to use with yardstick::roc_auc_vec
+#    predictor <- function(model, x){
+#      predict(model, x, type = "prob") %>% 
+#      pull(.pred_yes)  
+#    }
+get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20, 
+                    compare = "diff"){
   
-  loss <- fun_loss(truth = y, estimate = pred_function(model, x))
+  metric <- fun_metric(truth = y, estimate = pred_function(model, x))
   
-  perm_losses <- foreach(rep = 1:n_reps, .combine='c') %do% {
+  metrics_perm <- foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 
       mutate(across(contains(varname), sample)) %>% 
       fun_pred(model, .) %>% 
-      fun_loss(truth = y, estimate = .)
+      fun_metric(truth = y, estimate = .)
   }
   
-  losses <- loss - perm_losses
+  if (!compare %in% c("diff", "diff_rev", "ratio", "ratio_rev")) {
+    stop('Valid values for compare are "diff", "diff_rev"')
+  }
+  
+  if(compare == "diff") {
+    metrics_final <- metric - metrics_perm
+  } else {
+    metrics_final <- metrics_perm - metrics
+  }
+  
+  
+  vars <- x %>% 
+    select(contains(var_string)) %>% 
+    names()
+  
+  vip <- tibble(var_string, vars = list(vars), 
+                metric_mean = mean(metrics_final),
+                metric_median = median(metrics_final),
+                metric_05 = quantile(metrics_final, .05),
+                metric_95 = quantile(metrics_final, .95))
+  return(vip)
 }

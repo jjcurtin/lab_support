@@ -5,6 +5,7 @@
 # Required libraries
 library(tidyverse)
 library(tidymodels)
+library(foreach)
 
 # pull out a coefficient from a fitted parametric model
 get_estimate <- function(the_fit, the_term){
@@ -170,7 +171,7 @@ get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20,
   
   metrics_perm <- foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 
-      mutate(across(contains(varname), sample)) %>% 
+      mutate(across(contains(var_string), sample)) %>% 
       fun_pred(model, .) %>% 
       fun_metric(truth = y, estimate = .)
   }

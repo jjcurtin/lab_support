@@ -15,7 +15,7 @@ plot_freqpoly <- function(df, x, bins = 50){
 }
 
 plot_bar <- function(df, x){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ x }} )) +
@@ -25,7 +25,7 @@ plot_bar <- function(df, x){
 }
 
 plot_box_violin <- function(df, x){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ x }})) +
@@ -38,7 +38,7 @@ plot_box_violin <- function(df, x){
 }
 
 plot_boxplot <- function(df, x){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ x }})) +
@@ -75,7 +75,7 @@ plot_scatter <- function(df, x, y){
 
 
 plot_grouped_box_violin <- function(df, x, y){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ x }}, y = {{ y }})) +
@@ -97,7 +97,7 @@ plot_hexbin <- function(df, x, y){
 }
 
 plot_grouped_barplot_count <- function(df, x, y){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ y }}, fill = {{ x }})) +
@@ -107,7 +107,7 @@ plot_grouped_barplot_count <- function(df, x, y){
 }
 
 plot_grouped_barplot_percent <- function(df, x, y){
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   df %>%
     ggplot(aes(x = {{ y }}, fill = {{ x }})) +
@@ -124,7 +124,7 @@ plot_categorical <- function(df, x, y, ordered = FALSE){
       mutate(!!x := fct_reorder({{ x }},{{ y }}))
   }
   
-  x_label_size <- if_else(n_unique(df %>% pull({{ x }})) < 7, 11, 7)
+  x_label_size <- if_else(skimr::n_unique(df %>% pull({{ x }})) < 7, 11, 7)
   
   p_bar <- df %>%
     ggplot(aes(x = {{ x }} )) +

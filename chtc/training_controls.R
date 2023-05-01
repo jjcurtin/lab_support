@@ -10,6 +10,7 @@ data_type <- "all"   # but still need to change more (e.g., feature set) to swit
 window <- "1week"
 lead <- 0
 version <- "v1"
+batch <- "batch1" # specify a batch (numbered sequentially) if you need to add to an existing set of jobs (e.g., add hyperparameters but maintain version, algorithm, cv, etc.)
 algorithm <- "glmnet" # specify one algorithm per training control file - can be glmnet, knn, random_forest, xgboost
 
 
@@ -46,7 +47,7 @@ cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_resample))
 
 # SET STUDY PATHS
-name_job <- str_c("train_", window, "_", lead, "_", version, "_", algorithm, "_", cv_name) # the name of the job to set folder names
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", batch, "_", algorithm, "_", cv_name) # the name of the job to set folder names
 path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
 path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
 

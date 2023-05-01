@@ -2,11 +2,6 @@
 
 # Author:  John Curtin (jjcurtin@wisc.edu)
 
-# Required libraries
-library(tidyverse)
-library(tidymodels)
-library(foreach)
-
 
 # Set conflict rules to resolve conflicts between tidymodels and tidyverse
 tidymodels_conflictRules <- function(){

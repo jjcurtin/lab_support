@@ -7,13 +7,21 @@ library(tidyverse)
 library(tidymodels)
 library(foreach)
 
+
+# Set conflict rules to resolve conflicts between tidymodels and tidyverse
+tidymodels_conflictRules <- function(){
+  conflictRules("scales", mask.ok = c("discard", "col_factor"))
+  conflictRules("recipes", mask.ok = c("fixed"))
+  conflictRules("yardstick", mask.ok = c("spec"))
+}
+
 # pull out a coefficient from a fitted parametric model
 get_estimate <- function(the_fit, the_term){
 
   the_fit %>%
-    tidy() %>%
-    filter(term == the_term) %>%
-    pull(estimate)
+    broom::tidy() %>%
+    dplyr::filter(term == the_term) %>%
+    dplyr::pull(estimate)
 }
 
 # prep a recipe and bake some data
@@ -22,11 +30,11 @@ get_estimate <- function(the_fit, the_term){
 make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
 
   features <- rec %>%
-    prep(training = data_trn, strings_as_factors = FALSE) %>%
-    bake(new_data = data_new)
+    recipes::prep(training = data_trn, strings_as_factors = FALSE) %>%
+    recipes::bake(new_data = data_new)
 
   if (glimpse_it){
-    features %>% glimpse()
+    features %>% dplyr::glimpse()
   }
 
   return(features)
@@ -35,37 +43,37 @@ make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
 # makes a plot of observed (truth) vs estimate (predicted) plot
 plot_truth <- function(truth, estimate) {
 
-  ggplot(mapping = aes(x = truth, y = estimate)) +
-    geom_abline(lty = 2) +
-    geom_point(alpha = 0.5) +
-    labs(y = "predicted outcome", x = "outcome") +
-    coord_obs_pred()   # scale axes uniformly
+  ggplot2::ggplot(mapping = aes(x = truth, y = estimate)) +
+    ggplot2::geom_abline(lty = 2) +
+    ggplot2::geom_point(alpha = 0.5) +
+    ggplot2::labs(y = "predicted outcome", x = "outcome") +
+    ggplot2::coord_obs_pred()   # scale axes uniformly
 }
 
 # makes a hyperparameter plot for a model with up to 2 hyperparameters
 plot_hyperparameters <- function(tune_fit, hp1, hp2 = NULL, metric = NULL, log_hp1 = FALSE) {
 
-  data <- collect_metrics(tune_fit)
+  data <- tune::collect_metrics(tune_fit)
 
   metric_scores <- data %>%
-    filter(.metric == metric) %>%
-    pull(mean)
+    dplyr::filter(.metric == metric) %>%
+    dplyr::pull(mean)
 
   x1 <- data[[hp1]]
   if (log_hp1) x1 <- log(x1)
 
   if (is.null(hp2)) {
-    ggplot(mapping = aes(x = x1, y = metric_scores)) +
-      geom_line() +
-      xlab(hp1) +
-      ylab(metric)
+    ggplot2::ggplot(mapping = aes(x = x1, y = metric_scores)) +
+      ggplot2::geom_line() +
+      ggplot2::xlab(hp1) +
+      ggplot2::ylab(metric)
   } else {
     x2 <- factor(data[[hp2]], ordered = TRUE)
-    ggplot(mapping = aes(x = x1, y = metric_scores, group = x2, color = x2)) +
-      geom_line() +
-      xlab(hp1) +
-      ylab(metric) +
-      scale_color_discrete(name = hp2)
+    ggplot2::ggplot(mapping = aes(x = x1, y = metric_scores, group = x2, color = x2)) +
+      ggplot2::geom_line() +
+      ggplot2::xlab(hp1) +
+      ggplot2::ylab(metric) +
+      ggplot2::scale_color_discrete(name = hp2)
   }
 
 
@@ -73,7 +81,6 @@ plot_hyperparameters <- function(tune_fit, hp1, hp2 = NULL, metric = NULL, log_h
 
 #modified code from Kuhn described here: https://github.com/topepo/caret/issues/116
 get_lambdas <- function(x, y, len = 50, model = "LASSO") {
-  require(glmnet)
 
   numLev <- if(is.character(y) | is.factor(y)) length(levels(y)) else NA
 
@@ -85,7 +92,7 @@ get_lambdas <- function(x, y, len = 50, model = "LASSO") {
     alpha <- 1
   } else alpha <- 0
 
-  init <- glmnet(as.matrix(x), y,
+  init <- glmnet::glmnet(as.matrix(x), y,
                  family = fam,
                  nlambda = len+2,
                  alpha = alpha)
@@ -98,8 +105,8 @@ get_lambdas <- function(x, y, len = 50, model = "LASSO") {
 # Nadeau and Bengio (2003) correlated t-test
 nb_correlated_t_test <- function(cv_fits_full, cv_fits_compact, k = 10){
 
-  cv_metrics_full <- collect_metrics(cv_fits_full, summarize = FALSE)$.estimate
-  cv_metrics_compact <- collect_metrics(cv_fits_compact, summarize = FALSE)$.estimate
+  cv_metrics_full <- tune::collect_metrics(cv_fits_full, summarize = FALSE)$.estimate
+  cv_metrics_compact <- tune::collect_metrics(cv_fits_compact, summarize = FALSE)$.estimate
   diffs <- cv_metrics_full - cv_metrics_compact
   n <- length(diffs)
   mean_diff <- mean(diffs)
@@ -111,7 +118,7 @@ nb_correlated_t_test <- function(cv_fits_full, cv_fits_compact, k = 10){
 
   t = abs(mean_diff/se)
   p_value <- 2 * pt(t, n - 1, lower.tail = FALSE)
-  tibble(mean_diff = mean_diff, se = se, t = t, df = n - 1, p_value = p_value)
+  tibble::tibble(mean_diff = mean_diff, se = se, t = t, df = n - 1, p_value = p_value)
 }
 
 
@@ -122,8 +129,8 @@ bayesian_correlated_t_test <- function(cv_fits_full, cv_fits_compact, rope_min, 
     stop("rope_max should be larger than rope_min")
   }
 
-  cv_metrics_full <- collect_metrics(cv_fits_full, summarize = FALSE)$.estimate
-  cv_metrics_compact <- collect_metrics(cv_fits_compact, summarize = FALSE)$.estimate
+  cv_metrics_full <- tune::collect_metrics(cv_fits_full, summarize = FALSE)$.estimate
+  cv_metrics_compact <- tune::collect_metrics(cv_fits_compact, summarize = FALSE)$.estimate
   diffs <- cv_metrics_full - cv_metrics_compact
   delta <- mean(diffs)
   n <- length(diffs)
@@ -169,9 +176,10 @@ get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20,
   
   metric <- fun_metric(truth = y, estimate = fun_pred(model, x))
   
-  metrics_perm <- foreach(rep = 1:n_reps, .combine='c') %do% {
+  #NEED TO ADDRESS NAMESPACE ISSUE FOR %do%
+  metrics_perm <- foreach::foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 
-      mutate(across(contains(var_string), sample)) %>% 
+      dplyr::mutate(dplyr::across(dplyr::contains(var_string), sample)) %>% 
       fun_pred(model, .) %>% 
       fun_metric(truth = y, estimate = .)
   }
@@ -188,7 +196,7 @@ get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20,
   
   
   vars <- x %>% 
-    select(contains(var_string)) %>% 
+    dplyr::select(contains(var_string)) %>% 
     names()
   
   vip <- tibble(var_string, vars = list(vars), 

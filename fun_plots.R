@@ -48,7 +48,6 @@ plot_boxplot <- function(df, x){
           axis.text.x = element_text(angle = 90, size = x_label_size, vjust = 0.5, hjust = 1))
 }
 
-## NEEDS WORK
 plot_tile <- function(df, x, y){
   df |>
     count(.data[[x]], .data[[y]]) |>

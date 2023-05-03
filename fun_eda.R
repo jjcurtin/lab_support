@@ -20,19 +20,29 @@ tab <- function(df, var, sort = FALSE) {
 
 # Somewhat unformatted printing of text responses for categorical variables.
 # Used primarily to confirm that responses are valid and tidy
-print_responses <- function(name, column){
-  unique(column) |>
-    na.omit() |>
-    stringr::str_c(collapse = ", ") |>
-    stringr::str_c(name, ": ", ., "\n") |>
-    cat()
-}
+# print_responses <- function(name, column){
+#   unique(column) |>
+#     na.omit() |>
+#     stringr::str_c(collapse = ", ") |>
+#     stringr::str_c(name, ": ", ., "\n") |>
+#     cat()
+# }
 
-# Used to tidy the responses/levels/labels for categorical variables
+# Used to tidy the responses/levels/labels for factors
 tidy_responses <- function(column){
-  column <- factor(column)
-  levels(column) <- janitor::make_clean_names(levels(column), use_make_names = FALSE) 
-  as.character(column)
+  # replace all non-alphanumeric with _
+  column <- fct_relabel(column, \(column) str_replace_all(column, "\\W", "_"))
+  # replace whitespace with _
+  column <- fct_relabel(column, \(column) str_replace_all(column, "\\s+", "_"))
+  # replace multiple _ with single _
+  column <- fct_relabel(column, \(column) str_replace_all(column, "\\_+", "_"))
+  #remove _ at end of string
+  column <- fct_relabel(column, \(column) str_replace_all(column, "\\_$", ""))
+  # remove _ at start of string
+  column <- fct_relabel(column, \(column) str_replace_all(column, "\\^_", ""))
+  # convert to lowercase
+  column <- fct_relabel(column, tolower)
+  factor(column)
 }
 
 print_kbl <- function(data, height = "500px", align = "r", digits = 2, caption = NULL){

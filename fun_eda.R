@@ -2,8 +2,6 @@
 
 # Author:  John Curtin (jjcurtin@wisc.edu)
 
-library(tidyverse)
-
 # Provide summary statistics for cleaning EDA
 skim_some <- skimr::skim_with(numeric = skimr::sfl(mean = NULL, sd = NULL, p25 = NULL, p50 = NULL, p75 = NULL, hist = NULL))
 
@@ -15,18 +13,18 @@ skim_all <- skimr::skim_with(numeric = skimr::sfl(skew = skew_na, kurtosis = kur
 
 # provides simple table with counts and proportions
 tab <- function(df, var, sort = FALSE) {
-  df %>% count({{ var }}, sort = sort) %>% 
-    mutate(prop = n / sum(n))
-}
+  df |>  dplyr::count({{ var }}, sort = sort) |> 
+    dplyr::mutate(prop = n / sum(n))
+} 
 
 
 # Somewhat unformatted printing of text responses for categorical variables.
 # Used primarily to confirm that responses are valid and tidy
 print_responses <- function(name, column){
-  unique(column) %>%
-    na.omit() %>%
-    str_c(collapse = ", ") %>%
-    str_c(name, ": ", ., "\n") %>%
+  unique(column) |>
+    na.omit() |>
+    stringr::str_c(collapse = ", ") |>
+    stringr::str_c(name, ": ", ., "\n") |>
     cat()
 }
 
@@ -38,8 +36,8 @@ tidy_responses <- function(column){
 }
 
 print_kbl <- function(data, height = "500px", align = "r", digits = 2, caption = NULL){
-  data %>%
-    kableExtra::kbl(align = align, digits = digits, caption = caption) %>%
-    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  data |>
+    kableExtra::kbl(align = align, digits = digits, caption = caption) |>
+    kableExtra::kable_styling(bootstrap_options = c("striped", "condensed")) |>
     kableExtra::scroll_box(height = height, width = "100%")
 }

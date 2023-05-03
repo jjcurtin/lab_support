@@ -5,7 +5,7 @@
 
 # Set conflict rules to resolve conflicts between tidymodels and tidyverse
 tidymodels_conflictRules <- function(){
-  conflictRules("scales", mask.ok = c("discard", "col_factor"))
+  conflictRules("scales", mask.ok = c("discard"), exclude = c("col_factor"))
   conflictRules("recipes", mask.ok = c("fixed"))
   conflictRules("yardstick", mask.ok = c("spec"))
 }

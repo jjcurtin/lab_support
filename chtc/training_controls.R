@@ -87,14 +87,15 @@ glide <- FALSE
 # Numeric predictors set to numeric, nominal variables (unordered and ordered) set 
 # to factor with levels ordered correctly.
 
-class_data <- function (df){
+format_data <- function (df){
 
-# uncomment and update as needed
-# df <- df %>% 
-#   mutate(x1 = factor(x1, levels = c("l1", "l2", "l3")))
-
-
-  return(df)
+  df %>% 
+    rename(y = !!y_col_name) %>% 
+    mutate(y = if_else(y == !!y_level_pos, "pos", "neg")) %>% 
+    mutate(y = factor(y, levels = c("pos", "neg")))
+  
+  # Now include additional mutates to change classes for columns as needed
+  # see https://jjcurtin.github.io/dwt/file_and_path_management.html#using-a-separate-mutate
 }
 
 # BUILD RECIPE ---------

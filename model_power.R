@@ -1,3 +1,7 @@
+# Useful site for effect size conversions
+# https://www.escal.site/
+# https://stats.oarc.ucla.edu/other/mult-pkg/faq/general/effect-size-power/faqhow-is-effect-size-used-in-power-analysis/
+
 model_power <- function(pc = NULL, pa = NULL, N = NULL, alpha = 0.05, power = NULL, 
                         f2 = NULL, partial_eta2 = NULL, delta_R2 = NULL, R2 = NULL) {
   

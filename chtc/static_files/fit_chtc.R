@@ -29,11 +29,10 @@ if (str_detect(fn, ".rds")) {
   d <- vroom(fn, show_col_types = FALSE)
 }
 
-d <- class_data(d)  # set column classes
- 
-# # Set outcome variable to y
-d <- d %>%
-  rename(y = {{y_col_name}})
+# Format data------------------------
+# change column classes, rename Y, etc
+# This is a custom/study specific function that exists in training_controls
+d <- format_data(d)  
  
 
 # create nested outer splits object ---------------
@@ -43,6 +42,7 @@ splits <- d %>%
 
 
 # build recipe ----------------
+# This is a custom/study specific function that exists in training_controls
 rec <- build_recipe(d = d, job = job)
 
 # make features on d to get n_feats ----------------

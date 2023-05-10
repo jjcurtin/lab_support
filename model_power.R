@@ -1,6 +1,3 @@
-library(pwr)
-library(dplyr)
-
 model_power <- function(pc = NULL, pa = NULL, N = NULL, alpha = 0.05, power = NULL, 
                         f2 = NULL, partial_eta2 = NULL, delta_R2 = NULL, R2 = NULL) {
   
@@ -38,9 +35,9 @@ model_power <- function(pc = NULL, pa = NULL, N = NULL, alpha = 0.05, power = NU
   
   # conduct power analysis
   results <- list()
-  results$pwr <- pwr.f2.test(u = u, v = v, f2 = f2 , sig.level = alpha, power = power)
+  results$pwr <- pwr::pwr.f2.test(u = u, v = v, f2 = f2 , sig.level = alpha, power = power)
   
-  results$summary <- tibble(pa = pa,
+  results$summary <- dplyr::tibble(pa = pa,
                             pc = pc,
                             f2 = f2,
                             partial_eta2 = partial_eta2,

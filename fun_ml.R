@@ -175,7 +175,7 @@ get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20,
   # bit of a hack to allow use of %do% without attaching full foreach package
   `%do%` <- foreach::`%do%`
   
-  metrics_perm <- foreach::foreach(rep = 1:n_reps, .combine='c') `%do%` {
+  metrics_perm <- foreach::foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 
       dplyr::mutate(dplyr::across(dplyr::contains(var_string), sample)) %>% 
       fun_pred(model, .) %>% 

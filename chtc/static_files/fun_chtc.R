@@ -332,8 +332,10 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   return(splits)
 }
 
-make_rset <- function(splits, cv_resample_type, split_num = NULL, inner_split_num = NULL, outer_split_num = NULL) {
-# used to make an rset object that contains a single split for use in tuning glmnet on CHTC  
+make_rset <- function(splits, cv_resample_type, split_num = NULL, 
+                      inner_split_num = NULL, outer_split_num = NULL) {
+# used to make an rset object that contains a single split for use in 
+# tuning glmnet on CHTC  
   
   if (cv_resample_type == "nested") {
     split <- splits$inner_resamples[[outer_split_num]] %>% 
@@ -372,12 +374,15 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
   
   
   if (job$algorithm == "glmnet") {
-    grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, length.out = hp2_glmnet_out)))
+    grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, 
+                                                  length.out = hp2_glmnet_out)))
     
     # make rset for single held-in/held_out split
     # does not work for bootstrapping
-    split <- make_rset(splits, cv_resample_type = cv_resample_type, split_num = job$split_num,
-                       inner_split_num = job$inner_split_num, outer_split_num = job$outer_split_num)
+    split <- make_rset(splits, cv_resample_type = cv_resample_type, 
+                       split_num = job$split_num, 
+                       inner_split_num = job$inner_split_num, 
+                       outer_split_num = job$outer_split_num)
     
     if (ml_mode == "classification") {
       models <- logistic_reg(penalty = tune(),
@@ -407,10 +412,9 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     # create tibble of penalty and metrics returned 
     results <- collect_metrics(models, summarize = FALSE) %>% 
       rename(hp2 = penalty) %>% 
-      select(hp2, .metric, .estimate) %>% # use select to drop extra cols (.estimator, n, std_err, .config)
+      select(hp2, .metric, .estimate) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = ".estimate") %>%  
-      # relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% # specify column order of metrics
       bind_cols(job %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
@@ -420,7 +424,8 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
   if (job$algorithm == "random_forest") {
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, 
+                              cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     

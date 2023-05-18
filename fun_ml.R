@@ -172,9 +172,7 @@ get_vip <- function(model, x, y, var_string, fun_metric, fun_pred, n_reps = 20,
   metric <- fun_metric(truth = y, estimate = fun_pred(model, x))
   
   
-  # bit of a hack to allow use of %do% without attaching full foreach package
-  `%do%` <- foreach::`%do%`
-  
+  # requires foreach package attached in callng script
   metrics_perm <- foreach::foreach(rep = 1:n_reps, .combine='c') %do% {
     x %>% 
       dplyr::mutate(dplyr::across(dplyr::contains(var_string), sample)) %>% 

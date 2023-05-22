@@ -134,7 +134,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 
   # write jobs file to input folder
   jobs %>% 
-    vroom_write(file.path(path_jobs, name_job, "input", "jobs.csv"), delim = ",")
+    write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
   
   # write text file of job nums to read into CHTC with submit script (for naming error files)
   jobs %>% 

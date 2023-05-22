@@ -1,5 +1,6 @@
 suppressWarnings(suppressPackageStartupMessages({
   require(dplyr)
+  require(stringr)
   require(recipes)
   require(parsnip)
   require(themis)
@@ -356,7 +357,7 @@ make_rset <- function(splits, cv_resample_type, split_num = NULL,
 }
 
 tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
-                       hp2_glmnet_max = NULL, hp2_glmnet_out = NULL) {
+                       hp2_glmnet_max = NULL, hp2_glmnet_out = NULL, y_level_pos = NULL) {
   # job: single-row job-specific tibble from jobs
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
@@ -444,13 +445,15 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     
     # use get_metrics function to get a tibble that shows performance metrics
     if (ml_mode == "classification") {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode, 
+                             y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(job, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
         bind_cols(job, .) 
     }
     
@@ -461,7 +464,8 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     
     # extract fold associated with this job - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, 
+                              cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -478,13 +482,15 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     
     # use get_metrics function to get a tibble that shows performance metrics
     if (ml_mode == "classification") {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(job, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
         bind_cols(job, .) 
     }
     
@@ -506,13 +512,15 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     
     # use get_metrics function to get a tibble that shows performance metrics
     if (ml_mode == "classification") {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(job, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
         bind_cols(job, .) 
     }
     
@@ -567,7 +575,7 @@ make_features <- function(job, splits, rec, cv_resample_type) {
 }
 
 # helper function for tune_model()
-get_metrics <- function(model, feat_out, ml_mode) {
+get_metrics <- function(model, feat_out, ml_mode, y_level_pos) {
   
   # model: single model object 
   # feat_out: feature matrix built from held-out data
@@ -589,7 +597,7 @@ get_metrics <- function(model, feat_out, ml_mode) {
     
     roc <- tibble(truth = feat_out$y,
                   prob = predict(model, feat_out,
-                                type = "prob")$.pred_pos) %>% 
+                                type = "prob")[str_c("pred_", y_level_pos)]) %>% 
       roc_auc(prob, truth = truth, event_level = "first") %>% 
       select(metric = .metric, 
              estimate = .estimate)

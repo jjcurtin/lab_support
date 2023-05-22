@@ -48,16 +48,18 @@ rec <- build_recipe(d = d, job = job)
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
-  tune_model(job = job, rec = rec, splits = splits, ml_mode = ml_mode, cv_resample_type = cv_resample_type, 
+  tune_model(job = job, rec = rec, splits = splits, ml_mode = ml_mode, 
+             cv_resample_type = cv_resample_type, 
              hp2_glmnet_min = hp2_glmnet_min, hp2_glmnet_max = hp2_glmnet_max, 
-             hp2_glmnet_out = hp2_glmnet_out)
+             hp2_glmnet_out = hp2_glmnet_out,
+             y_level_pos = y_level_pos)
 } else {
-  tune_model(job = job, rec = rec, splits = splits, cv_resample_type = cv_resample_type, ml_mode = ml_mode)
+  tune_model(job = job, rec = rec, splits = splits, 
+             cv_resample_type = cv_resample_type, ml_mode = ml_mode, y_level_pos = y_level_pos)
 }
 
 # write out results tibble ------------
 results %>% 
-  mutate(n_feats = ncol(feat_all) - 1) %>% # subtract one for y
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
   vroom_write(str_c("results_", job$job_num, ".csv"), delim = ",")

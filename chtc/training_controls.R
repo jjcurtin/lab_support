@@ -47,9 +47,13 @@ cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_resample))
 
 # SET STUDY PATHS
-name_job <- str_c("train_", window, "_", lead, "_", version, "_", batch, "_", algorithm, "_", cv_name) # the name of the job to set folder names
-path_jobs <- str_c("P:/studydata/risk/chtc/", study) # location of where you want your jobs to be setup
-path_data <- str_c("P:/studydata/risk/data_processed/", study) # location of data set
+# the name of the job to set folder names
+name_job <- str_c("train_", window, "_", lead, "_", version, "_", batch, "_", 
+                  algorithm, "_", cv_name) 
+# location of where you want your jobs to be setup
+path_jobs <- str_c("P:/studydata/risk/chtc/", study) 
+# location of data set
+path_data <- str_c("P:/studydata/risk/data_processed/", study) 
 
 
 # SET ALGORITHM-SPECIFIC HYPERPARAMETERS
@@ -124,17 +128,10 @@ build_recipe <- function(d, job) {
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
     step_rm(label_num, subid, dttm_label) %>% 
-    # MUST CHANGE DICHOTMOUS OUTCOME TO POS/NEG VALUES
-    step_mutate(y = if_else(y == !!y_level_pos, "pos", "neg")) %>% 
-    step_string2factor(y, levels = c("pos", "neg")) %>% # positive case should be first
-    step_relevel(y, ref_level = "pos") %>% # confirming positive case is set as first level
-    # reference group will be first level in factor - specify levels to choose reference group
-    step_string2factor(label_weekday, levels = c("Mon", "Tues", "Wed", "Thu", "Fri", "Sat", "Sun")) %>%
-    step_num2factor(label_hour, levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-                                           "14", "15", "16", "17", "18", "19", "20", "21", "22",
+    step_num2factor(label_hour, 
+                    levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+                              "14", "15", "16", "17", "18", "19", "20", "21", "22",
                                            "23", "24", "1", "2", "3")) %>%
-    step_string2factor(label_season, levels = c("Spring", "Summer", "Fall", "Winter")) %>% 
-    step_string2factor(all_nominal()) %>% 
     step_zv(all_predictors()) %>% 
     step_impute_median(all_numeric()) %>% 
     step_impute_mode(all_nominal(),  -y) 

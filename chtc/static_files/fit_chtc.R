@@ -55,11 +55,12 @@ results <- if (job$algorithm == "glmnet") {
              y_level_pos = y_level_pos)
 } else {
   tune_model(job = job, rec = rec, splits = splits, 
-             cv_resample_type = cv_resample_type, ml_mode = ml_mode, y_level_pos = y_level_pos)
+             cv_resample_type = cv_resample_type, ml_mode = ml_mode, 
+             y_level_pos = y_level_pos)
 }
 
 # write out results tibble ------------
-results %>% 
+ results %>% 
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
   vroom_write(str_c("results_", job$job_num, ".csv"), delim = ",")

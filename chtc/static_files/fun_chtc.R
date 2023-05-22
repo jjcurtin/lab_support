@@ -499,7 +499,8 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
   
   if (job$algorithm == "knn") {
     # extract single fold associated with job
-    features <- make_features(job = job, splits = splits, rec = rec, cv_resample_type = cv_resample_type)
+    features <- make_features(job = job, splits = splits, rec = rec, 
+                              cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
@@ -597,7 +598,7 @@ get_metrics <- function(model, feat_out, ml_mode, y_level_pos) {
     
     roc <- tibble(truth = feat_out$y,
                   prob = predict(model, feat_out,
-                                type = "prob")[str_c("pred_", y_level_pos)]) %>% 
+                                type = "prob")[[str_c(".pred_", y_level_pos)]]) %>% 
       roc_auc(prob, truth = truth, event_level = "first") %>% 
       select(metric = .metric, 
              estimate = .estimate)

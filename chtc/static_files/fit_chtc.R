@@ -38,25 +38,13 @@ d <- format_data(d)
 # create nested outer splits object ---------------
 set.seed(102030)
 splits <- d %>% 
-  make_splits(cv_resample_type, cv_resample, cv_outer_resample, cv_inner_resample, cv_group)
+  make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
+              cv_inner_resample, cv_group)
 
 
 # build recipe ----------------
 # This is a custom/study specific function that exists in training_controls
 rec <- build_recipe(d = d, job = job)
-
-# make features on d to get n_feats ----------------
-# count before removing nzv
-feat_all <-  rec %>% 
-  prep(training = d, strings_as_factors = FALSE) %>% 
-  bake(new_data = NULL)
-
-
-# remove nzv if specified in training controls
-if (remove_nzv) {
-  rec <- rec %>% 
-    step_nzv(all_predictors())
-}
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {

@@ -16,9 +16,7 @@ source("training_controls.R")
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-jobs <- vroom("jobs.csv", col_types = "iiiiccdddc")
-
-job <- jobs %>% 
+job <- vroom("jobs.csv", col_types = "iiiiccdddc") %>% 
   filter(job_num == job_num_arg)
 
 # read in data train --------------- 
@@ -35,16 +33,18 @@ if (str_detect(fn, ".rds")) {
 d <- format_data(d)  
  
 
+# build recipe ----------------
+# This is a custom/study specific function that exists in training_controls
+rec <- build_recipe(d = d, job = job)
+
+
 # create nested outer splits object ---------------
 set.seed(102030)
 splits <- d %>% 
   make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
               cv_inner_resample, cv_group)
+rm(d) # no longer need d
 
-
-# build recipe ----------------
-# This is a custom/study specific function that exists in training_controls
-rec <- build_recipe(d = d, job = job)
 
 # fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {

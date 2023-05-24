@@ -18,15 +18,17 @@ algorithm <- "glmnet" # specify one algorithm per training control file - can be
 
 
 # SET GLOBAL PARAMETERS --------
-ml_mode <- "regression"   # regression or classification
+ml_mode <- "classification"   # regression or classification
 
 feature_set <- c("feat_baseline_id", "feat_baseline_temporal") # 1+ feature sets
 data_trn <- str_c("features_", data_type, "_", window, "_", lead, "_", version, ".csv.xz") # set to NULL if using chtc staging for large data
-resample <- c("none", "up_1", "down_1", "smote_1") # 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore under_ratio (e.g., 3 = 25% minority cases)
+
+# 1+ resampling methods (up, down, smote, or none).  All resamples should be in form resample type underscore ratio.  Note that ratio is under_ratio for up and smote and over_ratio for down
+resample <- c("none", "up_1", "down_1", "smote_1", "up_.5", "down_2") 
+
 y_col_name <- "label" # outcome variable - will be changed to y in recipe for consistency across studies 
 y_level_pos <- "" # character string of the outcome variable's positive level (e.g., "yes", "abstinent")
 y_level_neg <- "" # character string of the outcome variable's negative level (e.g., "no", "smoking")
-remove_nzv <- TRUE # using as variable instead of in recipe to be able to calculate number of features before removing nzv
 
 
 # CV PARAMETERS
@@ -71,8 +73,8 @@ hp3_rf <- 1500 # trees (10 x's number of predictors)
 hp1_xgboost <- c(0.0001, 0.001, 0.01, 0.1, 0.2, 0.3, .4)  # learn_rate
 hp2_xgboost <- c(1, 2, 3, 4) # tree_depth
 hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not needed)
-# trees = 100
-# early stopping = 10
+# trees = 500
+# early stopping = 20
 
 
 
@@ -80,8 +82,8 @@ hp3_xgboost <- c(20, 30, 40, 50)  # mtry (previously included 2 and 10 but not n
 tar <- c("train.tar.gz", "other_project_specific.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
 max_idle <- 1000 # according to CHTC we should set this at 1000 to not flood the server. It will not limit the number of jobs running at one time 
 request_cpus <- 1 
-request_memory <- "8000MB"
-request_disk <- "1000000KB" # this is pretty large - necessary for meta
+request_memory <- "28000MB"
+request_disk <- "1600MB"
 flock <- FALSE
 glide <- FALSE
 
@@ -89,18 +91,20 @@ glide <- FALSE
 # Script should have a single function that classes all variables in the
 # training set as they should be set up prior to recipe
 # Numeric predictors set to numeric, nominal variables (unordered and ordered) set 
-# to factor with levels ordered correctly.
+# to factor with levels ordered correctly.  Rename outcome to 'y'.  Can also select
+# out any columns that will not be used for prediction.
 
 format_data <- function (df){
 
   df %>% 
     rename(y = !!y_col_name) %>% 
-    mutate(y = if_else(y == !!y_level_pos, "pos", "neg")) %>% 
-    mutate(y = factor(y, levels = c("pos", "neg")))
-  
+    mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), # set pos class first
+           across(where(is.character), factor)) %>%
+    select(-label_num, -dttm_label)
   # Now include additional mutates to change classes for columns as needed
   # see https://jjcurtin.github.io/dwt/file_and_path_management.html#using-a-separate-mutate
 }
+  
 
 # BUILD RECIPE ---------
 

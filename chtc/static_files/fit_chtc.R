@@ -3,7 +3,7 @@
 # libraries & source functions file ----------------
 suppressWarnings(suppressPackageStartupMessages({
   require(dplyr)
-  require(vroom) 
+  # require(vroom) 
   require(tidyr)
   require(stringr)
   require(readr)
@@ -16,7 +16,7 @@ source("training_controls.R")
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
 
-job <- vroom("jobs.csv", col_types = "iiiiccdddc") %>% 
+job <- read_csv("jobs.csv", col_types = "iiiiccdddc") %>% 
   filter(job_num == job_num_arg)
 
 # read in data train --------------- 
@@ -24,7 +24,7 @@ fn <- str_subset(list.files(), "^data_trn")
 if (str_detect(fn, ".rds")) {
   d <- read_rds(fn)
 } else {
-  d <- vroom(fn, show_col_types = FALSE)
+  d <- read_delim(fn, show_col_types = FALSE) # supports both csv and tsv formats
 }
 
 # Format data------------------------
@@ -63,5 +63,5 @@ results <- if (job$algorithm == "glmnet") {
  results %>% 
   mutate(job_num = job$job_num) %>% 
   relocate(job_num) %>% 
-  vroom_write(str_c("results_", job$job_num, ".csv"), delim = ",")
+  write_csv(str_c("results_", job$job_num, ".csv"))
 

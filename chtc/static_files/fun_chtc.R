@@ -8,12 +8,12 @@ suppressWarnings(suppressPackageStartupMessages({
   require(yardstick)
   require(rsample)
   require(ranger)
-  require(psych)
-  require(purrr)
+#  require(psych)
+#  require(purrr)
   require(glmnet)
-  require(kknn)
-  require(vip)
-  require(vroom)
+#  require(kknn)
+#  require(vip)
+#  require(vroom)
 }))
 
 
@@ -473,8 +473,8 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
     model <- boost_tree(learn_rate = job$hp1,
                         tree_depth = job$hp2,
                         mtry = job$hp3,
-                        trees = 100,  # set high but use early stopping
-                        stop_iter = 10) %>% 
+                        trees = 500,  # set high but use early stopping
+                        stop_iter = 20) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%

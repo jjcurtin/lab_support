@@ -6,8 +6,8 @@
 skim_some <- skimr::skim_with(numeric = skimr::sfl(mean = NULL, sd = NULL, p25 = NULL, p50 = NULL, p75 = NULL, hist = NULL))
 
 # Provides summary statistics for modeling EDA
-skew_na <- partial(e1071::skewness, na.rm = TRUE)
-kurt_na <- partial(e1071::kurtosis, na.rm = TRUE)
+skew_na <- purrr::partial(e1071::skewness, na.rm = TRUE)
+kurt_na <- purrr::partial(e1071::kurtosis, na.rm = TRUE)
 skim_all <- skimr::skim_with(numeric = skimr::sfl(skew = skew_na, kurtosis = kurt_na, hist = NULL))
 
 

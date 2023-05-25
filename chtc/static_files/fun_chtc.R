@@ -8,7 +8,7 @@ suppressWarnings(suppressPackageStartupMessages({
   require(yardstick)
   require(rsample)
   require(ranger)
-  require(readr)
+  require(readr, exclude = "spec")
 #  require(psych)
 #  require(purrr)
   require(glmnet)

@@ -87,12 +87,15 @@ request_disk <- "1600MB"
 flock <- FALSE
 glide <- FALSE
 
-# Class training data ---------
+# FORMAT RAW DATA ---------
 # Script should have a single function that classes all variables in the
 # training set as they should be set up prior to recipe
 # Numeric predictors set to numeric, nominal variables (unordered and ordered) set 
 # to factor with levels ordered correctly.  Rename outcome to 'y'.  Can also select
-# out any columns that will not be used for prediction.
+# out any columns that will not be used for prediction across all training batches.
+# IMPORTANT: This function should be the same for all training batches. 
+# No branching for algorithm, etc.  It is used by post-processing scripts regardless
+# of the best configuration selected.
 
 format_data <- function (df){
 
@@ -100,7 +103,7 @@ format_data <- function (df){
     rename(y = !!y_col_name) %>% 
     mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), # set pos class first
            across(where(is.character), factor)) %>%
-    select(-label_num, -dttm_label)
+    select(-label_num, -dttm_label, subid)
   # Now include additional mutates to change classes for columns as needed
   # see https://jjcurtin.github.io/dwt/file_and_path_management.html#using-a-separate-mutate
 }
@@ -126,19 +129,14 @@ build_recipe <- function(d, job) {
     resample <- job$resample
   } else {
     resample <- str_split(job$resample, "_")[[1]][1]
-    under_ratio <- as.numeric(str_split(job$resample, "_")[[1]][2])
+    ratio <- as.numeric(str_split(job$resample, "_")[[1]][2])
   }
   
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
-    step_rm(label_num, subid, dttm_label) %>% 
-    step_num2factor(label_hour, 
-                    levels = c("4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
-                              "14", "15", "16", "17", "18", "19", "20", "21", "22",
-                                           "23", "24", "1", "2", "3")) %>%
     step_zv(all_predictors()) %>% 
-    step_impute_median(all_numeric()) %>% 
-    step_impute_mode(all_nominal(),  -y) 
+    step_impute_median(all_numeric_predictors()) %>% 
+    step_impute_mode(all_nominal_predictors()) 
   
   # If statements for filtering features based on feature set
   if (feature_set == "feat_all_passive") {
@@ -168,36 +166,44 @@ build_recipe <- function(d, job) {
   # resampling options for unbalanced outcome variable
   if (resample == "down") {
     rec <- rec %>% 
-      themis::step_downsample(y, under_ratio = under_ratio, seed = 10) 
-  } else if (resample == "smote") {
-    if (under_ratio != 1) { over_ratio <- under_ratio / (under_ratio + 1)
-    } else over_ratio <- under_ratio
+      themis::step_downsample(y, under_ratio = ratio, seed = 10) 
+  }
+  if (resample == "smote") {
     rec <- rec %>% 
-      themis::step_smote(y, over_ratio = over_ratio, seed = 10) 
-  } else if (resample == "up") {
-    if (under_ratio != 1) { over_ratio <- under_ratio / (under_ratio + 1)
-    } else over_ratio <- under_ratio
+      themis::step_smote(y, over_ratio = ratio, seed = 10) 
+  }
+  if (resample == "up") {
     rec <- rec %>% 
-      themis::step_upsample(y, over_ratio = over_ratio, seed = 10)
+      themis::step_upsample(y, over_ratio = ratio, seed = 10)
   }
   
   # algorithm specific steps
   if (algorithm == "glmnet") {
     rec <- rec  %>%
-      step_dummy(all_nominal(), -y) %>%
-      step_normalize(all_predictors()) %>% 
-      # drop columns with NA values after imputation (100% NA)
-      step_select(where(~ !any(is.na(.))))
-      # step nzv done within fit if training controls remove_nzv is set to TRUE
+      step_dummy(all_nominal_predictors()) %>%
+      step_normalize(all_predictors())
+  } 
+  
+  if (algorithm == "random_forest") {
+    # no algorithm specific steps
+  } 
+  
+  if (algorithm == "xgboost") {
+    rec <- rec  %>% 
+      step_dummy(all_nominal_predictors())
   } 
   
   if (algorithm == "knn") {
     rec <- rec  %>% 
-      step_dummy(all_nominal(), -y) %>% 
-      step_normalize(all_predictors()) %>% 
-      # drop columns with NA values after imputation (100% NA)
-      step_select(where(~ !any(is.na(.))))
+      step_dummy(all_nominal_predictors()) %>% 
+      step_normalize(all_predictors())
   } 
+  
+  # final steps for all algorithms
+  rec <- rec %>%
+    # drop columns with NA values after imputation (100% NA)
+    step_select(where(~ !any(is.na(.)))) %>%
+    step_nzv()
   
   return(rec)
 }

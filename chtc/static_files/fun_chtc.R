@@ -234,7 +234,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
 
 
 
-make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL) {
+make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL, the_seed = NULL) {
   
   # d: (training) dataset to be resampled 
   # cv_resample_type: can be boot, kfold, or nested
@@ -243,6 +243,9 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   # outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
   # group: specifies grouping variable for grouped cv and nested cv
   
+  if(is.null(the_seed)) {
+    error("make_splits() requires a seed")
+  } else set.seed(the_seed)
   
   # bootstrap splits
   if (cv_resample_type == "boot") {
@@ -286,10 +289,13 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
     if (!is.null(cv_group)) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
-        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(cv_group))
+        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, 
+                       group = all_of(cv_group))
       splits <- d %>% 
         nested_cv(outside = outer_grouped_kfold, 
-                  inside = group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, group = all_of(cv_group)))
+                  inside = group_vfold_cv(v = inner_n_folds, 
+                                          repeats = inner_n_repeats, 
+                                          group = all_of(cv_group)))
     } 
     
     # create splits for ungrouped nested cv with kfold inner
@@ -694,8 +700,8 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
     models <- boost_tree(learn_rate = config_best$hp1,
                         tree_depth = config_best$hp2,
                         mtry = config_best$hp3,
-                        trees = 100,  # set high but use early stopping
-                        stop_iter = 10) %>% 
+                        trees = 500,  # set high but use early stopping
+                        stop_iter = 20) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%
@@ -783,8 +789,8 @@ fit_best_model <- function(best_model, rec, d, ml_mode) {
     fit_best <- boost_tree(learn_rate = best_model$hp1,
                            tree_depth = best_model$hp2,
                            mtry = best_model$hp3,
-                           trees = 100,  # set high but use early stopping
-                           stop_iter = 10) %>% 
+                           trees = 500,  # set high but use early stopping
+                           stop_iter = 20) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%

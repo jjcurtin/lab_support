@@ -19,7 +19,7 @@ job_num_arg <- args[1]
 job <- read_csv("jobs.csv", col_types = "iiiiccdddc") %>% 
   filter(job_num == job_num_arg)
 
-# read in data train --------------- 
+# Read in data train --------------- 
 fn <- str_subset(list.files(), "^data_trn")
 if (str_detect(fn, ".rds")) {
   d <- read_rds(fn)
@@ -33,20 +33,18 @@ if (str_detect(fn, ".rds")) {
 d <- format_data(d)  
  
 
-# build recipe ----------------
-# This is a custom/study specific function that exists in training_controls
-rec <- build_recipe(d = d, job = job)
-
-
-# create nested outer splits object ---------------
-set.seed(102030)
+# Create nested outer splits object ---------------
 splits <- d %>% 
   make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
-              cv_inner_resample, cv_group)
+              cv_inner_resample, cv_group, the_seed = seed_splits)
+
+# Build recipe ----------------
+# This is a custom/study specific function that exists in training_controls
+rec <- build_recipe(d = d, job = job)
 rm(d) # no longer need d
 
 
-# fit model and get predictions and model metrics ----------------
+# Fit model and get predictions and model metrics ----------------
 results <- if (job$algorithm == "glmnet") {
   tune_model(job = job, rec = rec, splits = splits, ml_mode = ml_mode, 
              cv_resample_type = cv_resample_type, 

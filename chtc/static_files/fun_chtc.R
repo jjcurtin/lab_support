@@ -1,6 +1,7 @@
 suppressWarnings(suppressPackageStartupMessages({
   require(dplyr)
   require(stringr)
+  require(readr)
   require(recipes)
   require(parsnip)
   require(themis)
@@ -8,7 +9,6 @@ suppressWarnings(suppressPackageStartupMessages({
   require(yardstick)
   require(rsample)
   require(ranger)
-  require(readr, exclude = "spec")
 #  require(psych)
 #  require(purrr)
   require(glmnet)

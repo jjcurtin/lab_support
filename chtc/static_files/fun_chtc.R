@@ -141,7 +141,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # write text file of job nums to read into CHTC with submit script (for naming error files)
   jobs %>% 
     select(job_num) %>% 
-    write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), col_names = FALSE)
+    write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), 
+              col_names = FALSE)
     
   
 

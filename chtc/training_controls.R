@@ -99,19 +99,19 @@ format_data <- function (df){
 
 # BUILD RECIPE---------------------------------------
 # Script should have a single build_recipe function to be compatible with fit script. 
-build_recipe <- function(d, job) {
+build_recipe <- function(d, config) {
   # d: (training) dataset from which to build recipe
-  # job: single-row job-specific tibble
+  # config: single-row config-specific tibble
   
   # get relevant info from job (algorithm, feature_set, resample, under_ratio)
-  algorithm <- job$algorithm
-  feature_set <- job$feature_set
+  algorithm <- config$algorithm
+  feature_set <- config$feature_set
   
-  if (job$resample == "none") {
-    resample <- job$resample
+  if (config$resample == "none") {
+    resample <- config$resample
   } else {
-    resample <- str_split(job$resample, "_")[[1]][1]
-    ratio <- as.numeric(str_split(job$resample, "_")[[1]][2])
+    resample <- str_split(config$resample, "_")[[1]][1]
+    ratio <- as.numeric(str_split(config$resample, "_")[[1]][2])
   }
   
   # Set recipe steps generalizable to all model configurations

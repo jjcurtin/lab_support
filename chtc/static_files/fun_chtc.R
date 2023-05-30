@@ -18,7 +18,7 @@ suppressWarnings(suppressPackageStartupMessages({
 }))
 
 
-make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
+make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   # read in study specific controls
   source(path_training_controls)
   
@@ -70,9 +70,9 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   }
   
   
-  # create jobs tibble
+  # create configs tibble
   if (algorithm == "glmnet") { 
-      jobs <- expand_grid(split_num = split_num,
+      configs <- expand_grid(split_num = split_num,
                           outer_split_num = outer_split_num,
                           inner_split_num = inner_split_num,
                           algorithm = algorithm,
@@ -85,7 +85,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   } 
   
   if (algorithm == "random_forest") {
-      jobs <- expand_grid(split_num = split_num,
+    configs <- expand_grid(split_num = split_num,
                           outer_split_num = outer_split_num,
                           inner_split_num = inner_split_num,
                           algorithm = algorithm,
@@ -97,7 +97,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   } 
   
   if (algorithm == "knn") {
-      jobs <- expand_grid(split_num = split_num,
+    configs <- expand_grid(split_num = split_num,
                           outer_split_num = outer_split_num,
                           inner_split_num = inner_split_num,
                           algorithm = algorithm,
@@ -109,7 +109,7 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   }  
   
   if (algorithm == "xgboost") {
-      jobs <- expand_grid(split_num = split_num,
+    configs <- expand_grid(split_num = split_num,
                           outer_split_num = outer_split_num,
                           inner_split_num = inner_split_num,
                           algorithm = algorithm,
@@ -121,30 +121,41 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   }
   
   
-  # add job num to tibble
-  jobs <- jobs %>% 
-    tibble::rownames_to_column("job_num") 
+  # add config num to configs
+  configs <- configs %>% 
+    tibble::rownames_to_column("config_num") |> 
+    mutate(config_num = as.numeric(config_num))
   
-  # create new job directory (if it does not already exist) 
-  if (!dir.exists(file.path(path_jobs, name_job))) {
-    dir.create(file.path(path_jobs, name_job))
-    dir.create(file.path(path_jobs, name_job, "input"))
-    dir.create(file.path(path_jobs, name_job, "output"))
+  # create new batch directory (if it does not already exist) 
+  if (!dir.exists(file.path(path_batch, name_batch))) {
+    dir.create(file.path(path_batch, name_batch))
+    dir.create(file.path(path_batch, name_batch, "input"))
+    dir.create(file.path(path_batch, name_batch, "output"))
   } else {
-    message("Job folder already exists. No new folders created.")
+    message("Batch folder already exists. No new folders created.")
   }
 
   # write jobs file to input folder
-  jobs %>% 
-    write_csv(file.path(path_jobs, name_job, "input", "jobs.csv"))
+  configs %>% 
+    write_csv(file.path(path_batch, name_batch, "input", "configs.csv"))
   
-  # write text file of job nums to read into CHTC with submit script (for naming error files)
-  jobs %>% 
-    select(job_num) %>% 
-    write_csv(file.path(path_jobs, name_job, "input", "job_nums.txt"), 
+  # write text file of config_start and config_end for each CHTC job
+  seq_end <- max(configs$config_num)
+
+  config_start <- seq(from = 1, to = seq_end, by = configs_per_job)
+  config_end <- seq(from = configs_per_job, to = seq_end, by = configs_per_job)
+
+  # add one more end if end_seq not a multiple of configs_per_job
+  if (length(config_end) < length(config_start)) config_end <- c(config_end, seq_end)
+  
+  
+  # create job_nums.csv file  
+  tibble(config_start, config_end) |> 
+    tibble::rownames_to_column("job_num") |> 
+    mutate(job_num = as.numeric(job_num)) |> 
+    write_csv(file.path(path_batch, name_batch, "input", "job_nums.csv"), 
               col_names = FALSE)
-    
-  
+
 
   # copy data to input folder as data_trn 
   # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
@@ -156,8 +167,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
       fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
     }
     check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_jobs, name_job, "input", fn),
-                            overwrite = overwrite_jobs)
+                            to = file.path(path_batch, name_batch, "input", fn),
+                            overwrite = overwrite_batch)
     if (!check_copy) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
@@ -165,8 +176,8 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   
   # copy study specific training_controls to input folder 
   check_copy <-file.copy(from = file.path(path_training_controls),
-            to = file.path(path_jobs, name_job, "input", "training_controls.R"),
-            overwrite = overwrite_jobs) 
+            to = file.path(path_batch, name_batch, "input", "training_controls.R"),
+            overwrite = overwrite_batch) 
   if (!check_copy) {
     stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
@@ -174,9 +185,9 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
   # copy static R and unix chtc files to input folder 
   check_copy <- file.copy(from = file.path(path_chtc, "static_files", 
                                            c(list.files(file.path(path_chtc, "static_files")))),
-            to = file.path(path_jobs, name_job, "input"),
+            to = file.path(path_batch, name_batch, "input"),
             recursive = TRUE,
-            overwrite = overwrite_jobs) 
+            overwrite = overwrite_batch) 
   for (i in 1:length(check_copy)) {
     if (check_copy[i] == FALSE) {
     stop("Not all static files copied to input folder. Make sure you are running mak_jobs in an R project.")
@@ -189,48 +200,48 @@ make_jobs <- function(path_training_controls, overwrite_jobs = TRUE) {
     # don't add data_trn to transfer files if staging
     transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
                                 paste(tar, collapse = ', '), 
-                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
+                                ", fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
   } else {
     transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
                                 paste(tar, collapse = ', '), ", ", fn,
-                                ", fun_chtc.R, fit_chtc.R, training_controls.R, jobs.csv, job_nums.txt, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
+                                ", fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
   }
     
-  write(transfer_files_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(transfer_files_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add staging requirement if data_trn is null
   if(is.null(data_trn)) {
     staging_req <- str_c("Requirements = (Target.HasCHTCStaging == true)")
-    write(staging_req, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+    write(staging_req, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   } 
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)
-  write(max_idle_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(max_idle_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add cpus requested
   cpus_str <- str_c("request_cpus = ", request_cpus)
-  write(cpus_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(cpus_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add memory requested
   memory_str <- str_c("request_memory = ", request_memory)
-  write(memory_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(memory_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add disk space requested
   disk_str <- str_c("request_disk = ", request_disk)
-  write(disk_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(disk_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add flock
   flock_str <- str_c("+wantFlocking = ", flock)
-  write(flock_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(flock_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add glide
   glide_str <- str_c("+wantGlideIn = ", glide)
-  write(glide_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  write(glide_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
   # add queue
-  queue_str <- str_c("queue job_num from job_nums.txt")
-  write(queue_str, file.path(path_jobs, name_job, "input", "sub.sub"), append = TRUE)
+  queue_str <- str_c("queue job_num,config_start,config_end from job_nums.csv")
+  write(queue_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
   
 }
 
@@ -364,9 +375,9 @@ make_rset <- function(splits, cv_resample_type, split_num = NULL,
   return(rset)
 }
 
-tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
+tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_min = NULL,
                        hp2_glmnet_max = NULL, hp2_glmnet_out = NULL, y_level_pos = NULL) {
-  # job: single-row job-specific tibble from jobs
+  # config: single-row config-specific tibble from jobs
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   
@@ -382,20 +393,20 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
   
   
   
-  if (job$algorithm == "glmnet") {
+  if (config$algorithm == "glmnet") {
     grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, 
                                                   length.out = hp2_glmnet_out)))
     
     # make rset for single held-in/held_out split
     # does not work for bootstrapping
     split <- make_rset(splits, cv_resample_type = cv_resample_type, 
-                       split_num = job$split_num, 
-                       inner_split_num = job$inner_split_num, 
-                       outer_split_num = job$outer_split_num)
+                       split_num = config$split_num, 
+                       inner_split_num = config$inner_split_num, 
+                       outer_split_num = config$outer_split_num)
     
     if (ml_mode == "classification") {
       models <- logistic_reg(penalty = tune(),
-                             mixture = job$hp1) %>%
+                             mixture = config$hp1) %>%
         set_engine("glmnet") %>%
         set_mode("classification") %>%
         tune_grid(preprocessor = rec,
@@ -406,7 +417,7 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
                   metrics = mode_metrics)
     } else {
       models <- linear_reg(penalty = tune(),
-                           mixture = job$hp1) %>%
+                           mixture = config$hp1) %>%
         set_engine("glmnet") %>%
         set_mode("regression") %>%
         tune_grid(preprocessor = rec,
@@ -424,24 +435,24 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
       select(hp2, .metric, .estimate) %>% 
       pivot_wider(., names_from = ".metric",
                   values_from = ".estimate") %>%  
-      bind_cols(job %>% select(-hp2), .) %>% 
+      bind_cols(config %>% select(-hp2), .) %>% 
       relocate(hp2, .before = hp3) 
     
     return(results)
   }
   
-  if (job$algorithm == "random_forest") {
-    # extract fold associated with this job - 1 held in and 1 held out set and make 1 
+  if (config$algorithm == "random_forest") {
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, 
+    features <- make_features(config = config, splits = splits, rec = rec, 
                               cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
-    # fit model on feat_in with job hyperparameter values 
-    model <- rand_forest(mtry = job$hp1,
-                         min_n = job$hp2,
-                         trees = job$hp3) %>%
+    # fit model on feat_in with config hyperparameter values 
+    model <- rand_forest(mtry = config$hp1,
+                         min_n = config$hp2,
+                         trees = config$hp3) %>%
       set_engine("ranger",
                  importance = "none",
                  respect.unordered.factors = "order",
@@ -458,29 +469,29 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     } else {
       results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
                              y_level_pos) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     }
     
     return(results)
   }
   
-  if (job$algorithm == "xgboost") {
+  if (config$algorithm == "xgboost") {
     
-    # extract fold associated with this job - 1 held in and 1 held out set and make 1 
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
-    features <- make_features(job = job, splits = splits, rec = rec, 
+    features <- make_features(config = config, splits = splits, rec = rec, 
                               cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
-    # fit model on feat_in with job hyperparameter values 
-    model <- boost_tree(learn_rate = job$hp1,
-                        tree_depth = job$hp2,
-                        mtry = job$hp3,
+    # fit model on feat_in with config hyperparameter values 
+    model <- boost_tree(learn_rate = config$hp1,
+                        tree_depth = config$hp2,
+                        mtry = config$hp3,
                         trees = 500,  # set high but use early stopping
                         stop_iter = 20) %>% 
       set_engine("xgboost",
@@ -495,25 +506,25 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     } else {
       results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
                              y_level_pos) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     }
     
     return(results)
   }
   
-  if (job$algorithm == "knn") {
-    # extract single fold associated with job
-    features <- make_features(job = job, splits = splits, rec = rec, 
+  if (config$algorithm == "knn") {
+    # extract single fold associated with config
+    features <- make_features(config = config, splits = splits, rec = rec, 
                               cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
-    # fit model - job provides number of neighbors
-    model <- nearest_neighbor(neighbors = job$hp1) %>% 
+    # fit model - config provides number of neighbors
+    model <- nearest_neighbor(neighbors = config$hp1) %>% 
       set_engine("kknn") %>% 
       set_mode(ml_mode) %>% 
       fit(y ~ .,
@@ -526,11 +537,11 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     } else {
       results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
                              y_level_pos) %>% 
-        bind_cols(job, .) 
+        bind_cols(config, .) 
     }
     
     return(results) 
@@ -542,26 +553,26 @@ tune_model <- function(job, rec, splits, ml_mode, cv_resample_type, hp2_glmnet_m
 
 # helper function for tune_model()
 # KW: still need to add section for bootstrap
-make_features <- function(job, splits, rec, cv_resample_type) {
+make_features <- function(config, splits, rec, cv_resample_type) {
   
 
-  # job: single-row job-specific tibble
+  # config: single-row config-specific tibble
   # splits: rset object that contains all resamples
   # rec: recipe (created manually or via build_recipe() function)
   # cv_resample_type: either boot, kfold, or nested
   
   if (cv_resample_type == "kfold") {
     
-    d_in <- training(splits$splits[[job$split_num]])
-    d_out <- testing(splits$splits[[job$split_num]])
+    d_in <- training(splits$splits[[config$split_num]])
+    d_out <- testing(splits$splits[[config$split_num]])
   }
   
   
   if (cv_resample_type == "nested") {
     
-    d_in <- training(splits$inner_resamples[[job$outer_split_num]]$splits[[job$inner_split_num]])
+    d_in <- training(splits$inner_resamples[[config$outer_split_num]]$splits[[config$inner_split_num]])
 
-    d_out <- testing(splits$inner_resamples[[job$outer_split_num]]$splits[[job$inner_split_num]]) 
+    d_out <- testing(splits$inner_resamples[[config$outer_split_num]]$splits[[config$inner_split_num]]) 
   }
   
   if (cv_resample_type == "boot") {

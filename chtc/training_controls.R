@@ -116,6 +116,7 @@ build_recipe <- function(d, config) {
   
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
+    step_rm(subid) %>%
     step_zv(all_predictors()) %>% 
     step_impute_median(all_numeric_predictors()) %>% 
     step_impute_mode(all_nominal_predictors()) 

@@ -3,7 +3,7 @@ universe = vanilla
 requirements = (OpSysMajorVer == 8)
 
 executable = execute.sh
-arguments = $(job_num)
+arguments = $(job_num) $(config_start) $(config_end)
 
 log = $(Cluster).log
 error = error/err_$(job_num).err

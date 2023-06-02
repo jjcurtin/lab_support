@@ -124,16 +124,19 @@ build_recipe <- function(d, config) {
   
   # resampling options for unbalanced outcome variable
   if (resample == "down") {
+    # ratio = under_ratio.  No conversion needed
     rec <- rec %>% 
       themis::step_downsample(y, under_ratio = ratio, seed = 10) 
   }
   
   if (resample == "smote") {
+    ratio <- 1 / ratio # correct ratio to over_ratio
     rec <- rec %>% 
       themis::step_smote(y, over_ratio = ratio, seed = 10) 
   }
   
   if (resample == "up") {
+    ratio <- 1 / ratio # correct ratio to over_ratio
     rec <- rec %>% 
       themis::step_upsample(y, over_ratio = ratio, seed = 10)
   }

@@ -11,8 +11,7 @@ path_training_controls <- "./PROJECT/chtc/training_controls.R"
 
 # DON'T CHANGE -------------------- 
 suppressPackageStartupMessages(library(tidyverse))
-source("../lab_support/chtc/static_files/fun_chtc.R", echo = FALSE)
+source("../lab_support/chtc/fun_make_jobs.R", echo = FALSE)
 
 # set overwrite_jobs to FALSE if you do not want to overwrite existing files
 make_jobs(path_training_controls, overwrite_jobs = TRUE)
-

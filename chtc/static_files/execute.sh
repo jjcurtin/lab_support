@@ -26,7 +26,7 @@ export RHOME=$(pwd)/R
 export R_LIBS=$PWD/packages
 
 #run R script, passing in args
-Rscript fit_chtc.R $1
+Rscript fit_chtc.R $1 $2 $3
 
 # uncomment if using large file from staging directory to remove file from woriking directory
 # May need to edit extension on large file (i.e., .csv.xz)

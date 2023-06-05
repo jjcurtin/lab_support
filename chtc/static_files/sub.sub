@@ -3,12 +3,14 @@ universe = vanilla
 requirements = (OpSysMajorVer == 8)
 
 executable = execute.sh
-arguments = $(job_num)
+arguments = $(job_num) $(config_start) $(config_end)
 
 log = $(Cluster).log
 error = error/err_$(job_num).err
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
-#on_exit_hold = exitcode != 0
+transfer_output_remaps = "results_$(job_num).csv = results/results_$(job_num).csv"
+on_exit_hold = exitcode != 0
+
 

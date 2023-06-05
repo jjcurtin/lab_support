@@ -4,6 +4,7 @@
 suppressWarnings(suppressPackageStartupMessages({
   require(dplyr)
   # require(vroom) 
+  require(purrr)
   require(tidyr)
   require(stringr)
   require(readr)
@@ -12,12 +13,16 @@ source("fun_chtc.R")
 source("training_controls.R")  
 
 # set up job ---------
-# job_num_arg <- 1
+# for testing:
+#   job_num_arg <- 1
+#   config_start_arg <- 1
+#   config_end_arg <- 2
 args <- commandArgs(trailingOnly = TRUE) 
 job_num_arg <- args[1]
+config_start_arg <- args[2]
+config_end_arg <- args[3]
 
-job <- read_csv("jobs.csv", col_types = "iiiiccdddc") %>% 
-  filter(job_num == job_num_arg)
+configs <- read_csv("configs.csv", col_types = "iiiiccdddc")
 
 # Read in data train --------------- 
 fn <- str_subset(list.files(), "^data_trn")
@@ -31,35 +36,45 @@ if (str_detect(fn, ".rds")) {
 # change column classes, rename Y, etc
 # This is a custom/study specific function that exists in training_controls
 d <- format_data(d)  
- 
+
 
 # Create nested outer splits object ---------------
 splits <- d %>% 
   make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
               cv_inner_resample, cv_group, the_seed = seed_splits)
 
-# Build recipe ----------------
-# This is a custom/study specific function that exists in training_controls
-rec <- build_recipe(d = d, job = job)
-rm(d) # no longer need d
 
-
-# Fit model and get predictions and model metrics ----------------
-results <- if (job$algorithm == "glmnet") {
-  tune_model(job = job, rec = rec, splits = splits, ml_mode = ml_mode, 
-             cv_resample_type = cv_resample_type, 
-             hp2_glmnet_min = hp2_glmnet_min, hp2_glmnet_max = hp2_glmnet_max, 
-             hp2_glmnet_out = hp2_glmnet_out,
-             y_level_pos = y_level_pos)
-} else {
-  tune_model(job = job, rec = rec, splits = splits, 
-             cv_resample_type = cv_resample_type, ml_mode = ml_mode, 
-             y_level_pos = y_level_pos)
+# function to fit and evaluate a model configuration from configs
+fit_eval <- function(config_current, configs, d, splits) {
+  
+  # get current model config
+  config <- configs %>%
+    filter(config_num == config_current)
+  
+  # create recipe
+  # This is a custom/study specific function that exists in training_controls
+  rec <- build_recipe(d = d, config = config)
+  
+  
+  # Fit model and get predictions and model metrics
+  results <- if (config$algorithm == "glmnet") {
+    tune_model(config = config, rec = rec, splits = splits, ml_mode = ml_mode, 
+               cv_resample_type = cv_resample_type, 
+               hp2_glmnet_min = hp2_glmnet_min, hp2_glmnet_max = hp2_glmnet_max, 
+               hp2_glmnet_out = hp2_glmnet_out,
+               y_level_pos = y_level_pos)
+  } else {
+    tune_model(config = config, rec = rec, splits = splits, 
+               cv_resample_type = cv_resample_type, ml_mode = ml_mode, 
+               y_level_pos = y_level_pos)
+  }
+  
+  return(results)
 }
 
-# write out results tibble ------------
- results %>% 
-  mutate(job_num = job$job_num) %>% 
-  relocate(job_num) %>% 
-  write_csv(str_c("results_", job$job_num, ".csv"))
+config_start_arg:config_end_arg %>%
+  map(\(config_current) fit_eval(config_current, configs, d, splits)) %>%
+  list_rbind() %>%
+  write_csv(str_c("results_", job_num_arg, ".csv"))
+
 

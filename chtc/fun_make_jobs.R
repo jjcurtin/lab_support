@@ -176,24 +176,9 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # update submit file from training controls -----------------
   # add files to transfer
-  if(is.null(data_trn)) {
-    # don't add data_trn to transfer files if staging
-    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
-                                paste(tar, collapse = ', '), 
-                                ", fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz", fn)
-  } else {
-    transfer_files_str <- str_c("transfer_input_files = http://proxy.chtc.wisc.edu/SQUID/chtc/el8/R413.tar.gz, ",
-                                paste(tar, collapse = ', '), ", ", fn,
-                                ", fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, http://proxy.chtc.wisc.edu/SQUID/SLIBS.tar.gz")
-  }
+  transfer_files_str <- str_c("transfer_input_files = train.sif, fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv,", fn)
   
   write(transfer_files_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
-  
-  # add staging requirement if data_trn is null
-  if(is.null(data_trn)) {
-    staging_req <- str_c("Requirements = (Target.HasCHTCStaging == true)")
-    write(staging_req, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
-  } 
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)

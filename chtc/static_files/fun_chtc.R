@@ -1,22 +1,3 @@
-suppressWarnings(suppressPackageStartupMessages({
-  require(dplyr)
-  require(stringr)
-  require(readr)
-  require(recipes)
-  require(parsnip)
-  require(themis)
-  require(tune)
-  require(yardstick)
-  require(rsample)
-  require(ranger)
-#  require(psych)
-#  require(purrr)
-  require(glmnet)
-#  require(kknn)
-#  require(vip)
-#  require(vroom)
-}))
-
 make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL, the_seed = NULL) {
   
   # d: (training) dataset to be resampled 

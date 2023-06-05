@@ -1,5 +1,6 @@
 # sub.sub 
 universe = vanilla
++SingularityImage = "train.sif"
 requirements = (OpSysMajorVer == 8)
 
 executable = execute.sh

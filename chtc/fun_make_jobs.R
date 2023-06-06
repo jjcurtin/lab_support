@@ -178,35 +178,35 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = train.sif, fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv,", fn)
   
-  write(transfer_files_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(transfer_files_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)
-  write(max_idle_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(max_idle_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add cpus requested
   cpus_str <- str_c("request_cpus = ", request_cpus)
-  write(cpus_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(cpus_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add memory requested
   memory_str <- str_c("request_memory = ", request_memory)
-  write(memory_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(memory_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add disk space requested
   disk_str <- str_c("request_disk = ", request_disk)
-  write(disk_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(disk_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add flock
   flock_str <- str_c("+wantFlocking = ", flock)
-  write(flock_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(flock_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add glide
   glide_str <- str_c("+wantGlideIn = ", glide)
-  write(glide_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(glide_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
   # add queue
   queue_str <- str_c("queue job_num,config_start,config_end from job_nums.csv")
-  write(queue_str, file.path(path_batch, name_batch, "input", "sub.sub"), append = TRUE)
+  write(queue_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
   
 }
 

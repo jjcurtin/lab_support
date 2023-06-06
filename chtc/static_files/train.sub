@@ -3,11 +3,11 @@ universe = vanilla
 +SingularityImage = "train.sif"
 requirements = (OpSysMajorVer == 8)
 
-executable = execute.sh
+executable = train.sh
 arguments = $(job_num) $(config_start) $(config_end)
 
 log = $(Cluster).log
-error = error/err_$(job_num).err
+error = error/error_$(job_num).err
 
 should_transfer_files = YES
 when_to_transfer_output = ON_EXIT

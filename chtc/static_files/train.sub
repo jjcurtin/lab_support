@@ -1,4 +1,4 @@
-# sub.sub 
+# train.sub 
 universe = vanilla
 +SingularityImage = "train.sif"
 requirements = (OpSysMajorVer == 8)

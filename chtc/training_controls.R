@@ -165,3 +165,13 @@ build_recipe <- function(d, config) {
   
   return(rec)
 }
+
+# Update paths for OS--------------------------------
+# This does NOT need to be edited.  This will work for Windows, Mac and Linux OSs
+path_batch <- if_else(Sys.info()[["sysname"]] == "Windows",
+                      str_c("P:/", patch_batch), 
+                      str_c("/Volumes/private/", path_batch))
+
+path_data <- if_else(Sys.info()[["sysname"]] == "Windows",
+                     str_c("P:/", path_data), 
+                     str_c("/Volumes/private/", path_data))

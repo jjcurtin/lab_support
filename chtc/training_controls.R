@@ -16,16 +16,18 @@ data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz")
 
 seed_splits <- 102030
 
+
+# RESAMPLING FOR OUTCOME-----------------------------------
+# note that ratio is under_ratio, which is used by downsampling as is
+# It is converted to  overratio (1/ratio) for up and smote
+resample <- c("down_3") 
+# resample <- c("down_1", "up_1", "smote_1", "down_2", "up_.5", "smote_.5", down_3) 
+
+
 # OUTCOME-------------------------------------
 y_col_name <- "lapse" 
 y_level_pos <- "yes" 
 y_level_neg <- "no"
-
-
-# RESAMPLING FOR OUTCOME-----------------------------------
-# note that ratio is under_ratio for up and smote and over_ratio for down
-resample <- c("down_3") 
-# resample <- c("down_1", "up_1", "smote_1", "down_2", "up_.5", "smote_.5", down_3) 
 
 
 # CV SETTINGS---------------------------------

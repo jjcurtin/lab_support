@@ -13,5 +13,6 @@ should_transfer_files = YES
 when_to_transfer_output = ON_EXIT
 transfer_output_remaps = "results_$(job_num).csv = results/results_$(job_num).csv"
 on_exit_hold = exitcode != 0
+max_retries = 1
 
 

@@ -8,13 +8,7 @@ version <- "v4"
 algorithm <- "xgboost"
 batch <- "batch5"
 
-ml_mode <- "classification"   # regression or classification
 configs_per_job <- 50  # number of model configurations that will be fit/evaluated within each CHTC
-
-feature_set <- c("all") # EMA Features set names
-data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") 
-
-seed_splits <- 102030
 
 
 # RESAMPLING FOR OUTCOME-----------------------------------
@@ -24,7 +18,12 @@ resample <- c("down_3")
 # resample <- c("down_1", "up_1", "smote_1", "down_2", "up_.5", "smote_.5", down_3) 
 
 
-# OUTCOME-------------------------------------
+# DATA, SPLITS AND OUTCOME-------------------------------------
+feature_set <- c("all") # EMA Features set names
+data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") 
+seed_splits <- 102030
+
+ml_mode <- "classification"   # regression or classification
 y_col_name <- "lapse" 
 y_level_pos <- "yes" 
 y_level_neg <- "no"

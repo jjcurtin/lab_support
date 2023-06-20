@@ -70,7 +70,6 @@ hp3_xgboost <- c(20, 30, 40, 50)  # mtry
  
 
 # CHTC SPECIFIC CONTROLS----------------------------
-tar <- c("train.tar.gz") # name of tar packages for submit file - does not transfer these anywhere 
 max_idle <- 1000
 request_cpus <- 1 
 request_memory <- "25000MB"

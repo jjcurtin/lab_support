@@ -107,17 +107,17 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     mutate(config_num = as.numeric(config_num))
   
   # create new batch directory (if it does not already exist) 
-  if (!dir.exists(file.path(path_batch, name_batch))) {
-    dir.create(file.path(path_batch, name_batch))
-    dir.create(file.path(path_batch, name_batch, "input"))
-    dir.create(file.path(path_batch, name_batch, "output"))
+  if (!dir.exists(file.path(path_batch))) {
+    dir.create(file.path(path_batch))
+    dir.create(file.path(path_batch, "input"))
+    dir.create(file.path(path_batch, "output"))
   } else {
     message("Batch folder already exists. No new folders created.")
   }
   
   # write jobs file to input folder
   configs %>% 
-    write_csv(file.path(path_batch, name_batch, "input", "configs.csv"))
+    write_csv(file.path(path_batch, "input", "configs.csv"))
   
   # write text file of config_start and config_end for each CHTC job
   seq_end <- max(configs$config_num)
@@ -133,7 +133,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   tibble(config_start, config_end) |> 
     tibble::rownames_to_column("job_num") |> 
     mutate(job_num = as.numeric(job_num)) |> 
-    write_csv(file.path(path_batch, name_batch, "input", "job_nums.csv"), 
+    write_csv(file.path(path_batch, "input", "job_nums.csv"), 
               col_names = FALSE)
   
   
@@ -147,7 +147,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
       fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
     }
     check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_batch, name_batch, "input", fn),
+                            to = file.path(path_batch, "input", fn),
                             overwrite = overwrite_batch)
     if (!check_copy) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
@@ -156,7 +156,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # copy study specific training_controls to input folder 
   check_copy <-file.copy(from = file.path(path_training_controls),
-                         to = file.path(path_batch, name_batch, "input", "training_controls.R"),
+                         to = file.path(path_batch, "input", "training_controls.R"),
                          overwrite = overwrite_batch) 
   if (!check_copy) {
     stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
@@ -165,7 +165,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   # copy static R and unix chtc files to input folder 
   check_copy <- file.copy(from = file.path(path_chtc, "static_files", 
                                            c(list.files(file.path(path_chtc, "static_files")))),
-                          to = file.path(path_batch, name_batch, "input"),
+                          to = file.path(path_batch, "input"),
                           recursive = TRUE,
                           overwrite = overwrite_batch) 
   for (i in 1:length(check_copy)) {
@@ -178,35 +178,35 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   # add files to transfer
   transfer_files_str <- str_c("transfer_input_files = train.sif, fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv,", fn)
   
-  write(transfer_files_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add max idle jobs
   max_idle_str <- str_c("materialize_max_idle = ", max_idle)
-  write(max_idle_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(max_idle_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add cpus requested
   cpus_str <- str_c("request_cpus = ", request_cpus)
-  write(cpus_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(cpus_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add memory requested
   memory_str <- str_c("request_memory = ", request_memory)
-  write(memory_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(memory_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add disk space requested
   disk_str <- str_c("request_disk = ", request_disk)
-  write(disk_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(disk_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add flock
   flock_str <- str_c("+wantFlocking = ", flock)
-  write(flock_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(flock_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add glide
   glide_str <- str_c("+wantGlideIn = ", glide)
-  write(glide_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(glide_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add queue
   queue_str <- str_c("queue job_num,config_start,config_end from job_nums.csv")
-  write(queue_str, file.path(path_batch, name_batch, "input", "train.sub"), append = TRUE)
+  write(queue_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
 }
 

@@ -45,9 +45,9 @@ cv_name <- if_else(cv_resample_type == "nested",
 # the name of the batch of jobs to set folder name
 name_batch <- str_c("train_", algorithm, "_", window, "_", cv_name, "_", version, "_", batch) 
 # the path to the batch of jobs to put the folder name
-path_batch <- str_c("P:/studydata/risk/chtc/", study) 
+path_batch <- str_c("studydata/risk/chtc/", study) 
 # location of data set
-path_data <- str_c("P:/studydata/risk/data_processed/", study) 
+path_data <- str_c("studydata/risk/data_processed/", study) 
 
 
 # ALGORITHM-SPECIFIC HYPERPARAMETERS-----------

@@ -53,7 +53,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
     if (!is.null(cv_group)) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
-        group_vfold_cv(v = inner_n_folds, repeats = inner_n_repeats, 
+        group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, 
                        group = all_of(cv_group))
       splits <- d %>% 
         nested_cv(outside = outer_grouped_kfold, 

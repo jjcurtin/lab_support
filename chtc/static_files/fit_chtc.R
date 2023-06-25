@@ -2,6 +2,11 @@
 
 # libraries & source functions file ----------------
 suppressWarnings(suppressPackageStartupMessages({
+  require(ranger)
+  require(glmnet)
+  require(xgboost)
+  # require(kknn)
+  
   require(dplyr)
   require(tidyr)
   require(stringr)
@@ -13,10 +18,6 @@ suppressWarnings(suppressPackageStartupMessages({
   require(tune)
   require(yardstick)
   require(rsample)
-  require(ranger)
-  require(glmnet)
-  require(xgboost)
-  # require(kknn)
 })) 
 source("fun_chtc.R")
 source("training_controls.R")  

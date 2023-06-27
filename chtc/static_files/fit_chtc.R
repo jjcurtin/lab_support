@@ -38,7 +38,7 @@ fn <- str_subset(list.files(), "^data_trn")
 if (str_detect(fn, ".rds")) {
   d <- read_rds(fn)
 } else {
-  d <- read_delim(fn, show_col_types = FALSE) # supports both csv and tsv formats
+  d <- read_csv(fn, show_col_types = FALSE) # supports both csv and tsv formats
 }
 
 # Format data------------------------

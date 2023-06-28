@@ -35,7 +35,11 @@ job_num_arg <- args[1]
 config_start_arg <- args[2]
 config_end_arg <- args[3]
 
-configs <- read_csv("configs.csv", col_types = "iiiiccdddc")
+if (algorithm == "glm") {
+  configs <- read_csv("configs.csv", col_types = "iiiiccc")
+} else {
+  configs <- read_csv("configs.csv", col_types = "iiiiccdddc")
+}
 
 # Read in data train --------------- 
 fn <- str_subset(list.files(), "^data_trn")

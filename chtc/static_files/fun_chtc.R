@@ -326,9 +326,8 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                              y_level_pos) %>% 
         bind_cols(config, .) 
     }
-  
+  }
 }
-
 
 
 # helper function for tune_model()

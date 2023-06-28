@@ -100,6 +100,15 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            resample)      
   }
   
+  if (algorithm == "glm") { 
+    configs <- expand_grid(split_num = split_num,
+                           outer_split_num = outer_split_num,
+                           inner_split_num = inner_split_num,
+                           algorithm = algorithm,
+                           feature_set,
+                           resample)
+  } 
+  
   
   # add config num to configs
   configs <- configs %>% 

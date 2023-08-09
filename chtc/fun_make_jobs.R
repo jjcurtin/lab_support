@@ -106,6 +106,9 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            inner_split_num = inner_split_num,
                            algorithm = algorithm,
                            feature_set,
+                           hp1 = NA,
+                           hp2 = NA,
+                           hp3 = NA,
                            resample)
   } 
   

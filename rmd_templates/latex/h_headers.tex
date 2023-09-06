@@ -1,0 +1,26 @@
+ % Headers H1-H4 Stucture for these commands: https://texfaq.org/FAQ-atsigns
+\makeatletter
+\renewcommand\section{
+  \@startsection{section}{1}{\z@}
+    {11pt \@plus 0pt \@minus 0pt}
+    {.01pt \@plus 0pt }%reduce space below subsection (was 1.5ex)
+    {\normalfont\normalsize\bfseries\centering}} %modify font style
+
+  \renewcommand\subsection{
+  \@startsection{subsection}{2}{\z@} % name, level, indent
+    {11pt \@plus 0pt \@minus 0pt}
+    {.01pt \@plus 0pt }%reduce space below subsection (was 1.5ex)
+    {\normalfont\normalsize\bfseries}} %modify font style
+
+  \renewcommand\subsubsection{
+  \@startsection{subsubsection}{3}{\z@}
+    {11pt \@plus 0pt \@minus 0pt} %reduce space above subsubsection (was -3.25ex)
+    {-4pt \@plus 11pt} %reduce space below subsubsection (was 1.5ex)
+    {\normalfont\normalsize\bfseries}} %modify font style
+
+  \renewcommand\paragraph{
+  \@startsection{paragraph}{4}{\z@}
+    {-0.5ex\@plus -1ex \@minus -.2ex} %reduce space above paragraph (was -3.25ex)
+    {-1.5ex \@plus .2ex} %convert space below paragraph to an indent (was 1.5ex)
+    {\normalfont\normalsize\bfseries}} %modify font style
+\makeatother

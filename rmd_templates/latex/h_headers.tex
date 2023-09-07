@@ -1,6 +1,14 @@
 \begin{document}
 % Headers H1-H4 Stucture for these commands: https://texfaq.org/FAQ-atsigns
+% set section numbering/lettering
+% tips for seccntformat: https://tex.stackexchange.com/questions/95896/how-to-format-subsection-title-without-packages
 \makeatletter
+\def\@seccntformat#1{%
+  \expandafter\ifx\csname c@#1\endcsname\c@section\else
+  \expandafter\ifx\csname c@#1\endcsname\c@paragraph\else
+  \csname the#1\endcsname\quad
+  \fi\fi}
+
 \renewcommand\section{
   \@startsection{section}{1}{\z@}
     {11pt \@plus 0pt \@minus 0pt}

@@ -69,30 +69,42 @@
       <text variable="publisher"/>
     </group>
   </macro>
-  <macro name="access">
-    <choose>
-      <if variable="URL">
-        <group delimiter=": ">
+    <macro name="access">
+      <choose>
+        <if variable="DOI" match="any">
+          <text variable="DOI" prefix="https://doi.org/"/>
+        </if>
+        <else-if variable="URL">
           <group delimiter=" ">
-            <text term="retrieved" text-case="capitalize-first"/>
-            <text term="from"/>
+            <choose>
+              <if variable="issued status" match="none">
+                <group delimiter=" ">
+                  <text term="retrieved" text-case="capitalize-first"/>
+                  <date variable="accessed" form="text" suffix=","/>
+                  <text term="from"/>
+                </group>
+              </if>
+            </choose>
+            <text variable="URL"/>
           </group>
-          <text variable="URL"/>
-        </group>
-      </if>
-    </choose>
+        </else-if>
+      </choose>
   </macro>
   <macro name="accessed-date">
     <choose>
-      <if variable="URL">
-        <group prefix="[" suffix="]" delimiter=" ">
-          <text term="cited"/>
-          <date variable="accessed">
-            <date-part name="year"/>
-            <date-part name="month" prefix=" " form="short" strip-periods="true"/>
-            <date-part name="day" prefix=" "/>
-          </date>
-        </group>
+      <if variable="DOI" match="none">      
+        <choose>
+             <if variable="URL">
+              <group prefix="[" suffix="]" delimiter=" ">
+                <text term="cited"/>
+                <date variable="accessed">
+                  <date-part name="year"/>
+                  <date-part name="month" prefix=" " form="short" strip-periods="true"/>
+                  <date-part name="day" prefix=" "/>
+                </date>
+              </group>
+         </if>
+        </choose>
       </if>
     </choose>
   </macro>
@@ -102,11 +114,15 @@
         <group suffix="." delimiter=" ">
           <text variable="container-title" form="short" strip-periods="true"/>
           <choose>
-            <if variable="URL">
-              <text term="internet" prefix="[" suffix="]" text-case="capitalize-first"/>
+            <if variable="DOI" match="none">      
+              <choose>
+               <if variable="URL">
+                <text term="internet" prefix="[" suffix="]" text-case="capitalize-first"/>
+               </if>
+              </choose>
             </if>
           </choose>
-        </group>
+          </group>
         <text macro="edition" prefix=" "/>
       </if>
       <!--add event-name and event-place once they become available-->

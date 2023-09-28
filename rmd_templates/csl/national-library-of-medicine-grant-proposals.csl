@@ -92,7 +92,7 @@
   </macro>
   <macro name="accessed-date">
     <choose>
-      <if variable="DOI" match="none">      
+      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="none">
         <choose>
              <if variable="URL">
               <group prefix="[" suffix="]" delimiter=" ">

@@ -185,7 +185,7 @@
   </macro>
   <macro name="date">
     <choose>
-      <if type="article-journal article-magazine article-newspaper" match="any">
+      <if type="article-journal article-magazine article-newspaper webpage" match="any">
         <group suffix=";" delimiter=" ">
           <date variable="issued" delimiter=" ">
             <date-part name="year"/>

@@ -110,7 +110,7 @@
   </macro>
   <macro name="container-title">
     <choose>
-      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="any">
+      <if type="article-journal article-magazine chapter paper-conference article-newspaper webpage" match="any">
         <group suffix="." delimiter=" ">
           <text variable="container-title" form="short" strip-periods="true"/>
           <choose>

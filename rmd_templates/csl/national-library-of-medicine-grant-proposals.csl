@@ -57,11 +57,11 @@
   </macro>
   <macro name="publisher">
     <choose>
-    <if type="article article-magazine article-newspaper article-journal bill book broadcast chapter manuscript map motion_picture musical_score pamphlet paper-conference patent personal_communication review review-book song speech thesis treaty" match="none">
-           <group delimiter=": " suffix=".">
+    <if type="article article-magazine article-journal bill book broadcast chapter manuscript map motion_picture musical_score pamphlet paper-conference patent personal_communication review review-book song speech thesis treaty" match="none">
+          <group delimiter=": " suffix=".">
           <text variable="publisher"/>
           </group>
-              </if>
+     </if>
      <else>     
     <group delimiter=": " suffix=";">
       <choose>
@@ -86,7 +86,7 @@
               <text variable="DOI" prefix="https://doi.org/"/>
               </group>
         </if>
-        <else-if variable="URL" >
+        <else>
         <group delimiter=": " suffix=".">
           <group delimiter=" ">
             <text term="retrieved" text-case="capitalize-first"/>
@@ -94,7 +94,7 @@
           </group>
           <text variable="URL"/>
         </group>
-      </else-if>
+      </else>
     </choose>
   </macro>
   <macro name="accessed-date">
@@ -185,6 +185,8 @@
   <macro name="date">
     <choose>
       <if type="article-journal article-magazine article-newspaper" match="any">
+        <choose>
+        <if variable="volume page" match="any">
         <group suffix=";" delimiter=" ">
           <date variable="issued" delimiter=" ">
             <date-part name="year"/>
@@ -193,6 +195,18 @@
           </date>
           <text macro="accessed-date"/>
         </group>
+        </if>
+        <else>
+                <group suffix="." delimiter=" ">
+	          <date variable="issued" delimiter=" ">
+	            <date-part name="year"/>
+	            <date-part name="month" form="short" strip-periods="true"/>
+	            <date-part name="day"/>
+	          </date>
+	          <text macro="accessed-date"/>
+        </group>
+        </else>
+        </choose>        
       </if>
       <else-if type="bill legislation" match="any">
         <group delimiter=", ">

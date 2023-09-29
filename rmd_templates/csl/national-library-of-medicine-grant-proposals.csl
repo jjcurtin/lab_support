@@ -56,6 +56,13 @@
     </group>
   </macro>
   <macro name="publisher">
+    <choose>
+    <if type="article article-magazine article-newspaper article-journal bill book broadcast chapter manuscript map motion_picture musical_score pamphlet paper-conference patent personal_communication review review-book song speech thesis treaty" match="none">
+           <group delimiter=": " suffix=".">
+          <text variable="publisher"/>
+          </group>
+              </if>
+     <else>     
     <group delimiter=": " suffix=";">
       <choose>
         <if type="thesis">
@@ -68,61 +75,53 @@
       </choose>
       <text variable="publisher"/>
     </group>
+
+       </else>
+    </choose>
   </macro>
-    <macro name="access">
-      <choose>
+  <macro name="access">
+    <choose>
         <if variable="DOI" match="any">
-          <text variable="DOI" prefix="https://doi.org/"/>
+              <group delimiter=": " suffix=".">
+              <text variable="DOI" prefix="https://doi.org/"/>
+              </group>
         </if>
-        <else-if variable="URL">
+        <else-if variable="URL" >
+        <group delimiter=": " suffix=".">
           <group delimiter=" ">
-            <choose>
-              <if variable="issued status" match="none">
-                <group delimiter=" ">
-                  <text term="retrieved" text-case="capitalize-first"/>
-                  <date variable="accessed" form="text" suffix=","/>
-                  <text term="from"/>
-                </group>
-              </if>
-            </choose>
-            <text variable="URL"/>
+            <text term="retrieved" text-case="capitalize-first"/>
+            <text term="from"/>
           </group>
-        </else-if>
-      </choose>
+          <text variable="URL"/>
+        </group>
+      </else-if>
+    </choose>
   </macro>
   <macro name="accessed-date">
     <choose>
-      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="none">
-        <choose>
-             <if variable="URL">
-              <group prefix="[" suffix="]" delimiter=" ">
-                <text term="cited"/>
-                <date variable="accessed">
-                  <date-part name="year"/>
-                  <date-part name="month" prefix=" " form="short" strip-periods="true"/>
-                  <date-part name="day" prefix=" "/>
-                </date>
-              </group>
-         </if>
-        </choose>
+      <if variable="URL">
+        <group prefix="[" suffix="]" delimiter=" ">
+          <text term="cited"/>
+          <date variable="accessed">
+            <date-part name="year"/>
+            <date-part name="month" prefix=" " form="short" strip-periods="true"/>
+            <date-part name="day" prefix=" "/>
+          </date>
+        </group>
       </if>
     </choose>
   </macro>
   <macro name="container-title">
     <choose>
-      <if type="article-journal article-magazine chapter paper-conference article-newspaper webpage" match="any">
+      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="any">
         <group suffix="." delimiter=" ">
           <text variable="container-title" form="short" strip-periods="true"/>
           <choose>
-            <if variable="DOI" match="none">      
-              <choose>
-               <if variable="URL">
-                <text term="internet" prefix="[" suffix="]" text-case="capitalize-first"/>
-               </if>
-              </choose>
+            <if variable="URL">
+              <text term="internet" prefix="[" suffix="]" text-case="capitalize-first"/>
             </if>
           </choose>
-          </group>
+        </group>
         <text macro="edition" prefix=" "/>
       </if>
       <!--add event-name and event-place once they become available-->
@@ -185,7 +184,7 @@
   </macro>
   <macro name="date">
     <choose>
-      <if type="article-journal article-magazine article-newspaper webpage" match="any">
+      <if type="article-journal article-magazine article-newspaper" match="any">
         <group suffix=";" delimiter=" ">
           <date variable="issued" delimiter=" ">
             <date-part name="year"/>
@@ -241,7 +240,7 @@
           <text macro="accessed-date" prefix=" "/>
         </group>
       </else>
-    </choose>
+    </choose>      
   </macro>
   <macro name="pages">
     <choose>
@@ -290,7 +289,7 @@
     <layout>
       <text variable="citation-number" suffix=". "/>
       <group delimiter=". " suffix=". ">
-        <text macro="author" names-max="3"/>
+        <text macro="author"/>
         <text macro="title"/>
       </group>
       <group delimiter=" " suffix=". ">

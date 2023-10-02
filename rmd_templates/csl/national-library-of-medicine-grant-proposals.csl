@@ -103,9 +103,9 @@
   </macro>
   <macro name="accessed-date">
       <choose>
-       <if type="article-journal chapter paper-conference" match="none">
+       <if type="article-journal chapter paper-conference preprint" match="none">
       <choose>
-      <if variable="URL">
+      <if variable="issued" match="none">
         <group prefix="[" suffix="]" delimiter=" ">
           <text term="cited"/>
           <date variable="accessed">
@@ -125,7 +125,7 @@
         <group suffix="." delimiter=" ">
           <text variable="container-title" form="short" strip-periods="true"/>
           <choose>
-            <if variable="URL">
+            <if variable="DOI PMCID" match="none">
               <text term="internet" prefix="[" suffix="]" text-case="capitalize-first"/>
             </if>
           </choose>

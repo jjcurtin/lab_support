@@ -158,19 +158,9 @@
   </macro>
   <macro name="title">
     <text variable="title"/>
-    <choose>
-      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="none">
-        <choose>
-        </choose>
-        <text macro="edition" prefix=". "/>
-      </if>
-    </choose>
-    <choose>
-      <if type="thesis">
-        <text variable="genre" prefix=" [" suffix="]"/>
-      </if>
-    </choose>
   </macro>
+  
+  
   <macro name="edition">
     <choose>
       <if is-numeric="edition">
@@ -184,6 +174,7 @@
       </else>
     </choose>
   </macro>
+  
   <macro name="date">
     <choose>
       <if type="article-journal article-magazine chapter paper-conference" match="none">

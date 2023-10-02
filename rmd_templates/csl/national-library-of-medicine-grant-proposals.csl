@@ -81,11 +81,15 @@
   </macro>
   <macro name="access">
     <choose>
+    <if type="article-journal article-magazine chapter paper-conference" match="any">
+    <choose>
         <if variable="DOI" match="any">
               <group delimiter=": " suffix=".">
               <text variable="DOI" prefix="https://doi.org/"/>
               </group>
         </if>
+        </if>
+    </choose>
         <else>
         <group delimiter=": " suffix=".">
           <group delimiter=" ">
@@ -95,7 +99,7 @@
           <text variable="URL"/>
         </group>
       </else>
-    </choose>
+    </choose>    
   </macro>
   <macro name="accessed-date">
     <choose>

@@ -104,7 +104,6 @@
   <macro name="accessed-date">
       <choose>
        <if type="article-journal chapter paper-conference" match="none">
-      
       <choose>
       <if variable="URL">
         <group prefix="[" suffix="]" delimiter=" ">
@@ -122,7 +121,7 @@
   </macro>
   <macro name="container-title">
     <choose>
-      <if type="article-journal article-magazine chapter paper-conference article-newspaper" match="any">
+      <if type="article-journal chapter paper-conference " match="none">
         <group suffix="." delimiter=" ">
           <text variable="container-title" form="short" strip-periods="true"/>
           <choose>

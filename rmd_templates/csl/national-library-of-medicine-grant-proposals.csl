@@ -88,8 +88,8 @@
               <text variable="DOI" prefix="https://doi.org/"/>
               </group>
         </if>
-        </if>
     </choose>
+   </if>
         <else>
         <group delimiter=": " suffix=".">
           <group delimiter=" ">

@@ -192,7 +192,7 @@
   </macro>
   <macro name="date">
     <choose>
-      <if type="article-journal article-magazine article-newspaper" match="any">
+      <if type="article-journal article-magazine chapter paper-conference" match="none">
         <choose>
         <if variable="volume page" match="any">
         <group suffix=";" delimiter=" ">
@@ -201,7 +201,6 @@
             <date-part name="month" form="short" strip-periods="true"/>
             <date-part name="day"/>
           </date>
-          <text macro="accessed-date"/>
         </group>
         </if>
         <else>

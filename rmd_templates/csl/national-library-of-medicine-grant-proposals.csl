@@ -82,15 +82,15 @@
   <macro name="access">
     <choose>
     <if type="article-journal article-magazine chapter paper-conference" match="any">
-    <choose>
+         <choose>
         <if variable="DOI" match="any">
               <group delimiter=": " suffix=".">
               <text variable="DOI" prefix="https://doi.org/"/>
               </group>
         </if>
-    </choose>
-   </if>
-        <else>
+        </choose>
+     </if>
+      <else>
         <group delimiter=": " suffix=".">
           <group delimiter=" ">
             <text term="retrieved" text-case="capitalize-first"/>

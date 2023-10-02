@@ -102,7 +102,10 @@
     </choose>    
   </macro>
   <macro name="accessed-date">
-    <choose>
+      <choose>
+       <if type="article-journal chapter paper-conference" match="none">
+      
+      <choose>
       <if variable="URL">
         <group prefix="[" suffix="]" delimiter=" ">
           <text term="cited"/>
@@ -113,6 +116,8 @@
           </date>
         </group>
       </if>
+    </choose>
+          </if>
     </choose>
   </macro>
   <macro name="container-title">

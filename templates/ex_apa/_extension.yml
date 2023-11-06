@@ -1,0 +1,60 @@
+title: My Document in APA Style, Seventh Edition
+author: W. Joel Schneider
+version: 1.0.0
+quarto-required: ">=1.3.0"
+contributes:
+  formats:
+    common:
+      execute:
+        echo: false
+      citeproc: false
+      fig-cap-location: top
+      tbl-cap-location: top
+      cap-location: top
+      knitr: 
+        opts_chunk: 
+          apa-figtab: true
+      csl: apa.csl
+      toc: false
+      fig-width: 6.5
+      fig-height: 6.5
+      filters:
+        - apaquarto.lua
+        - apastriptitle.lua
+        - apafigtab.lua
+        - citeprocr.lua
+        - apaand.lua
+    native: default
+    html:
+      toc: true
+      toc-location: left
+      anchor-sections: false
+      fig-cap-location: top
+      html-math-method: katex
+      grid: 
+        body-width: "7in"
+      css: apa.css
+      theme: 
+        - litera
+        - apa.scss
+      template-partials:
+        - title-block.html
+    pdf:
+      documentclass: apa7
+      pdf-engine: xelatex
+      link-ciations: false
+      suppress-bibliography: false
+      hyperrefoptions: 
+        - linktoc=none
+      block-headings: false
+      template: template.tex
+      template-partials:
+        - doc-class.tex
+        - title.tex
+        - before-body.tex
+        - header.tex
+      classoption: "colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue"
+    docx: 
+      reference-doc: apa_processed.docx
+      filters: 
+        - docxstyler.lua

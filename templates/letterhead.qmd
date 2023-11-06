@@ -1,0 +1,81 @@
+---
+format:
+  pdf:
+    fig-pos: 'ht'
+geometry: margin=.5in
+mainfont: TimesNewRomanPSMT #ArialMT
+fontsize: 12pt
+execute:
+  echo: false
+---   
+```{r}
+# author <- "john"
+ author <- "susan"
+
+
+john <- tibble::tibble(credentials = "John J. Curtin, Ph.D. \\hfill \\break
+               Professor of Psychology, \\hfill \\break 
+               Scientist - Center for Health Enhancement Systems Studies \\hfill \\break
+               University of Wisconsin-Madison \\hfill \\break",
+               email = "jjcurtin@wisc.edu",
+               website = "go.wisc.edu/arc")
+  
+susan <- tibble::tibble(credentials = "Susan E. Wanta, M.A. \\hfill \\break
+               Research Program Manager, \\hfill \\break 
+               John Curtin's Addiction Reseearch Center \\hfill \\break
+               University of Wisconsin-Madison \\hfill \\break",
+               email = "schneck2@wisc.edu",
+               website = "go.wisc.edu/arc")
+
+
+```
+
+:::: {layout-ncol="2" layout-valign="center"}
+::: {}
+![header](https://raw.githubusercontent.com/jjcurtin/docs_arc/main/templates/letterhead/uw-header.png){width=3in}\
+:::
+::: {}
+
+::: {.flushright data-latex=""}
+**Department of Psychology**  
+1202 West Johnson St.  
+Madison, WI 53706  
+`r eval(parse(text=stringr::str_c(author, "$email")))`  
+[`r eval(parse(text=stringr::str_c(author, "$website")))`](`r stringr::str_c("http://", eval(parse(text=stringr::str_c(author, "$website"))))`)
+:::
+:::
+::::
+
+
+
+```{r}
+options(knitr.graphics.auto_pdf = FALSE)
+```
+`r format(lubridate::today(), "%B %d, %Y")`
+\hfill \break
+`r # Salutation Block. start each line of the address with "| "`
+| Name
+| Address
+| City, State Zip
+
+Dear _______,
+\hfill \break
+`r # start letter body`
+
+Insert Letter Body Here.
+
+
+
+`r # end letter body`
+\hfill \break
+Sincerely,
+```{r}
+the_sig <- stringr::str_c("https://raw.githubusercontent.com/jjcurtin/docs_arc/main/templates/letterhead/", author, "_sig.png")
+the_credentials <- stringr::str_c(author, "$credentials")
+
+```
+
+
+
+![sig](`r eval(the_sig)`){width=3in}\
+`r eval(parse(text=stringr::str_c(author, "$credentials")))`

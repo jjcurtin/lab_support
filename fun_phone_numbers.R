@@ -136,11 +136,11 @@ check_country_code <- function(number) {
   if (str_detect(number, "^98") && nchar(number) == 12 &&
       !str_detect(number, "[[:alpha:]*#]")) {
     # check area code
-    check_code <- (str_sub(number(2, 3) %in% c("11", "13", "17", "21", "23", "24", "25",
+    check_code <- (str_sub(number, 2, 3) %in% c("11", "13", "17", "21", "23", "24", "25",
                                                "26", "28", "31", "34", "35", "38", "41",
                                                "44", "45", "51", "54", "56", "58", "61",
                                                "66", "71", "74", "76", "77", "81", "83",
-                                               "84", "86", "87")))
+                                               "84", "86", "87"))
 
     if(check_code) {
       if (is.null(match)) {

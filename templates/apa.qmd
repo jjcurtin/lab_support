@@ -126,7 +126,7 @@ format:
     nocorrespondence: false
 ---
 
-{{< include _extensions/wjschne/apaquarto/_apa_title.qmd >}}
+{{< include https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_apa/_apa_title.qmd >}}
 
 ```{r}
 #| label: setup

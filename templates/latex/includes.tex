@@ -1,0 +1,9 @@
+\raggedright % lines are flush with the left margin and ragged on the right margin (vs justified where text is stretched to ensure both margins are flush)
+\usepackage{wrapfig} % allow text wrapping
+\usepackage{float} % allow use of float options such as H (use UPPERCASE to preserve floats)
+\usepackage{caption} % allows supression of automatic caption numbering
+\usepackage{lscape} % allows insertion of a landscape oriented page
+\newcommand{\blandscape}{\begin{landscape}} % defines shorthand command to start a landscape page
+\newcommand{\elandscape}{\end{landscape}} % defines shorthand command to end a landscape page
+\usepackage{enumitem} % allows fine-grain control over list styling
+\setlist[itemize]{align=parleft,left=0pt..1em} % align=parleft aligns the list icon to the left margin. left=0pt..1em means, add 0 pts of padding to the left of the icon, then skip 1em before starting the item text.

@@ -32,7 +32,7 @@ susan <- tibble::tibble(credentials = "Susan E. Wanta, M.A. \\hfill \\break
 
 :::: {layout-ncol="2" layout-valign="center"}
 ::: {}
-![header](https://raw.githubusercontent.com/jjcurtin/docs_arc/main/templates/letterhead/uw-header.png){width=3in}\
+![header](https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_letterhead/uw-header.png){width=3in}\
 :::
 ::: {}
 
@@ -70,7 +70,7 @@ Insert Letter Body Here.
 \hfill \break
 Sincerely,
 ```{r}
-the_sig <- stringr::str_c("https://raw.githubusercontent.com/jjcurtin/docs_arc/main/templates/letterhead/", author, "_sig.png")
+the_sig <- stringr::str_c("https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_letterhead/", author, "_sig.png")
 the_credentials <- stringr::str_c(author, "$credentials")
 
 ```

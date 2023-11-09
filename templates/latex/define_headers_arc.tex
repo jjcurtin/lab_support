@@ -1,7 +1,9 @@
 \begin{document}
-% Headers H1-H4 Stucture for these commands: https://texfaq.org/FAQ-atsigns
-% set section numbering/lettering
-% tips for seccntformat: https://tex.stackexchange.com/questions/95896/how-to-format-subsection-title-without-packages
+% Defines formatting of headers H1-H3 as well as the basic body (paragraph). 
+% Resources: 
+% Structure for these commands: https://texfaq.org/FAQ-atsigns
+% Fuller reference: https://latexref.xyz/_005c_0040startsection.html
+% Tips for seccntformat: https://tex.stackexchange.com/questions/95896/how-to-format-subsection-title-without-packages
 \makeatletter
 \def\@seccntformat#1{%
   \expandafter\ifx\csname c@#1\endcsname\c@section\else
@@ -11,9 +13,9 @@
 
 \renewcommand\section{
   \@startsection{section}{1}{\z@}
-    {11pt \@plus 0pt \@minus 0pt}
-    {.01pt \@plus 0pt }%reduce space below subsection (was 1.5ex)
-    {\normalfont\normalsize\bfseries\centering}} %modify font style
+    {11pt \@plus 0pt \@minus 0pt} % set space above the header
+    {.01pt \@plus 0pt }%reduce space below the header
+    {\normalfont\normalsize\bfseries\centering}} %modify font style of header
 
   \renewcommand\subsection{
   \@startsection{subsection}{2}{\z@} % name, level, indent

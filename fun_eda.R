@@ -17,6 +17,12 @@ tab <- function(df, var, sort = FALSE) {
     dplyr::mutate(prop = n / sum(n))
 } 
 
+# provides simple table with counts for cross tab
+# uses janitor::tabyl but included to have two tab functions
+tab2 <- function(df, var1, var2) {
+  df |>  janitor::tabyl({{ var1 }}, {{ var2 }})
+} 
+
 
 # Somewhat unformatted printing of text responses for categorical variables.
 # Used primarily to confirm that responses are valid and tidy

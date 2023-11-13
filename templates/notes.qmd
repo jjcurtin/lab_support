@@ -1,9 +1,0 @@
-# YAML formats
-
-- [HTML](https://quarto.org/docs/reference/formats/html.html)
-- [PDF](https://quarto.org/docs/reference/formats/pdf.html)
-
-## Rendering
-
-- quarto render filename.qmd --to pdf
-- quarto render filename.qmd --to html

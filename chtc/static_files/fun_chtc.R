@@ -532,13 +532,8 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
 
 }
 
-fit_best_model <- function(best_model, rec, d, ml_mode) {
-  
-  
-  # make features for full dataset
-  feat <- rec %>% 
-    prep(training = d, strings_as_factors = FALSE) %>% 
-    bake(new_data = NULL)
+fit_best_model <- function(best_model, feat, ml_mode) {
+
   
   if (best_model$algorithm == "glmnet") {
     

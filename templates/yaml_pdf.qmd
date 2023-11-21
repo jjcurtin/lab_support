@@ -1,0 +1,12 @@
+---
+format: 
+  pdf: default
+geometry: margin=.5in
+mainfont: TimesNewRomanPSMT #ArialMT #body text font
+sansfont: TimesNewRomanPSMT #ArialMT  #header font
+fontsize: 12pt
+---   
+
+<!-- https://quarto.org/docs/reference/formats/pdf.html
+Note that many of these options will affect multiple outputs-->
+

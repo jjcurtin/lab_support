@@ -1,12 +1,10 @@
 ---
+title: "Untitled"
 format: 
   html: 
     embed-resources: true
-max-width: 90vw #90% viewer (screen) width
-margin-top: 1in #geometry does not work on HTML, specify each margin this way in vw, px, or in
-css: style.css #delete if you are not using a css file
-mainfont: TimesNewRomanPSMT #ArialMT
-fontsize: 12pt
+editor_options: 
+  chunk_output_type: console
 ---   
 
 <!-- https://quarto.org/docs/reference/formats/html.html 

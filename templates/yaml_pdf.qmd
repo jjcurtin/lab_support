@@ -5,6 +5,8 @@ geometry: margin=.5in
 mainfont: TimesNewRomanPSMT #ArialMT #body text font
 sansfont: TimesNewRomanPSMT #ArialMT  #header font
 fontsize: 12pt
+# csl: https://raw.githubusercontent.com/citation-style-language/styles/master/national-library-of-medicine-grant-proposals.csl # NIH grants
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl # APA format
 ---   
 
 <!-- https://quarto.org/docs/reference/formats/pdf.html

@@ -2,7 +2,8 @@
 format: 
   pdf: 
     include-in-header: 
-      - ../lab_support/templates/latex/define_headers_arc.tex
+    # edit these paths depending on your QMD's location relative to lab_support
+      - ../lab_support/templates/latex/define_headers_arc.tex 
       - ../lab_support/templates/latex/includes.tex
 geometry: margin=.5in
 mainfont: TimesNewRomanPSMT #ArialMT

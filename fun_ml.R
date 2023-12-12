@@ -39,10 +39,10 @@ make_features <- function(rec, data_trn, data_new = NULL, glimpse_it = TRUE){
 plot_truth <- function(truth, estimate) {
 
   ggplot2::ggplot(mapping = aes(x = truth, y = estimate)) +
-    ggplot2::geom_abline(lty = 2) +
+    ggplot2::geom_abline(lty = 2, color = "red") +
     ggplot2::geom_point(alpha = 0.5) +
     ggplot2::labs(y = "predicted outcome", x = "outcome") +
-    ggplot2::coord_obs_pred()   # scale axes uniformly
+    tune::coord_obs_pred()   # scale axes uniformly
 }
 
 # makes a hyperparameter plot for a model with up to 2 hyperparameters

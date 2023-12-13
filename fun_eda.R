@@ -8,7 +8,8 @@ skim_some <- skimr::skim_with(numeric = skimr::sfl(mean = NULL, sd = NULL, p25 =
 # Provides summary statistics for modeling EDA
 skew_na <- purrr::partial(e1071::skewness, na.rm = TRUE)
 kurt_na <- purrr::partial(e1071::kurtosis, na.rm = TRUE)
-skim_all <- skimr::skim_with(numeric = skimr::sfl(skew = skew_na, kurtosis = kurt_na, hist = NULL))
+skim_all <- skimr::skim_with(numeric = skimr::sfl(skew = skew_na, kurtosis = kurt_na, hist = NULL),
+                             factor = skimr::sfl(ordered = NULL))
 
 
 # provides simple table with counts and proportions

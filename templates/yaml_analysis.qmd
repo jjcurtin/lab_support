@@ -1,0 +1,30 @@
+---
+title: "Analysis template"
+format: 
+  html: 
+    embed-resources: true
+editor_options: 
+  chunk_output_type: console
+---   
+
+```{r conflict_policy}
+#| include: false
+options(conflicts.policy = "depends.ok")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_ml.R?raw=true")
+tidymodels_conflictRules()
+```
+
+```{r packages_source}
+#| message: false
+library(tidyverse) 
+library(tidymodels) 
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
+```
+
+```{r settings}
+#| include: false
+theme_set(theme_classic())
+options(tibble.width = Inf,
+        pillar.bold = TRUE)
+```
+

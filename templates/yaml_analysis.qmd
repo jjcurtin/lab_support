@@ -23,6 +23,7 @@ tidymodels_conflictRules()
 library(tidyverse) 
 library(tidymodels) 
 devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/format_path.R?raw=true")
 ```
 
 ```{r settings}

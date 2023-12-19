@@ -30,6 +30,7 @@ devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/format_p
 #| include: false
 theme_set(theme_classic())
 options(tibble.width = Inf,
-        pillar.bold = TRUE)
+        pillar.bold = TRUE,
+        dplyr.print_max=Inf)
 ```
 

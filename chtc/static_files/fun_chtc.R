@@ -360,13 +360,15 @@ make_config_features <- function(config, splits, rec, cv_resample_type) {
     
   }
   
+  # make prepped recipe
+  rec_prepped <- rec |> 
+    prep(training = d_in, strings_as_factors = FALSE)
+  
   # make feature matrices
-  feat_in <- rec %>% 
-    prep(training = d_in, strings_as_factors = FALSE) %>% 
+  feat_in <- rec_prepped %>% 
     bake(new_data = NULL)
   
-  feat_out <- rec %>% 
-    prep(training = d_in, strings_as_factors = FALSE) %>% 
+  feat_out <- rec_prepped %>% 
     bake(new_data = d_out)
   
   return(list(feat_in = feat_in, feat_out = feat_out))

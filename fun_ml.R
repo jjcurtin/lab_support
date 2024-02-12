@@ -9,10 +9,11 @@ tidymodels_conflictRules <- function(){
   conflictRules("recipes", mask.ok = c("fixed"))
   conflictRules("yardstick", mask.ok = c("spec"))
   
-  # these next conflicts between foreach and purrr.  when() is deprecated and we 
+  # these next conflicts are between foreach and purrr.  when() is deprecated and we 
   # don't use accumulate in our workflow currently
   # foreach is loaded by doParallel so often used with tidymodels
-  conflictRules("foreach", mask.ok = c("when", "accumulate"))
+  # Not sure if this is needed if we don't fully load doParallel
+  # conflictRules("foreach", mask.ok = c("when", "accumulate"))
 }
 
 # pull out a coefficient from a fitted parametric model

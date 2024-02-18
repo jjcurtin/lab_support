@@ -4,7 +4,17 @@ $if(svg)$
 \usepackage{svg}
 $endif$
 
+
+
 $header.tex$
+
+%% If need to use endnotes instead of footnotes
+$if(params.endnotes)$
+	\usepackage{endnotes}
+	\let\footnote=\endnote
+$else$
+
+$endif$
 
 % \usepackage[style=apa,backend=biber]{biblatex}
 % $for(bibliography)$
@@ -33,5 +43,9 @@ $if(has-frontmatter)$
 $endif$
 $body$
 
+$if(params.endnotes)$
+\newpage
+\theendnotes
+$endif$
 
 \end{document}

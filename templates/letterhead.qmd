@@ -15,7 +15,8 @@ execute:
 
 john <- tibble::tibble(credentials = "John J. Curtin, Ph.D. \\hfill \\break
                Professor of Psychology, \\hfill \\break 
-               Scientist - Center for Health Enhancement Systems Studies \\hfill \\break
+               Center for Health Enhancement Systems Studies, and \\hfill \\break
+               Center for Healthy Minds \\hfill \\break 
                University of Wisconsin-Madison \\hfill \\break",
                email = "jjcurtin@wisc.edu",
                website = "go.wisc.edu/arc")

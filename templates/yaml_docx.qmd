@@ -1,0 +1,44 @@
+---
+format: 
+  docx: 
+    reference-doc: docx/arc_arial.docx # arc_times.docx or arc_arial.docx
+# csl: https://raw.githubusercontent.com/citation-style-language/styles/master/national-library-of-medicine-grant-proposals.csl # NIH grants
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl # APA format
+---   
+
+<!-- Other DOCX YAML options: https://quarto.org/docs/reference/formats/docx.html
+Note that ALL docx formatting options (including headers, margins, and font size) are controlled by the reference template doc.
+
+Also note: To modify headers you must complete ALL the following steps:
+1. Select the heading text you want to customize
+2. Modify its styles the way you want
+3. On the Home tab, in the Styles group, right-click the heading style that you customized and click "Update Heading to Match Selection". -->
+
+
+# Header 1
+
+Some text
+
+## Header 2
+
+More text
+
+### Header 3
+
+Even more text
+
+#### Header 4
+
+Unfortunately, word cannot handle a header and a paragraph on the same line. You can manually fix this in the output word doc by replacing the paragraph separator at the end of the line with ctrl-alt-enter
+
+## Tables
+
+Unfortunately, **`kableExtra` is not compatible with word output**. You can use plain `knitr::kable()` or the `flextable` package.
+
+```{r}
+
+
+mtcars |> head(5) |> knitr::kable()
+
+
+```

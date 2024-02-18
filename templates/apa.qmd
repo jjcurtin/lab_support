@@ -126,7 +126,10 @@ format:
     nocorrespondence: false
 ---
 
-{{< include https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_apa/_apa_title.qmd >}}
+#Adjust the ../ from your manuscript folder, backwards to your copy of the lab_support repo
+```{=markdown}
+{{< include ../../../../lab_support/templates/ex_apa/_apa_title.qmd >}}
+```
 
 ```{r}
 #| label: setup

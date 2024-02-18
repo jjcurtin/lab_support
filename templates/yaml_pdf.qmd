@@ -2,7 +2,6 @@
 format: 
   pdf: 
     include-in-header: 
-    # edit these paths depending on your QMD's location relative to lab_support
       - ../lab_support/templates/latex/define_headers_arc.tex 
       - ../lab_support/templates/latex/includes.tex
 geometry: margin=.5in
@@ -13,10 +12,4 @@ fontsize: 12pt
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl # APA format
 ---   
 
-<!-- Other PDF YAML options: https://quarto.org/docs/reference/formats/pdf.html
-Note that many of these options will affect multiple outputs-->
-
-
-# Header 1
-
-Some text
+<!-- Other PDF YAML options: https://quarto.org/docs/reference/formats/pdf.html-->

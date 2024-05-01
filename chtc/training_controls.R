@@ -67,6 +67,9 @@ hp2_xgboost <- c(1, 2, 3, 4) # tree_depth
 hp3_xgboost <- c(20, 30, 40, 50)  # mtry
 # trees = 500
 # early stopping = 20
+
+hp1_rda <- seq(.1, 1, length.out = 10)  # frac_common_cov: Fraction of the Common Covariance Matrix (0-1; 1 = LDA, 0 = QDA)
+hp2_rda <- seq(.1, 1, length.out = 10) # frac_identity: Fraction of the Identity Matrix (0-1)
  
 
 # CHTC SPECIFIC CONTROLS----------------------------

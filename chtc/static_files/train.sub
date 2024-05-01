@@ -1,7 +1,6 @@
 # train.sub 
 universe = vanilla
-requirements = (OpSysMajorVer == 8) && ((PoolName == "CHTC") || (SINGULARITY_CAN_USE_SIF))
-+SingularityImage = "train.sif"
+container_image = train.sif
 
 executable = train.sh
 arguments = $(job_num) $(config_start) $(config_end)

@@ -124,6 +124,18 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            resample)      
   }  
   
+  if (algorithm == "nnet") {
+    configs <- expand_grid(split_num = split_num,
+                           outer_split_num = outer_split_num,
+                           inner_split_num = inner_split_num,
+                           algorithm = algorithm,
+                           feature_set,
+                           hp1 = hp1_nnet,
+                           hp2 = hp2_nnet,
+                           hp3 = hp3_nnet,
+                           resample)      
+  }  
+  
   
   # add config num to configs
   configs <- configs %>% 

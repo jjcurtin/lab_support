@@ -268,8 +268,6 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   }
   
   if (config$algorithm == "rda") {
-    
-    
     # extract fold associated with this config - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 
     features <- make_config_features(config = config, splits = splits, rec = rec, 
@@ -284,15 +282,55 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
       fit(y ~ ., data = feat_in)
     
     # use get_metrics function to get a tibble that shows classification performance metrics
-    results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
                              y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        bind_cols(config, .) 
+    }
     
     return(results)
   }
+  
+  if (config$algorithm == "nnet") {
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                                     cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    # fit model on feat_in with config hyperparameter values 
+    model <- mlp(hidden_units = config$hp3,
+                 penalty = config$hp2,
+                 epochs = config$hp1) %>% 
+      set_engine("nnet") %>% 
+      set_mode(ml_mode) %>%
+      fit(y ~ ., data = feat_in)
+    
+    # use get_metrics function to get a tibble that shows classification performance metrics
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        bind_cols(config, .) 
+    }
+    
+    return(results)
+  }
+  
   
   if (config$algorithm == "knn") {
     # extract single fold associated with config
@@ -596,6 +634,21 @@ fit_best_model <- function(best_model, feat, ml_mode) {
       set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
+    
+    return(fit_best)
+  }
+  
+  if (best_model$algorithm == "xgboost") {
+    
+    fit_best <- boost_tree(learn_rate = best_model$hp1,
+                           tree_depth = best_model$hp2,
+                           mtry = best_model$hp3,
+                           trees = 500,  # set high but use early stopping
+                           stop_iter = 20) %>% 
+      set_engine("xgboost",
+                 validation = 0.2) %>% 
+      set_mode(ml_mode) %>%
+      fit(y ~ ., data = feat)
     
     return(fit_best)
   }

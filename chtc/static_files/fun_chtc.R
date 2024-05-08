@@ -306,12 +306,14 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
     feat_in <- features$feat_in
     feat_out <- features$feat_out
     
+    weights = (ncol(feat_in)-1)*config$hp3+config$hp3*2+config$hp3+1
+    
     # fit model on feat_in with config hyperparameter values 
     model <- mlp(hidden_units = config$hp3,
                  penalty = config$hp2,
                  epochs = config$hp1) %>% 
-      set_engine("nnet") %>% 
-      set_mode(ml_mode) %>%
+      set_engine("nnet", MaxNWts = weights) %>% 
+      set_mode(ml_mode) %>% 
       fit(y ~ ., data = feat_in)
     
     # use get_metrics function to get a tibble that shows classification performance metrics

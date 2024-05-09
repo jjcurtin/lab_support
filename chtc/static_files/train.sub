@@ -1,5 +1,4 @@
 # train.sub 
-universe = vanilla
 container_image = train.sif
 
 executable = train.sh

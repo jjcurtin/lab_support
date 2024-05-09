@@ -174,7 +174,9 @@ font-size: 0.85em !important;
   border-radius: 4px;
 }
 
-
+/* USE THIS IN QMD FOR MANUAL*/
+/*::::: {.absolute left="0%" bottom="0%" width="300px" height="auto"}*/
+/*::::: {style="font-size: 75%;"}*/
 .callout-title p strong{
 font-size: 75% !important;
 }

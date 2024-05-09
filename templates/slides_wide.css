@@ -176,7 +176,7 @@ font-size: 0.85em !important;
 }
 
 
-
+/*::::: {style="font-size: 75%;"}*/
 .callout-title p strong{
 font-size: 75% !important;
 }
@@ -185,6 +185,7 @@ font-size: 75% !important;
 font-size: 75% !important;
 }
 
+/*::::: {.absolute left="0%" bottom="0%" width="300px" height="auto"}*/
 .callout {
 position: absolute;
 left: 0%;

@@ -604,7 +604,7 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
 fit_best_model <- function(best_model, feat, ml_mode) {
 
   
-  if (best_model$algorithm == "glmnet") {
+  if (str_detect(best_model$algorithm, "glmnet")) {
     
     if (ml_mode == "classification") {
       fit_best <- logistic_reg(penalty = best_model$hp2,

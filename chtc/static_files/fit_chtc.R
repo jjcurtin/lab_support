@@ -83,9 +83,25 @@ fit_eval <- function(config_current, configs, d, splits) {
   return(results)
 }
 
-config_start_arg:config_end_arg %>%
-  map(\(config_current) fit_eval(config_current, configs, d, splits)) %>%
-  list_rbind() %>%
-  write_csv(str_c("results_", job_num_arg, ".csv"))
+if (algorithm == "glmnet_manual") {
+  all <- config_start_arg:config_end_arg %>%
+    map(\(config_current) fit_eval(config_current, configs, d, splits))
+  
+  results <- all |> 
+    map(\(l) pluck(l, "results")) |> 
+    list_rbind() |> 
+    write_csv(str_c("results_", job_num_arg, ".csv"))
+  
+  params <- all |> 
+    map(\(l) pluck (l, "params")) |> 
+    list_rbind() |> 
+    write_rds(str_c("params_", job_num_arg, ".rds"))
+  
+} else {
+  config_start_arg:config_end_arg %>%
+    map(\(config_current) fit_eval(config_current, configs, d, splits)) %>%
+    list_rbind() %>%
+    write_csv(str_c("results_", job_num_arg, ".csv"))
+}
 
 

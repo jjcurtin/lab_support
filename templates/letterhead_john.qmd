@@ -1,0 +1,55 @@
+---
+format:
+  pdf:
+    fig-pos: 'ht'
+geometry: margin=.5in
+mainfont: TimesNewRomanPSMT #ArialMT
+fontsize: 12pt
+execute:
+  echo: false
+---   
+```{r}
+options(knitr.graphics.auto_pdf = FALSE)
+john <- tibble::tibble(
+  credentials = "John J. Curtin, Ph.D. \\hfill \\break
+               Professor of Psychology, \\hfill \\break
+               Center for Health Enhancement Systems Studies, and \\hfill \\break
+               Center for Healthy Minds \\hfill \\break
+               University of Wisconsin-Madison \\hfill \\break",
+  address = "1202 West Johnson St. \\hfill \\break
+               Madison, WI 53706 \\hfill \\break",
+  email = "jjcurtin@wisc.edu",
+  website = "go.wisc.edu/arc",
+  phone = "608-262-0387"
+)
+```
+
+:::: {layout-ncol="2" layout-valign="center"}
+::: {}
+![header](https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_letterhead/uw-header.png){width=3in}\
+:::
+::: {}
+
+::: {.flushright data-latex=""}
+**Department of Psychology**  
+1202 West Johnson St.  
+Madison, WI 53706  
+`r eval(john$email)`  
+[`r eval(john$website)`](`r stringr::str_c("http://", eval(john$website))`)
+:::
+:::
+::::
+
+`r format(lubridate::today(), "%B %d, %Y")`
+\hfill \break
+
+Dear ______________
+\hfill \break
+
+INSERT LETTER BODY HERE
+\hfill \break
+
+Sincerely,
+
+![sig](https://raw.githubusercontent.com/jjcurtin/lab_support/main/templates/ex_letterhead/john_sig.png){width=3in}\
+`r eval(john$credentials)`

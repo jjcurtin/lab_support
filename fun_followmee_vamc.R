@@ -79,6 +79,10 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
+    as_tibble() 
+ if (nrow(data) != 0) {  
+  data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+    .$Data %>% 
     as_tibble() %>% 
     rename(date_chr = Date, 
            lat = Latitude, 
@@ -94,7 +98,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     relocate(subid, date) %>% 
     relocate(date_chr, .after = last_col()) |>
     mutate(DeviceID = as.numeric(DeviceID))
-  
+  } 
   return(data)
 }
 

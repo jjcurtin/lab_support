@@ -97,8 +97,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     mutate(date = as_datetime(date_chr),
            subid = subid) %>% 
     relocate(subid, date) %>% 
-    relocate(date_chr, .after = last_col()) |>
-    mutate(DeviceID = as.numeric(DeviceID))
+    relocate(date_chr, .after = last_col()) 
  } else {
     print(str_c("No new GPS for ", subid))
   }

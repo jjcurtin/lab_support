@@ -114,3 +114,35 @@ update_followmee_data <- function(past_data, creds) {
     distinct(subid, date, lat, lon, .keep_all = TRUE) %>% 
     arrange(date)
 }
+
+
+current_device_location <- {
+ #use to check if devices are online or not
+  
+  url  <-  "http://www.followmee.com"
+  path <- "/api/tracks.aspx"
+  
+  output_type <- "json"
+  fn <- "currentforalldevices"
+  
+  query <- str_c("?key=", creds$key,
+                 "&username=", creds$username,
+                 "&output=",output_type,
+                 "&function=", fn) %>% 
+    str_c(url, path, .)
+  
+  response <- GET(url = query)
+  
+  if (!response$status_code == 200) {
+    stop("FollowMee API GET Status Code: ", response$status_code)
+  }
+  
+  cur_loc_devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+    .$Data |>
+    select(DeviceName, Date) |>
+    mutate(last_obs =lubridate::as.duration(lubridate::interval(Date, now()))) |>
+    mutate(warning = if_else(last_obs > lubridate::as.duration(lubridate::hours(6)), "NO RECENT DATA", NA))
+  
+  return(cur_loc_devices)
+}
+

@@ -80,8 +80,8 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() 
- if (nrow(data) != 0) { 
-   print(nrow(data))
+  print(nrow(data))
+ if (nrow(data) > 0) { 
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() %>% 

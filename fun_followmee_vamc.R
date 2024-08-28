@@ -80,8 +80,10 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() 
-  print(nrow(data))
- if (nrow(data) > 0) { 
+ if (nrow(data) == 0) { 
+   print(str_c("No new GPS for ", subid))
+   return(data)
+   }  else {
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() %>% 
@@ -98,10 +100,9 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
            subid = subid) %>% 
     relocate(subid, date) %>% 
     relocate(date_chr, .after = last_col()) 
- } else {
-    print(str_c("No new GPS for ", subid))
-  }
   return(data)
+ } 
+  
 }
 
 update_followmee_data <- function(past_data, creds) {

@@ -119,7 +119,7 @@ update_followmee_data <- function(past_data, creds) {
 }
 
 
-current_device_location <- {
+current_devices_location <- function(creds) {
  #use to check if devices are online or not
   
   url  <-  "http://www.followmee.com"
@@ -144,7 +144,7 @@ current_device_location <- {
     .$Data |>
     select(DeviceName, Date) |>
     mutate(last_obs =lubridate::as.duration(lubridate::interval(Date, now()))) |>
-    mutate(warning = if_else(last_obs > lubridate::as.duration(lubridate::hours(6)), "NO RECENT DATA", NA))
+    mutate(warning = if_else(last_obs > lubridate::as.duration(lubridate::hours(24)), "NO RECENT DATA", NA))
   
   return(cur_loc_devices)
 }

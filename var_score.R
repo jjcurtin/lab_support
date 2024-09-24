@@ -29,8 +29,8 @@ var_score <- function(d, forward_items, reverse_items = NULL, item_range = NULL,
   d <- d %>% 
     rowwise() %>% 
     mutate(total = if_else(prorate,
-                           mean(c_across(), na.rm = TRUE) * ncol(.), # if true
-                           sum(c_across(), na.rm = TRUE))) %>%       # if false
+                           mean(c_across(everything()), na.rm = TRUE) * ncol(.), # if true
+                           sum(c_across(everything()), na.rm = TRUE))) %>%       # if false
     mutate(missing_cols = sum(is.na(c_across(!contains("total"))))) %>% # count miss cols excluding total
     mutate(total = if_else(missing_cols > max_missing_cols,  # set total to NA if too many missing
                            NA_real_,

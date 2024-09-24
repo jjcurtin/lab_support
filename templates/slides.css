@@ -1,0 +1,198 @@
+.reveal-viewport {
+
+}
+
+.reveal .slides {
+/*  width: 100% !important;*/
+  margin-left: 20px !important;
+}
+
+.reveal .slide-logo {
+  height: auto !important;
+  width: 175px !important;
+  max-width: unset !important;
+  max-height: unset !important;
+  bottom: 0px  !important;
+}
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+main, menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+  font-weight: bold !important;
+  font-size: 25px !important;
+}
+
+.reveal strong, .reveal b {
+    font-weight: 900 !important;
+}
+
+
+#title-slide {
+    text-align: right;
+    top: 40px !important;
+    right: 10px !important;
+
+}
+
+
+.reveal .quarto-title-block .quarto-title-authors {
+    justify-content: right !important;
+}
+
+
+.reveal .quarto-title-block .quarto-title-authors .quarto-title-author .quarto-title-author-name {
+    text-align: right;
+}
+
+
+
+.reveal .footer{
+color: black;
+text-align: right !important;
+width: 95% !important;
+}
+
+
+
+.reveal h1 {
+    font-size: 60px !important;
+    color: blue;
+    text-align: right;
+    vertical-align: top;
+    margin-bottom: 20px;
+    font-weight:bold !important;
+    }
+
+.reveal h2 {
+ color: green !important;
+ text-decoration: underline !important;
+ font-weight:bold !important;
+ font-size: 40px !important;
+}
+  
+.reveal h3 {
+ color: green !important;
+ font-weight:bold !important;
+ font-size: 40px !important;
+ }  
+  
+    
+.reveal ul {
+    list-style-type: "\25A1   " !important;
+    padding-inline-start: 30px;
+}
+
+.reveal ol {
+    padding-inline-start: 30px;
+}
+.reveal ul ul {
+    list-style-type: square !important;
+}
+
+
+.reveal .slide ul ul li {
+    margin-top: 0px !important; 
+    margin-bottom: 0px !important;
+}
+
+
+.reveal .slide ul, .reveal .slide ol {
+    margin-bottom: .5em !important;
+}
+
+
+.reveal blockquote {
+margin: var(--r-block-margin) 5%;
+
+}
+
+
+.reveal .slides section .fragment.visible {
+color:gray;
+}
+
+
+.reveal .slides section .fragment.visible.current-fragment {
+color:black;
+}
+
+
+.list-gray {
+color:gray;
+}
+
+.centered {
+text-align:center;
+}
+
+.smaller {
+font-size: 0.7em !important;
+}
+
+.medium {
+font-size: 0.85em !important;
+}
+
+
+.red {
+  color: red;
+}
+
+.yellowb {
+  background-color: yellow;
+}
+
+.yellow {
+  color: yellow;
+}
+
+
+.green {
+  color: green;
+}
+
+.blue {
+  color: blue;
+}
+
+.gray {
+  color:gray; 
+}
+
+.reveal .cell-output pre code {
+  background-color: honeydew !important;
+  border-radius: 4px;
+}
+
+/* USE THIS IN QMD FOR MANUAL*/
+/*::::: {.absolute left="0%" bottom="0%" width="300px" height="auto"}*/
+/*::::: {style="font-size: 75%;"}*/
+.callout-title p strong{
+font-size: 75% !important;
+}
+
+.callout-content p {
+font-size: 75% !important;
+}
+
+.callout {
+position: absolute;
+left: 0%;
+bottom: 0%; 
+width: 300px;
+height: auto;
+}
+
+figcaption {
+display: none !important;
+}

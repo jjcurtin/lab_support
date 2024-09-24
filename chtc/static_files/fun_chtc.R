@@ -267,6 +267,73 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
     return(results)
   }
   
+  if (config$algorithm == "rda") {
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                                     cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    # fit model on feat_in with config hyperparameter values 
+    model <- discrim_regularized(frac_common_cov = config$hp1,
+                                 frac_identity = config$hp2) %>% 
+      set_engine("klaR") %>% 
+      fit(y ~ ., data = feat_in)
+    
+    # use get_metrics function to get a tibble that shows classification performance metrics
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        bind_cols(config, .) 
+    }
+    
+    return(results)
+  }
+  
+  if (config$algorithm == "nnet") {
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                                     cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    weights = (ncol(feat_in)-1)*config$hp3+config$hp3*2+config$hp3+1
+    
+    # fit model on feat_in with config hyperparameter values 
+    model <- mlp(hidden_units = config$hp3,
+                 penalty = config$hp2,
+                 epochs = config$hp1) %>% 
+      set_engine("nnet", MaxNWts = weights) %>% 
+      set_mode(ml_mode) %>% 
+      fit(y ~ ., data = feat_in)
+    
+    # use get_metrics function to get a tibble that shows classification performance metrics
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        bind_cols(config, .) 
+    }
+    
+    return(results)
+  }
+  
+  
   if (config$algorithm == "knn") {
     # extract single fold associated with config
     features <- make_config_features(config = config, splits = splits, rec = rec, 
@@ -326,6 +393,61 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                              y_level_pos) %>% 
         bind_cols(config, .) 
     }
+  }
+  
+  if (config$algorithm == "glmnet_manual") {
+    
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                                     cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    if (ml_mode == "classification") {
+      model <- logistic_reg(penalty = config$hp2,
+                            mixture = config$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode("classification") %>%
+        fit(y ~ ., data = feat_in)
+      
+    } else {
+      model <- linear_reg(penalty = config$hp2,
+                          mixture = config$hp1) %>%
+        set_engine("glmnet") %>%
+        set_mode("regression") %>%
+        fit(y ~ ., data = feat_in)
+      
+      
+    }
+    
+    # tidy model & get parameter estimates
+    model_tidy <- tidy(model)
+    param_names <- model_tidy |> 
+      filter(abs(estimate) > 0) |> 
+      pull(term)
+    
+    params_enframe <- tibble::enframe(list(param_names)) 
+    
+    params <- bind_cols(config, params_enframe) |> 
+      select(-name)
+    
+    # create tibble of metrics returned 
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        bind_cols(config, .) 
+    }
+    
+    return(list(results = results, 
+                params = params))
   }
 }
 
@@ -537,7 +659,7 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
 fit_best_model <- function(best_model, feat, ml_mode) {
 
   
-  if (best_model$algorithm == "glmnet") {
+  if (str_detect(best_model$algorithm, "glmnet")) {
     
     if (ml_mode == "classification") {
       fit_best <- logistic_reg(penalty = best_model$hp2,
@@ -569,6 +691,21 @@ fit_best_model <- function(best_model, feat, ml_mode) {
       set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     
+    
+    return(fit_best)
+  }
+  
+  if (best_model$algorithm == "xgboost") {
+    
+    fit_best <- boost_tree(learn_rate = best_model$hp1,
+                           tree_depth = best_model$hp2,
+                           mtry = best_model$hp3,
+                           trees = 500,  # set high but use early stopping
+                           stop_iter = 20) %>% 
+      set_engine("xgboost",
+                 validation = 0.2) %>% 
+      set_mode(ml_mode) %>%
+      fit(y ~ ., data = feat)
     
     return(fit_best)
   }

@@ -134,7 +134,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   
   # set metrics for regression or classification
   if (ml_mode == "regression") {
-    mode_metrics <- metric_set(rmse, rsq)
+    mode_metrics <- metric_set(mae, rmse, rsq)
   }
   
   if (ml_mode == "classification") {
@@ -155,10 +155,13 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                        inner_split_num = config$inner_split_num, 
                        outer_split_num = config$outer_split_num)
     
+    # backward compatible for tune controls that didnt set family 
+    if (!exists("glm_family")) glm_family <- if_else(ml_mode == "regression", "gaussian", "binomial")
+    
     if (ml_mode == "classification") {
       models <- logistic_reg(penalty = tune(),
                              mixture = config$hp1) %>%
-        set_engine("glmnet") %>%
+        set_engine("glmnet", glm_family = glm_family) %>%
         set_mode("classification") %>%
         tune_grid(preprocessor = rec,
                   resamples = split,
@@ -167,9 +170,10 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                   # make sure this is true in recipe
                   metrics = mode_metrics)
     } else {
+      
       models <- linear_reg(penalty = tune(),
                            mixture = config$hp1) %>%
-        set_engine("glmnet") %>%
+        set_engine("glmnet", family = glm_family) %>%
         set_mode("regression") %>%
         tune_grid(preprocessor = rec,
                   resamples = split,
@@ -177,8 +181,6 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                   # metrics assume that positive event it first level
                   # make sure this is true in recipe
                   metrics = mode_metrics)
-      
-      
     }
     # create tibble of penalty and metrics returned 
     results <- collect_metrics(models, summarize = FALSE) %>% 
@@ -222,8 +224,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -259,8 +260,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -290,8 +290,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -325,8 +324,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -357,8 +355,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -372,10 +369,12 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                                      cv_resample_type = cv_resample_type)
     feat_in <- features$feat_in
     feat_out <- features$feat_out
+   
+    if (!exists("glm_family")) glm_family <- if_else(ml_mode == "regression", "gaussian", "binomial")
     
     # fit model on feat_in with config hyperparameter values 
     model <- logistic_reg() %>% 
-      set_engine("glm") %>% 
+      set_engine("glm", family = glm_family) %>% 
       set_mode(ml_mode) %>% 
       fit(y ~ .,
           data = feat_in)
@@ -389,8 +388,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
   }
@@ -441,8 +439,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
         relocate(sens, spec, ppv, npv, accuracy, bal_accuracy, roc_auc) %>% 
         bind_cols(config, .) 
     } else {
-      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
-                             y_level_pos) %>% 
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
         bind_cols(config, .) 
     }
     
@@ -498,11 +495,11 @@ make_config_features <- function(config, splits, rec, cv_resample_type) {
 }
 
 # helper function for tune_model()
-get_metrics <- function(model, feat_out, ml_mode, y_level_pos) {
+get_metrics <- function(model, feat_out, ml_mode, y_level_pos = NULL) {
   
   # model: single model object 
   # feat_out: feature matrix built from held-out data
-  
+  # y_level_pos only needed for classification 
   
   if (ml_mode == "classification") {
     preds <- predict(model, feat_out, type = "class")$.pred_class
@@ -531,11 +528,11 @@ get_metrics <- function(model, feat_out, ml_mode, y_level_pos) {
   if (ml_mode == "regression") {
     
     preds <- predict(model, feat_out)$.pred
+    mae_model <- mae_vec(truth = feat_out$y, estimate = preds)
     rmse_model <- rmse_vec(truth = feat_out$y, estimate = preds)
     rsq_model <- rsq_vec(truth = feat_out$y, estimate = preds)
    
-    
-    model_metrics <- tibble(rsq = rsq_model, rmse = rmse_model)
+    model_metrics <- tibble(mae = mae_model, rsq = rsq_model, rmse = rmse_model)
   }
   
   return(model_metrics)

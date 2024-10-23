@@ -541,9 +541,10 @@ get_metrics <- function(model, feat_out, ml_mode, y_level_pos = NULL) {
 eval_best_model <- function(config_best, rec, splits, ml_mode) {
 # evaluates best model configuration using resamples of data contained in splits.
   
+  
   # specific setup for regression or classification
   if (ml_mode == "regression") {
-    mode_metrics <- metric_set(rmse, rsq)
+    mode_metrics <- metric_set(mae,rmse, rsq)
     # control grid to save predictions
     ctrl <- control_resamples(save_pred = TRUE, 
                               extract = function (x) extract_fit_parsnip(x) %>% tidy())
@@ -564,12 +565,15 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
   
   if (config_best$algorithm == "glmnet") {
     
+    # backward compatible for tune controls that didnt set family 
+    if (!exists("glm_family")) glm_family <- if_else(ml_mode == "regression", "gaussian", "binomial")
+    
     # Doing branch because need logistic_reg vs. linear_reg
     # Can fix later with more generic code
     if (ml_mode == "classification") {
       models <- logistic_reg(penalty = config_best$hp2,
                             mixture = config_best$hp1) %>%
-        set_engine("glmnet") %>%
+        set_engine("glmnet", family = glm_family) %>%
         set_mode(ml_mode) %>%
         fit_resamples(preprocessor = rec,
                       resamples = splits,
@@ -578,7 +582,7 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
       } else {
         models <- linear_reg(penalty = config_best$hp2,
                                mixture = config_best$hp1) %>%
-          set_engine("glmnet") %>%
+          set_engine("glmnet", family = glm_family) %>%
           set_mode(ml_mode) %>%
           fit_resamples(preprocessor = rec,
                         resamples = splits,
@@ -658,16 +662,19 @@ fit_best_model <- function(best_model, feat, ml_mode) {
   
   if (str_detect(best_model$algorithm, "glmnet")) {
     
+    # backward compatible for tune controls that didnt set family 
+    if (!exists("glm_family")) glm_family <- if_else(ml_mode == "regression", "gaussian", "binomial")
+    
     if (ml_mode == "classification") {
       fit_best <- logistic_reg(penalty = best_model$hp2,
                              mixture = best_model$hp1) %>%
-        set_engine("glmnet") %>%
+        set_engine("glmnet", family = glm_family) %>%
         set_mode(ml_mode) %>%
         fit(y ~ ., data = feat)
     } else {
       fit_best <- linear_reg(penalty = best_model$hp2,
                                mixture = best_model$hp1) %>%
-        set_engine("glmnet") %>%
+        set_engine("glmnet", family = glm_family) %>%
         set_mode(ml_mode) %>%
         fit(y ~ ., data = feat)     
     }

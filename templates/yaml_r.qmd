@@ -1,6 +1,6 @@
 ---
-title: "hw_07_key" 
-author: "TAs" 
+title: "Report" 
+author: "John Curtin" 
 date: "`r lubridate::today()`"
 format: 
   html:
@@ -11,182 +11,29 @@ editor_options:
   chunk_output_type: console
 ---
 
-# Reading Questions
-
-## RQ 1. 
-What does it mean to have "redundancy between predictors" in multiple regression? What is the consequence of having redundant predictors? Answer in 2-3 sentences.
-
-Redundancy between predictors means that two or more predictors explain some of the same of variance in the model’s dependent variable.
-
-Adding a redundant predictor to a model should decrease the unique variance explained by the predictor(s) with which it is redundant. If a predictor is redundant and does not add much explanatory power to the model, then the standard errors of the parameter estimates associated with the redundant predictors will increase, making it harder to detect their effects.
+# Notes
 
 
-# Data Analysis
-
-
-## DA 1.
+# Setup 
 ```{r}
 #| messages: false
 #| warnings: false
 
+# packages
 options(conflicts.policy = "depends.ok")
 library(tidyverse)
-library(skimr)
-library(broom)
 
-path_data <- "homework/data"
-```
+# source  
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/
+                     format_path.R?raw=true",
+                     sha1 = "a58e57da996d1b70bb9a5b58241325d6fd78890f")
+devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/
+                     my_skim.R?raw=true",
+                     sha1 = "839a13530805f9d28f407483a18b7e3368389fe7")
 
-```{r}
-raw_data_1 <- read_delim(here::here(path_data, "hw_07_iq"),
-                         delim = " ",
-                       show_col_types = FALSE)
-raw_data_2 <- read_delim(here::here(path_data, "hw_07_brain"),
-                         delim = " ",
-                         show_col_types = FALSE)
-```
+# paths
+path_data <- format_path("studydata/")
 
-## DA 2.
-
-There are two commons ways to rename columns.  The first is to use `colnames()` directly on the dataframe.  We will demonstrate this method for the first dataframe.
-  
-```{r}
-iq_names <- c("subject_id","simi","voca","bloc","matr","figr","digi","code")
-colnames(raw_data_1) <- iq_names
-```
-
-Lets confirm it worked
-```{r}
-names(raw_data_1)
-```
-
-The second option is to use the `rename()` function from the `dplyr` package.  Lets demonstrate this method on the second dataframe.
-
-```{r}
-raw_data_2 <- raw_data_2 |> 
-  rename(subject_id = col1, sex = col2, weight = col3, height = col4, 
-         mri_count = col5, openness = col6) 
-```
-
-Lets confirm it worked
-```{r}
-names(raw_data_2)
-```
-
-## DA 3.
-```{r}
-d <- full_join(raw_data_1,raw_data_2, by = "subject_id")
-```
-
-Check that the columns are all there and that there are the correct number of rows.  Do a quick check of a few of the rows to make sure the data looks right.
-
-```{r}
-d |>  glimpse()
-
-d |> head(5)
-raw_data_1 |> head(5)
-raw_data_2 |> head(5)
-```
-
-
-## DA 4.
-```{r}
-# source var_score function
-devtools::source_url("https://raw.githubusercontent.com/jjcurtin/lab_support/main/var_score.R")
-
-# calculate fsiq
-d$fsiq <- var_score(d, forward_items = c("simi","voca","bloc","matr","figr",
-                                         "digi","code"), 
-                    item_range = c(5,20),
-                    prorate = TRUE, 
-                    max_miss = .20) 
-```
-
-Skim the variables you will use for your analysis to check for missing data and to get a sense of the distribution of the variables.
-```{r}
-d |> skim(fsiq, height, weight, sex)
-```
-
-Notice that there are missing values for some of our variables.  We will need to think carefully about how to handle this.  We probably don't want to use different numbers of participants across our analyses.  At this point in the course, we haven't yet done much to handle missing data so we will simply do a listwise deletion.  This is not ideal, but it is a simple way to handle missing data.  
-
-```{r}
-vars <- c("fsiq", "height", "weight", "sex")
-d <- d |> 
-  drop_na(all_of(vars))
-
-nrow(d) 
-```
-We now have 38 participants with complete data
-
-## DA 5.
-```{r}
-GGally::ggpairs(d |>  select(mri_count, sex, weight, height, fsiq))
-```
-
-
-## DA 6.
-Highest correlations are height~sex, height~weight, and sex~mri_count.
-
-## DA 7.
-Lets first set up some functions to calculate PRE. [You should probably have your own script with your commonly used functions at this point!]
-```{r}
-sse <- function(model) sum(model$residuals^2)
-
-pre <- function(model_c, model_a) {
-  (sse(model_c) - sse(model_a)) / sse(model_c)
-}
-```
-
-```{r}
-# fit compact and augmented model
-m_c <- lm(mri_count ~ 1, d)
-m_a <- lm(mri_count ~ 1 + fsiq, d)
-
-# compare models (compact vs. augmented)
-anova(m_c, m_a)
-
-# or get t-test of parameter estimate
-m_a |> tidy()
-
-# calculate PRE (its equivalent to R2 and Delta R2)
-pre(m_c, m_a)
-```
-
-FSIQ was not significantly associated with total voxel count, b = 1.58, F(1,36) = 2.72, p = .108.  OR t(36) = 1.65, p - .133. FSIQ explained 7% of the variance in total voxel count.
-
-NOTE: $R^2$, $PRE$ and $\Delta R^2$ are all equivalent in the one predictor model and it makes most sense to describe this as total variance accounted for by `fsiq` as we did above. 
-
-## DA 8.
-```{r}
-m_c <- lm(mri_count ~ 1 + sex + height + weight, d)
-m_a <- lm(mri_count ~ 1 + fsiq + sex + height + weight, d)
-anova(m_c, m_a)
-m_a |> tidy()
-pre(m_c, m_a)
-```
-
-The association between FSIQ and total voxel count was statistically significant, after controlling for sex, height, and weight, b = 1.81, F(1,33) = 6.17, p = .018. Scoring one point higher on FSIQ is associated with 1.81k higher total voxel count when holding sex, height and weight constant. FSIQ explained 16% of the unexplained variance in total voxel count.
-
-PRE increased: this is because in the 5-parameter model, PRE associated with fsiq represents the percentage of variance explained (or error reduced) by fsiq, after removing the variance associated with sex, height, and weight. 
-
-## DA 9.
-Multicolinearity is not a problem. Variance inflation factor for predictor fsiq is << than 5.
-```{r}
-car::vif(m_a)
-```
-
-## DA 10.
-```{r}
-preds <- tibble(fsiq = seq(min(d$fsiq), max(d$fsiq), length.out = 100),
-                sex = 0.5, height = mean(d$height), weight = mean(d$weight))
-preds <- preds |> 
-  bind_cols(predict(m_a, preds, interval = "confidence"))
-
-ggplot() + 
-  geom_smooth(data = preds, stat = "identity", 
-              aes(x = fsiq, y = fit, ymin = lwr, ymax = upr), color = "blue") +
-  geom_point(data = d, aes(x = fsiq, y = mri_count)) +
-  theme_bw(base_size = 14) +
-  labs(x = "Full Scale IQ on WISC-V", y = "Total Voxel Count",
-       title = "Association between Cognitive Ability and Brain Size")
+# options
+theme_set(theme_classic()) 
 ```

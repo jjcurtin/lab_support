@@ -1,28 +1,19 @@
 ---
-title: 'A "Smart" Recovery Monitoring and Support System for SUD Continuing Care'
+title: 'revealjs demonstration slide deck'
 author: "John J. Curtin, Ph.D."
 institute: "University of Wisconsin-Madison"
 date: October 25, 2024
 format: 
   revealjs:
     scrollable: false 
-    css: presenntation.css
+    css: presentation.css
     slide-number: false 
     multiplex: false 
 title-slide-attributes:
   data-background-image: https://github.com/jjcurtin/lectures/blob/main/images/smartphone_know_you.png?raw=true
-  data-background-size: 45%
+  data-background-size: 30%
   data-background-repeat: no
   data-background-position: left 10% bottom 10%
-include-after: |
-  <script type="text/javascript">
-    Reveal.on('ready', event => {
-      if (event.indexh === 0) {
-        document.querySelector("div.has-logo > img.slide-logo").style.display = "block";
-        document.querySelector("div.has-logo > img.slide-logo").style.display = "block";
-        document.querySelector("div.has-logo > img.slide-logo").style.display = "none";
-        Reveal.configure({ slideNumber: null });
-        Reveal.configure({ slideNumber: 'c' });
 editor_options: 
   chunk_output_type: console
 ---
@@ -177,8 +168,8 @@ The Area under the Receiver Operating Characteristic Curve (auROC) indicates the
 #| fig-height: 6
 #| fig-width: 6
 
-source(here::here("figs/risk/figs_ema_probability.R"))
-fig_auroc_ci_1
+# source(here::here("figs/risk/figs_ema_probability.R"))
+# fig_auroc_ci_1
 ```
 ::::
 :::
@@ -210,7 +201,7 @@ fig_auroc_ci_1
 #| fig-height: 6
 #| fig-width: 6
 
-fig_auroc_ci_2
+# fig_auroc_ci_2
 ```
 ::::
 :::
@@ -241,7 +232,7 @@ And our model that made predictions about the lapse probability in the next day 
 #| fig-height: 6
 #| fig-width: 6
 
-fig_auroc_ci_3
+# fig_auroc_ci_3
 ```
 ::::
 :::
@@ -264,8 +255,8 @@ But we can, and to be clear, we believe all three of these models to have clinic
 #| fig-height: 3
 #| fig-width: 5
 
-source(here::here("figs/opt/figs_opt_shaps.R"))
-fig_shap_ex1
+# source(here::here("figs/opt/figs_opt_shaps.R"))
+# fig_shap_ex1
 ```
 :::
 
@@ -302,7 +293,7 @@ For example, in this first plot,  I am showing you someone who would be predicte
 #| fig-height: 3
 #| fig-width: 5
 
-fig_shap_ex1
+# fig_shap_ex1
 ```
 :::
 
@@ -317,7 +308,7 @@ fig_shap_ex1
 #| fig-height: 3
 #| fig-width: 5
 
-fig_shap_ex2
+# fig_shap_ex2
 ```
 :::
 
@@ -340,7 +331,7 @@ In contrast, a second person might have similarly high lapse probability on day 
 #| fig-height: 3
 #| fig-width: 5
 
-fig_shap_ex1
+# fig_shap_ex1
 ```
 :::
 
@@ -355,7 +346,7 @@ fig_shap_ex1
 #| fig-height: 3
 #| fig-width: 5
 
-fig_shap_ex2
+# fig_shap_ex2
 ```
 :::
 
@@ -364,7 +355,7 @@ fig_shap_ex2
 #| fig-height: 3
 #| fig-width: 5
 
-fig_shap_ex3
+# fig_shap_ex3
 ```
 :::
 :::
@@ -397,8 +388,8 @@ But not surprisingly, there are still a number of very important issues to addre
 #| fig-height: 5
 #| fig-width: 5 
 
-source(here::here("figs/risk/figs_ema_demographics.R"))
-fig_race
+# source(here::here("figs/risk/figs_ema_demographics.R"))
+# fig_race
 ```
 ::::
 
@@ -425,7 +416,7 @@ As one example of this issue, the data we collected to train these models from t
 #| fig-height: 5
 #| fig-width: 5 
 
-fig_race
+# fig_race
 ```
 ::::
 
@@ -434,8 +425,8 @@ fig_race
 #| fig-height: 5
 #| fig-width: 5
 
-source(here::here("figs/risk/figs_fairema_ci.R"))
-fig_race_only
+# source(here::here("figs/risk/figs_fairema_ci.R"))
+# fig_race_only
 ```
 ::::
 :::

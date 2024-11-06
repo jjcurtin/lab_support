@@ -11,65 +11,56 @@ format:
     multiplex: false 
 title-slide-attributes:
   data-background-image: https://github.com/jjcurtin/lectures/blob/main/images/smartphone_know_you.png?raw=true
-  data-background-size: 30%
+  data-background-size: 40%
   data-background-repeat: no
   data-background-position: left 10% bottom 10%
 editor_options: 
   chunk_output_type: console
 ---
 
-## First Slide
+## Slide Titles, Separators, Bullets, and Notes 
 
-This is a simple slide to demonstrate use of slide title using ## and the use of speaker notes using divs
+This is a simple slide to demonstrate several big points
 
-New slides will start with each new title or the use of a horizontal line made up of -.   I use horizontal lines even when I have a title because it makes it easier to distinguish between slides IMO
+- We use `##` for slide titles
+- We separate slides using a string of `-----------` (though a title starts a new slide by default too)
+- See the notes div for presenter notes (and info in the notes!)
+- Bullets work as expected given markdown
+  - so do sub-bullets
+  
 
 ::: {.notes}
-here are notes for this slide
+This is a field to put notes that you can see in the presenter view.  
+
+Divs begin with `:::` and end with `:::`
+You the number of `:` is arbitrary but should match when nesting divs.
+You specify the class of the div in the curly braces.  In this case, we are using the class "notes"
+Divs have many other uses including for callouts and to control the appearance of the slide.
 :::
 
 -----------------------------------------------------------------------------
 
-This is a slide without a title and with first and second level bullet points
+This is a slide without a title.  The use of `---` is sufficient to separate slides.
 
-- level 1 bullet
-  - level 2 bullet
-  - level 2 bullet
+This slide also displays an image.
 
-- level 1 bullet
-  - level 2 bullet
-  - level 2 bullet
-
-::: {.notes}
-More notes 
-:::
-
------------------------------------------------------------------------------
-
-## A Smart Recovery Monitoring and Support System
-
-This slide displays an image.
-
-- Notice the control of image placement and size
-- The image is saved and loaded from github
-
+- Notice the control of image placement and size inside curly braces
+- The image can saved and loaded from github or could be saved locally with your qmd file.
 
 ![](https://github.com/jjcurtin/slide_decks/blob/main/images/ema_hand.png?raw=true){.absolute bottom=0 right=50 width=45%}
 
-
 ::: {.notes}
-
 
 :::
 
 -----------------------------------------------------------------------------
 
-## A Smart Recovery Monitoring and Support System
+## Quotes
 
-This slide demonstrates the use of a quote with >
+This slide demonstrates the use of a quote with `>`
 
-- notice the use of colored text
-- notice the addition of extra lines using \
+- Notice the use of colored text.  This can be used with any text, not just quotes
+- Notice the use of <br> to create line breaks in the text
 
 \
 \
@@ -80,59 +71,88 @@ This slide demonstrates the use of a quote with >
  
  \
  \
- 
+
+Here is normal text after the quote.  Notice the addition of extra lines to increase spacing using `\`
 
 ::: {.notes}
-
 
 
 :::
 
 -----------------------------------------------------------------------------
 
-## A Smart Recovery Monitoring and Support System
-
-I like to split bullet points across slides and turn them gray when they are no longer the focus. It allows more room for notes split across slides
+## Sequential Bullet Points
 
 - Precision mental health requires us to provide the [right interventions]{style="color: blue;"} and supports to the <br>[right people]{style="color: blue;"} at the [right time]{style="color: blue;"}, [every time]{style="color: blue;"}
 
-\
 
 
 ::: {.notes}
+I like to split bullet points across slides and turn them gray when they are no longer the focus. It allows more room for notes split across slides.  
 
+Alternatively, bullet points can be set to appear sequentially on a single slide.  
 
+- There is more detail on how to implement that approach in the quarto documentation.  
+- Here is the link:  https://quarto.org/docs/presentations/revealjs/
+- I highly recommend reading the documentation to get a sense of the full/additional capabilities of revealjs for presentations.
 :::
 
 -----------------------------------------------------------------------------
 
-## A Smart Recovery Monitoring and Support System
-
-I like to split bullet points across slides and turn them gray when they are no longer the focus. It allows more room for notes split across slides
+## Sequential Bullet Points
 
 - [Precision mental health requires us to provide the right treatments and supports to the <br>right people at the right time, every time]{style="color:gray;"}
-
-\
 
 - Continuing care for substance use disorders requires [long-term monitoring]{style="color: blue;"} and <br>[ongoing lifestyle adjustments and support]{style="color: blue;"} to prevent relapse
 
 
 ::: {.notes}
+Now I could insert note specific to this second bullet point here!
+:::
+
+-----------------------------------------------------------------------------
+
+## Callouts 
+
+Here is the use of a callout div
+
+- There are a few types
+  - note
+  - tips
+  - important
+  - caution
+  - warning
+
+- The types vary in the header color and icon
+- You can find more detail on the [quarto website](https://quarto.org/docs/blog/posts/2022-02-13-feature-callouts/)
+
+:::{.callout-tip}
+## Rules of thumb for auROC 
+.70 - .80 is considered fair  
+.80 - .90 is considered good  
+\>= .90 is considered excellent  
+:::
+
+::: {.notes}
 
 
 :::
 
 -----------------------------------------------------------------------------
 
-## Model Performance
+## Footers
 
-Here is the  use of a callout div.  Useful occassionally?
 
-The Area under the Receiver Operating Characteristic Curve (auROC) indicates the probability that any true lapse is scored higher than any true no-lapse by the model
+You can add footers to specific slides using a footer div
 
-- Random performance:  auROC = 0.5 
-- Perfect performance: auROC = 1.0 
+::: footer
+Curtin et al., 2024
+:::
+-----------------------------------------------------------------------------
 
+## Callouts 
+
+- You can suppress the icon if you want using `{.callout-tip icon=false}`
 
 :::{.callout-tip icon=false}
 ## Rules of thumb for auROC 
@@ -148,70 +168,87 @@ The Area under the Receiver Operating Characteristic Curve (auROC) indicates the
 
 -----------------------------------------------------------------------------
 
-## Model Performance
+## Plots
 
-::: {.columns}
-:::: {.column width="40%"}
+You can make plots directly in the slides using R code chunks
 
-:::::{.callout-tip icon=false}
-## Rules of thumb for auROC 
-.70 - .80 is considered fair  
-.80 - .90 is considered good  
-\>= .90 is considered excellent  
-:::::
+- You need to load relevant libraries and set themes, etc (once)
+- You can set the size of the plot in the chunk options and suppress messages
 
-::::
-
-:::: {.column width="60%"}
 ```{r}
-#| label: figs_auroc_ci_1
-#| fig-height: 6
-#| fig-width: 6
+#| message: false
+#| fig-height: 2
 
-# source(here::here("figs/risk/figs_ema_probability.R"))
-# fig_auroc_ci_1
+library(tidyverse)
+theme_set(theme_classic()) 
+
+# dataset:
+tibble(value = rnorm(100)) |> 
+  ggplot(aes(x=value)) + 
+    geom_histogram()
 ```
-::::
-:::
 
 ::: {.notes}
 
 
-
 :::
-
 
 -----------------------------------------------------------------------------
 
-## Model Performance
+## Columns 
 
 ::: {.columns}
-:::: {.column width="40%"}
-:::::{.callout-tip icon=false}
-## Rules of thumb for auROC 
-.70 - .80 is considered fair  
-.80 - .90 is considered good  
-\>= .90 is considered excellent  
-:::::
-::::
-
 :::: {.column width="60%"}
-```{r}
-#| label: figs_auroc_ci_2
-#| fig-height: 6
-#| fig-width: 6
+We can break the slides up into columns
 
-# fig_auroc_ci_2
-```
+- We use nested divs for this
+- Top level div (use `::: {.columns}`) to start the container for the columns.  End the columns with `:::`
+- Next level div (use `::::`) is the container for each column.  End each column with `::::`
+:::::
+
+:::: {.column width="40%"}
+The columns can be of different widths
+
+- Specify the width for each specific column with the div that starts the column
+- e.g., `:::: {.column width="40%"}`
 ::::
 :::
 
 ::: {.notes}
-And our model that made predictions about the lapse probability in the next day performed even better. 
 
-[PAUSE]
+
 :::
 
+-----------------------------------------------------------------------------
+
+## Plots 
+
+You can use columns to put plots side by side.  Notice here that this overall text appears before the start of the columns container so it is not in columns but instead full width
+
+::: {.columns}
+:::: {.column width="50%"}
+
+```{r}
+#| fig-height: 6
+#| fig-width: 6
+
+
+```
+:::::
+
+
+:::: {.column width="50%"}
+The columns can be of different widths
+
+- Specify the width for each specific column with the div that starts the column
+- e.g., `:::: {.column width="40%"}`
+::::
+:::
+
+::: {.notes}
+
+
+:::
 -----------------------------------------------------------------------------
 
 ## Model Performance: Excellent auROCs

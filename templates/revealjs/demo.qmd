@@ -5,8 +5,8 @@ institute: "University of Wisconsin-Madison"
 date: October 25, 2024
 format: 
   revealjs:
-    scrollable: false 
     css: presentation.css
+    scrollable: false 
     slide-number: false 
     multiplex: false 
 title-slide-attributes:

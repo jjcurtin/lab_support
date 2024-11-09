@@ -20,7 +20,9 @@ editor_options:
 
 ## Slide Titles, Separators, Bullets, and Notes 
 
-This is a simple slide to demonstrate several big points
+Quarto has a [great demonstration](https://quarto.org/docs/presentations/revealjs/) of many of the features of revealjs.  
+
+In this demonstration, we start with a simple slide to demonstrate several big points
 
 - We use `##` for slide titles
 - We separate slides using a string of `-----------` (though a title starts a new slide by default too)
@@ -55,6 +57,129 @@ This slide also displays an image.
 
 -----------------------------------------------------------------------------
 
+## Incremental Bullet Points - Option 1
+
+Lists can optionally be displayed incrementally using a `::: { .incremental}` div
+
+::: { .incremental}
+-   First item
+-   Second item
+-   Third item
+:::
+
+
+-----------------------------------------------------------------------------
+
+## Incremental Bullet Points - Option 2
+
+Content can also come in incrementally using pauses.
+
+. . .
+
+Pauses are indicated by `. . .`
+
+. . .
+
+This will work with any content, plots, etc;  Not just bullet points
+
+-----------------------------------------------------------------------------
+
+## Incremental Bullet Points - Option 3
+
+List can also be displayed incrementally by putting them on separate slides.  
+
+As the slides advance, you can manually color the previous points gray.  Put the text in `[]` and the color in {style="color: gray;"}
+
+This is my preferred method because it allows for more room for notes on each bullet point
+
+- First item 
+
+
+
+::: {.notes}
+
+
+
+:::
+
+-----------------------------------------------------------------------------
+
+## Incremental Bullet Points - Option 3
+
+List can also be displayed incrementally by putting them on separate slides.  
+
+As the slides advance, you can manually color the previous points gray.  Put the text in `[]` and the color in {style="color: gray;"}
+
+This is my preferred method because it allows for more room for notes on each bullet point
+
+- [First item ]{style="color: gray;"}
+- Second item
+
+
+
+::: {.notes}
+
+
+
+:::
+
+-----------------------------------------------------------------------------
+
+## Incremental Bullet Points - Option 3
+
+List can also be displayed incrementally by putting them on separate slides.  
+
+As the slides advance, you can manually color the previous points gray.  Put the text in `[]` and the color in `{style="color: gray;"}`
+
+This is my preferred method because it allows for more room for notes on each bullet point
+
+- [First item ]{style="color: gray;"}
+- [Second item]{style="color: gray;"}
+- Third item
+
+::: {.notes}
+
+
+:::
+
+-----------------------------------------------------------------------------
+
+## Incremental Content with Fragments
+
+Animated incremental text (or other content like plots, etc) can be handled with fragments:
+
+::: {.fragment .fade-in}
+Fade in
+:::
+
+::: {.fragment .fade-up}
+Slide up while fading in
+:::
+
+::: {.fragment .fade-left}
+Slide left while fading in
+:::
+
+::: {.fragment .fade-in-then-semi-out}
+Fade in then semi out
+:::
+
+. . .
+
+::: {.fragment .strike}
+Strike
+:::
+
+::: {.fragment .highlight-red}
+Highlight red
+:::
+
+::: footer
+Learn more: [Fragments](https://quarto.org/docs/presentations/revealjs/advanced.html#fragments)
+:::
+
+-----------------------------------------------------------------------------
+
 ## Quotes
 
 This slide demonstrates the use of a quote with `>`
@@ -77,37 +202,6 @@ Here is normal text after the quote.  Notice the addition of extra lines to incr
 ::: {.notes}
 
 
-:::
-
------------------------------------------------------------------------------
-
-## Sequential Bullet Points
-
-- Precision mental health requires us to provide the [right interventions]{style="color: blue;"} and supports to the <br>[right people]{style="color: blue;"} at the [right time]{style="color: blue;"}, [every time]{style="color: blue;"}
-
-
-
-::: {.notes}
-I like to split bullet points across slides and turn them gray when they are no longer the focus. It allows more room for notes split across slides.  
-
-Alternatively, bullet points can be set to appear sequentially on a single slide.  
-
-- There is more detail on how to implement that approach in the quarto documentation.  
-- Here is the link:  https://quarto.org/docs/presentations/revealjs/
-- I highly recommend reading the documentation to get a sense of the full/additional capabilities of revealjs for presentations.
-:::
-
------------------------------------------------------------------------------
-
-## Sequential Bullet Points
-
-- [Precision mental health requires us to provide the right treatments and supports to the <br>right people at the right time, every time]{style="color:gray;"}
-
-- Continuing care for substance use disorders requires [long-term monitoring]{style="color: blue;"} and <br>[ongoing lifestyle adjustments and support]{style="color: blue;"} to prevent relapse
-
-
-::: {.notes}
-Now I could insert note specific to this second bullet point here!
 :::
 
 -----------------------------------------------------------------------------
@@ -140,16 +234,6 @@ Here is the use of a callout div
 
 -----------------------------------------------------------------------------
 
-## Footers
-
-
-You can add footers to specific slides using a footer div
-
-::: footer
-Curtin et al., 2024
-:::
------------------------------------------------------------------------------
-
 ## Callouts 
 
 - You can suppress the icon if you want using `{.callout-tip icon=false}`
@@ -164,6 +248,17 @@ Curtin et al., 2024
 ::: {.notes}
 
 
+:::
+
+-----------------------------------------------------------------------------
+
+## Footers
+
+
+You can add footers to specific slides using a footer div
+
+::: footer
+Curtin et al., 2024
 :::
 
 -----------------------------------------------------------------------------
@@ -211,6 +306,29 @@ The columns can be of different widths
 
 - Specify the width for each specific column with the div that starts the column
 - e.g., `:::: {.column width="40%"}`
+::::
+:::
+
+::: {.notes}
+
+
+:::
+
+-----------------------------------------------------------------------------
+
+## Columns 
+
+::: {.columns}
+:::: {.column width="45%"}
+If you want more separation between columns, you can add an empty narrow column between the others.  
+:::::
+
+:::: {.column width="10%"}
+
+::::
+
+:::: {.column width="45%"}
+This is a good way to add space between columns. 
 ::::
 :::
 

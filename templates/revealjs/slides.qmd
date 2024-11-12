@@ -9,6 +9,7 @@ format:
     scrollable: false 
     slide-number: false 
     multiplex: false 
+    auto-stretch: false
 title-slide-attributes:
   data-background-image: https://github.com/jjcurtin/lectures/blob/main/images/smartphone_know_you.png?raw=true
   data-background-size: 40%

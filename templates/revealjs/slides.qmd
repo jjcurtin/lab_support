@@ -247,7 +247,6 @@ Here is the use of a callout div
 
 ## Footers
 
-
 You can add footers to specific slides using a footer div `::: {.footer}`
 
 ::: {.footer}
@@ -305,12 +304,10 @@ You can make plots directly in the slides using R code chunks
 
 ```{r}
 #| message: false
-#| fig-height: 2
 
 library(tidyverse)
 theme_set(theme_classic()) 
 
-# dataset:
 tibble(value = rnorm(100)) |> 
   ggplot(aes(x=value)) + 
     geom_histogram()
@@ -324,17 +321,18 @@ tibble(value = rnorm(100)) |>
 :::: {.column width=50%}
 You can also make plots in separate scripts
 
-Source the script and then display the plot object
+Source the script (use project path combined with `here::here()`) and then display the plot object
 
-Good for reusable plot code.  
+Good for reusable plot code
 
-I use this approach for my presentations
-
-I also do side by side text and plot a lot
+I use this approach for my presentations. I also do side by side text and plot a lot
 ::::
 
 :::: {.column width=50%}
-<!--INSERT PLOT HERE-->
+```{r}
+source(here::here("templates/revealjs/figs", "fig.R"))
+fig_hist
+```
 ::::
 :::
 
@@ -342,10 +340,41 @@ I also do side by side text and plot a lot
 
 ## Plot sizing
 
+You can set the size of the plot in the chunk options using `fig-height` and `fig-width`.  Here is a four inch high plot (with no setting for width) 
 
+```{r}
+#| fig-height: 4
+
+fig_hist
+```
 
 -----------------------------------------------------------------------------
+  
+## Plot sizing
 
+here is a 4 x 4 inch high plot
+
+```{r}
+#| fig-height: 4
+#| fig-width: 4
+
+fig_hist
+```
+
+-----------------------------------------------------------------------------
+  
+## Plot sizing
+
+here is a 2 x 2 inch high plot
+
+```{r}
+#| fig-height: 2
+#| fig-width: 2
+
+fig_hist
+```
+-----------------------------------------------------------------------------
+ 
 ## Slide backgrounds {background=#43464B}
 
 Set the `background` attribute on a slide to change the background color (all CSS color formats are supported).
@@ -378,9 +407,22 @@ Learn more: [Media Backgrounds](https://quarto.org/docs/presentations/revealjs/#
 
 We can put a box or oval around some part of a slide to focus audience attention
 
-It would typically be put in a fragment to have it appear incrementally
+It would typically be put in a fragment to have it appear incrementally (see `.fragment` in the curly braces)
 
-The class that supports this is in our css file (presentation.css)
+The class that supports this is in our css file (presentation.css).  You can overide any of the parameters in the css definition by specifying them in the curly braces.  Height and width would be the most common to change.
+
+```{r}
+#| fig-height: 4
+#| fig-width: 4
+
+fig_hist
+```
+
+::: {.circ_outline .absolute bottom=10% left=10% width=200px .fragment}
+:::
+
+::: {.rect_outline .absolute bottom=40% left=50% height=200px width=300px .fragment}
+:::
 
 -----------------------------------------------------------------------------
 
@@ -451,4 +493,3 @@ Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 - Figs/tables update with changes in data
 - Better version control (text vs. binary and size)
 - Spend your time in quarto and markdown and become a master!
-

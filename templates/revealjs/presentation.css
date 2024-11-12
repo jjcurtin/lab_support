@@ -1,3 +1,6 @@
+
+
+
 .reveal-viewport {
 
 }
@@ -195,4 +198,22 @@ height: auto;
 
 figcaption {
 display: none !important;
+}
+
+.rect_outline {
+  border: 5px solid;
+  border-color: red;
+  opacity: .5;
+  width: 100px; 
+  height: 100px; 
+}
+
+.circ_outline {
+  border: 5px solid;
+  border-color: red;
+  opacity: .5;
+  
+  border-radius: 50%;
+  height: 100px;   
+  width: 100px;
 }

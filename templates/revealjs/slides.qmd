@@ -1,5 +1,6 @@
 ---
-title: 'revealjs demonstration slide deck'
+title: "revealjs demonstration slide deck"
+subtitle: "https://jjcurtin.quarto.pub/revealjs-demonstration-slide-deck/"
 author: "John J. Curtin, Ph.D."
 institute: "University of Wisconsin-Madison"
 date: October 25, 2024
@@ -490,7 +491,7 @@ Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 ## Why Quarto and revealjs?
 
 - Open source/free
-- Reusable code
-- Figs/tables update with changes in data
 - Better version control (text vs. binary and size)
-- Spend your time in quarto and markdown and become a master!
+- Figs/tables update with changes in data
+- Reusable code (DRY)
+- Spend your time in Quarto and Markdown and become a master!

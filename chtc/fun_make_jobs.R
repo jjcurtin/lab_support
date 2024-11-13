@@ -197,7 +197,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     check_copy <- file.copy(from = file.path(path_data, data_trn),
                             to = file.path(path_batch, "input", fn),
                             overwrite = overwrite_batch)
-    if (!check_copy) {
+    if (!check_copy & overwrite_batch == TRUE) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
   } else fn <- NULL # set to NULL because you do not want this written out in submit file (for chtc staging)

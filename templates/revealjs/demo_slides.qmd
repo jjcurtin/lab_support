@@ -3,7 +3,7 @@ title: "revealjs demonstration slide deck"
 subtitle: "https://jjcurtin.quarto.pub/revealjs-demonstration-slide-deck/"
 author: "John J. Curtin, Ph.D."
 institute: "University of Wisconsin-Madison"
-date: October 25, 2024
+date: November 15, 2024
 format: 
   revealjs:
     css: presentation.css
@@ -12,13 +12,55 @@ format:
     multiplex: false 
     auto-stretch: false
 title-slide-attributes:
-  data-background-image: https://github.com/jjcurtin/lectures/blob/main/images/smartphone_know_you.png?raw=true
+  data-background-image: images/demo_kitten-400-350.jpeg
   data-background-size: 40%
   data-background-repeat: no
   data-background-position: left 10% bottom 10%
 editor_options: 
   chunk_output_type: console
 ---
+
+## Solid infrastructure for presentations
+
+- Create a github repo for your slides (e.g., `slide_decks`)
+
+- Clone that repo onto your computer (`git clone git@github.com:USERNAME/slide_decks.git`)
+
+- Make an R project at the root of this folder to handle paths
+
+- Add the following folders
+  - fig
+  - mak
+  - csv 
+  - images
+
+- If you are a Windows user, you will need to install Git and Bash to be able to work with your repo and publish your slide decks at terminal (which is preferred)
+  - Install [Git for Windows](https://gitforwindows.org/)
+  - Linux/Mac users to NOT need to do this.
+
+-----------------------------------------------------------------------------
+
+## Solid infrastructure for presentations
+
+- Add/download the following files into root of your locally cloned repo 
+  - [demo_slides.qmd](demo_slides.qmd)
+  - [presentation.css](presentation.css)
+  - [publish.sh](publish.sh)
+ 
+- Add the following file to your `fig` folder (my demo slides use it)
+  - [fig.R](fig/demo_fig.R) 
+ 
+- Add the following files to your `images` folder (again for demo slides)
+  - [demo_kitten-300-200.jpeg](images/demo_kitten-300-200.jpeg) 
+  - [demo_kitten-400-350.jpeg](images/demo_kitten-400-350.jpeg) 
+  - [demo_kitten-450-250.jpeg](images/demo_kitten-450-250.jpeg) 
+  - [demo_milky-way.jpeg](images/demo_milky-way.jpeg) 
+  - [demo_moon.png](images/demo_moon.png) 
+  - [demo_sky.png](images/demo_sky.png) 
+
+- Now do `git add .`, `git commit -m "add demo files"`, and `git push` to get these changes up to  your remote copy of the repo on github 
+
+-----------------------------------------------------------------------------
 
 ## Why Quarto and revealjs?
 
@@ -30,28 +72,20 @@ editor_options:
 
 -----------------------------------------------------------------------------
 
-## Solid infrastructure for presentations
+## How to publish slides
 
-- Create a github repo for your slides (e.g., `slide_decks`)
+- Open terminal and navigate to your repo
+- `quarto publish quarto-pub demo_slides.qmd`
+- Accept defaults the first time (saved in `_publish.yml`)
 
-- Add the following folders
-  - fig
-  - mak
-  - csv 
-  - images
-  
+But better to use the `publish.sh` script
+
+- Allows you to execute a series of bash commands rather than just `publish`
+- The sample is simple but you could build on it (e.g., commit your changes and push)
+- run it with `. publish.sh demo_slides`
+
 -----------------------------------------------------------------------------
 
-## Solid infrastructure for presentations
-
-- Add the following files at the root of your repo (download from my `lab_support` repo)
-  - [demo_slides.qmd]()
-  - [presentation.css]()
-  - [publish.sh]()
- 
-- Add the following files to your `figs` folder for my demo to work (download from my lab_support repo)
-  - [fig.R]() 
-  
 ## Slide Titles, Separators, and Notes 
 
 I pull these examples heavily from documentation on the [quarto website](https://quarto.org/docs/presentations/revealjs/) but focus on what we find useful.
@@ -63,7 +97,6 @@ In this demonstration, we start with a simple slide to demonstrate several big p
 - revealjs makes heavy use of div containers.  These begin and end with `:::` and the start of the container can have its properties specified by arguments inside of `{}`
 - See the notes div for presenter notes on this first slide
   
-
 ::: {.notes}
 This is a field to put notes that you can see in the presenter view.  
 
@@ -86,7 +119,7 @@ This slide also displays an image.
 - More on this in next slide
 - The image can saved and loaded from github (as in this slide) or could be saved locally with your qmd file (next slide).
 
-![](https://github.com/jjcurtin/slide_decks/blob/main/images/ema_hand.png?raw=true){.absolute bottom=0 right=50 width=45%}
+![](https://github.com/jjcurtin/lab_support/blob/main/templates/revealjs/images/demo_kitten-400-350.jpeg?raw=true){.absolute bottom=0 right=50 width=45%}
 
 ::: {.notes}
 Here are some more notes.   I will stop using notes for the remaining slides....
@@ -100,11 +133,11 @@ You can position images or other elements at precise locations
 
 Also notice the use of `.fragment` inside the curly braces of the second two images to have them come in as incremental fragments (more on that in a later slide)
 
-![](images/kitten-400-350.jpeg){.absolute top=170 left=30 width=400 height=400}
+![](images/demo_kitten-400-350.jpeg){.absolute top=170 left=30 width=400 height=400}
 
-![](images/kitten-450-250.jpeg){.absolute .fragment top=160 right=80 width=450}
+![](images/demo_kitten-450-250.jpeg){.absolute .fragment top=160 right=80 width=450}
 
-![](images/kitten-300-200.jpeg){.absolute .fragment .fade-up bottom=110 right=130 width=300}
+![](images/demo_kitten-300-200.jpeg){.absolute .fragment .fade-up bottom=110 right=130 width=300}
 
 ::: footer
 Learn more: [Absolute Position](https://quarto.org/docs/presentations/revealjs/advanced.html#absolute-position)
@@ -136,7 +169,7 @@ Pauses are indicated by `. . .` on their own line.
 
 This will work with any content, plots, etc;  Not just bullet points, so its a solution if you want to reveal more than just bullet points.
 
-![](images/kitten-300-200.jpeg)
+![](images/demo_kitten-300-200.jpeg)
 
 . . .
 
@@ -199,7 +232,7 @@ Highlight red (displayed at start)
 ::: {.fragment .fade-in}
 Fade in (hidden at start).  Fraqments can contain any content, not just text.  Here is an image:
 
-![](images/kitten-300-200.jpeg)
+![](images/demo_kitten-300-200.jpeg)
 :::
 
 ::: {.fragment .fade-up}
@@ -364,7 +397,7 @@ I use this approach for my presentations. I also do side by side text and plot a
 
 :::: {.column width=50%}
 ```{r}
-source(here::here("templates/revealjs/figs", "fig.R"))
+source(here::here("fig", "demo_fig.R"))
 fig_hist
 ```
 ::::
@@ -421,7 +454,7 @@ Learn more: [Slide Backgrounds](https://quarto.org/docs/presentations/revealjs/#
 
 -----------------------------------------------------------------------------
 
-## Media Backgrounds {background=#43464B background-image=images/milky-way.jpeg}
+## Media Backgrounds {background=#43464B background-image=images/demo_milky-way.jpeg}
 
 You can also use the following as a slide background:
 
@@ -462,16 +495,18 @@ fig_hist
 
 ## Other Details
 
-- chalkboard
-- scrolling
-- multiplex
-- slide numbers
+- [Chalkboard](https://quarto.org/docs/presentations/revealjs/presenting.html#Chalkboard)
+- [Scrollable](https://quarto.org/docs/presentations/revealjs/presenting.html#slide-numbers)
+- [Multiplex](https://quarto.org/docs/presentations/revealjs/presenting.html#Multiplex)
+- [Slide numbers](https://quarto.org/docs/presentations/revealjs/presenting.html#slide-numbers)
+- [Print to pdf](https://quarto.org/docs/presentations/revealjs/presenting.html#slide-numbers)
 
 -----------------------------------------------------------------------------
 
 ## Additional Title Slide Details
 
-
+- See my title slide for ideas
+- Lots of additional documentation [available](https://quarto.org/docs/reference/formats/presentations/revealjs.html)
 
 -----------------------------------------------------------------------------
 
@@ -505,9 +540,9 @@ Learn more: [Slide Transitions](https://quarto.org/docs/presentations/revealjs/a
 10 Built-in Themes (or [create your own](https://quarto.org/docs/presentations/revealjs/themes.html#creating-themes))
 
 ::: {layout-ncol=2}
-![](images/moon.png)
+![](images/demo_moon.png)
 
-![](images/sky.png)
+![](images/demo_sky.png)
 :::
 
 You can also customize the .css file to apply the same style to many aspects of your slides.  Talk to Susan (or just look inside presentation.css)!
@@ -517,4 +552,3 @@ This slide also demonstrates how to put images side by side using `::: {layout-n
 ::: footer
 Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 :::
-

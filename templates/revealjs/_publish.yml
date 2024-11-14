@@ -1,4 +1,4 @@
-- source: slides.qmd
+- source: demo_slides.qmd
   quarto-pub:
-    - id: b8169746-b4da-4954-9571-a985394d192a
+    - id: 646ecc4f-ecbd-4784-a0b7-3721faf56da3
       url: 'https://jjcurtin.quarto.pub/revealjs-demonstration-slide-deck'

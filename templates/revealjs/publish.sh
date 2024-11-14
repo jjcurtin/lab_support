@@ -1,5 +1,8 @@
 #!/bin/bash  
 
-quarto publish quarto-pub slides.qmd --no-browser
+# ./publish.sh FILE
+FILE=$1
+
+quarto publish quarto-pub "$FILE" --no-browser
 rm -r *_files
 rm *.html

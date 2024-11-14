@@ -20,6 +20,38 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Why Quarto and revealjs?
+
+- Open source/free
+- Better version control (text vs. binary and size)
+- Figs/tables update with changes in data
+- Reusable code (DRY)
+- Spend your time in Quarto and Markdown and become a master!
+
+-----------------------------------------------------------------------------
+
+## Solid infrastructure for presentations
+
+- Create a github repo for your slides (e.g., `slide_decks`)
+
+- Add the following folders
+  - fig
+  - mak
+  - csv 
+  - images
+  
+-----------------------------------------------------------------------------
+
+## Solid infrastructure for presentations
+
+- Add the following files at the root of your repo (download from my `lab_support` repo)
+  - [demo_slides.qmd]()
+  - [presentation.css]()
+  - [publish.sh]()
+ 
+- Add the following files to your `figs` folder for my demo to work (download from my lab_support repo)
+  - [fig.R]() 
+  
 ## Slide Titles, Separators, and Notes 
 
 I pull these examples heavily from documentation on the [quarto website](https://quarto.org/docs/presentations/revealjs/) but focus on what we find useful.
@@ -486,12 +518,3 @@ This slide also demonstrates how to put images side by side using `::: {layout-n
 Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 :::
 
------------------------------------------------------------------------------
-
-## Why Quarto and revealjs?
-
-- Open source/free
-- Better version control (text vs. binary and size)
-- Figs/tables update with changes in data
-- Reusable code (DRY)
-- Spend your time in Quarto and Markdown and become a master!

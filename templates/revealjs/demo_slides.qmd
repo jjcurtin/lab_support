@@ -45,10 +45,10 @@ editor_options:
 - Add/download the following files into root of your locally cloned repo 
   - [demo_slides.qmd](demo_slides.qmd)
   - [presentation.css](presentation.css)
-  - [publish.sh](publish_presentation.sh)
+  - [publish_presentation.sh](publish_presentation.sh)
  
 - Add the following file to your `fig` folder (my demo slides use it)
-  - [fig.R](fig/demo_fig.R) 
+  - [demo_fig.R](fig/demo_fig.R) 
  
 - Add the following files to your `images` folder (again for demo slides)
   - [demo_kitten-300-200.jpeg](images/demo_kitten-300-200.jpeg) 

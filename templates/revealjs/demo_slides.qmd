@@ -45,7 +45,7 @@ editor_options:
 - Add/download the following files into root of your locally cloned repo 
   - [demo_slides.qmd](demo_slides.qmd)
   - [presentation.css](presentation.css)
-  - [publish.sh](publish.sh)
+  - [publish.sh](publish_presentation.sh)
  
 - Add the following file to your `fig` folder (my demo slides use it)
   - [fig.R](fig/demo_fig.R) 
@@ -78,11 +78,11 @@ editor_options:
 - `quarto publish quarto-pub demo_slides.qmd`
 - Accept defaults the first time (saved in `_publish.yml`)
 
-But better to use the `publish.sh` script
+But better to use the `publish_presentation.sh` script
 
-- Allows you to execute a series of bash commands rather than just `publish`
+- Allows you to execute a series of bash commands rather than just `quarto publish`
 - The sample is simple but you could build on it (e.g., commit your changes and push)
-- run it with `. publish.sh demo_slides`
+- run it with `. publish_presentation.sh demo_slides`
 
 -----------------------------------------------------------------------------
 

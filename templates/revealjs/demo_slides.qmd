@@ -7,15 +7,16 @@ date: November 15, 2024
 format: 
   revealjs:
     css: presentation.css
-    scrollable: false 
+    logo: images/uwlogo.png
+    scrollable: true
     slide-number: false 
     multiplex: false 
     auto-stretch: false
 title-slide-attributes:
-  data-background-image: images/demo_kitten-400-350.jpeg
-  data-background-size: 40%
+  data-background-image: images/title_slide.png
+  data-background-size: cover
   data-background-repeat: no
-  data-background-position: left 10% bottom 10%
+  data-background-position: right top
 editor_options: 
   chunk_output_type: console
 ---
@@ -245,6 +246,10 @@ Slide left while fading in (hidden at start)
 
 ::: {.fragment .fade-in-then-semi-out}
 Fade in then semi out (hidden at start)
+:::
+
+::: {.fragment .blue}
+You can change the text color of your fragment by adding one of the pre-defined color spans from presentation.css!
 :::
 
 ::: footer
@@ -552,3 +557,83 @@ This slide also demonstrates how to put images side by side using `::: {layout-n
 ::: footer
 Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 :::
+
+
+## Acknowledgements (recent projects first){.smaller}
+::::: {.columns}
+:::: {.column width="48%"}
+:::{style="text-align: center;"}
+**Co-Investigators **
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/gustafson.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/mohr.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/kornfield.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/vanswol.png){style="margin:0 !important;" width="23%"}  
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/ammerman.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/murphy.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/shah.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/zhu.png){style="margin:0 !important;" width="23%"}  
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/brown.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/huang.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/sethares.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/alagoz){style="margin:0 !important;" width="23%"}
+::::
+:::: {.column width="24%"}
+:::{style="text-align: center;"}
+**Graduate Students**
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wyant.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/punturieri.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/yu.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/santana.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/fronk.png){style="margin:0 !important;" width="47%"}
+::::
+:::: {.column width="24%"}
+:::{style="text-align: center;"}
+**Staff**
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wanta.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/papp.png){style="margin:0 !important;" width="47%"}  
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/colmenares.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/lightheart.png){style="margin:0 !important;" width="47%"}
+::::
+:::::
+## Acknowledgements (alphabetized) {.smaller}
+::::: {.columns}
+:::: {.column width="48%"}
+:::{style="text-align: center;"}
+**Co-Investigators **
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/alagoz){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/ammerman.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/brown.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/gustafson.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/huang.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/kornfield.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/mohr.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/murphy.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/sethares.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/shah.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/vanswol.png){style="margin:0 !important;" width="23%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/zhu.png){style="margin:0 !important;" width="23%"}  
+::::
+:::: {.column width="24%"}
+:::{style="text-align: center;"}
+**Graduate Students**
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/fronk.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/punturieri.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/santana.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wyant.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/yu.png){style="margin:0 !important;" width="47%"}
+::::
+:::: {.column width="24%"}
+:::{style="text-align: center;"}
+**Staff**
+:::
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/colmenares.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/lightheart.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/papp.png){style="margin:0 !important;" width="47%"}
+![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wanta.png){style="margin:0 !important;" width="47%"}
+::::
+:::::

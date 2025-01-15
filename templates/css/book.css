@@ -1,0 +1,36 @@
+h1 {
+    color: blue;
+    }
+
+h2 {
+ color: green !important;
+}
+  
+h3 {
+ color: green !important;
+ } 
+
+.red {
+  color: red;
+}
+
+.yellowb {
+  background-color: yellow;
+}
+
+.yellow {
+  color: yellow;
+}
+
+.green {
+  color: green;
+}
+
+.blue {
+  color: blue;
+}
+
+.cell-output {
+  background-color: honeydew;
+  border-radius: 4px;
+}

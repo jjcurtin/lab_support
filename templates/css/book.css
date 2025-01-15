@@ -1,17 +1,21 @@
 h1 {
-    color: blue;
+    color: #0479A8;
     }
 
 h2 {
- color: green !important;
+ color: #c5050c !important;
 }
   
 h3 {
- color: green !important;
+ color: #c5050c !important;
  } 
 
 .red {
   color: red;
+}
+
+.uwred {
+  color: #c5050c !important;
 }
 
 .yellowb {

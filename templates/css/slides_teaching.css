@@ -6,12 +6,14 @@
   margin-left: 20px !important;
 }
 
+body {
+border-right: 4vw solid #c5050c;
+}  
+
 .reveal .slide-logo {
-  height: auto !important;
-  width: 175px !important;
-  max-width: unset !important;
-  max-height: unset !important;
-  bottom: 0px  !important;
+  height: 90px !important;
+  top: 0px  !important;
+  right: 10px !important;
 }
 
 html, body, div, span, applet, object, iframe,
@@ -74,7 +76,7 @@ width: 95% !important;
 
 .reveal h1 {
     font-size: 50px !important;
-    color: #DC7633;
+    color: #0479A8;
     text-align: right;
     vertical-align: top;
     margin-bottom: 20px;
@@ -82,17 +84,25 @@ width: 95% !important;
     }
 
 .reveal h2 {
- color: green !important;
- text-decoration: underline !important;
+ color: #c5050c !important;
  font-weight:bold !important;
- font-size: 30px !important;
+ font-size: 40px !important;
+}
+
+.reveal h2::after {
+  content: "";
+  height: .15em;
+  width: .8em;
+  display: block;
+  background-color: #c5050c;
 }
   
 .reveal h3 {
- color: green !important;
+ color: #c5050c !important;
  font-weight:bold !important;
- font-size: 30px !important;
+ font-size: 40px !important;
  }  
+  
     
 .reveal ul {
     list-style-type: "\25A1   " !important;
@@ -155,6 +165,10 @@ font-size: 0.85em !important;
 
 .red {
   color: red;
+}
+
+.uwred {
+  color: #c5050c !important;
 }
 
 .yellowb {

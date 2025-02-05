@@ -1,4 +1,5 @@
 # Required packages
+options(conflicts.policy = "depends.ok")
 library(tidyverse)  # bind_rows()
 library(jsonlite)   # fromJSON()
 library(httr)       # GET()

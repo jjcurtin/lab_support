@@ -1,9 +1,4 @@
-# Required packages
-options(conflicts.policy = "depends.ok")
-library(tidyverse)  # bind_rows()
-library(jsonlite)   # fromJSON()
-library(httr)       # GET()
-library(lubridate)  # days(), as_datetime()
+
 
 
 get_followmee_devices <- function(creds) {

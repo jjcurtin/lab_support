@@ -92,7 +92,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
            altitude_ft = `Altitude(ft)`, 
            accuracy = Accuracy) %>% 
     select(-`Speed(km/h)`, -`Altitude(m)`) %>% 
-    mutate(date = as_datetime(date_chr),
+    mutate(date = lubridate::as_datetime(date_chr),
            subid = subid) %>% 
     relocate(subid, date) %>% 
     relocate(date_chr, .after = last_col()) |>

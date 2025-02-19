@@ -50,7 +50,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
 # Use get_credentials() in lab_support to obtain creds.
   
   date_end <- Sys.Date()
-  date_start <- date_end - days(n_days - 1)
+  date_start <- date_end - lubridate::days(n_days - 1)
   device_id <- get_followmee_deviceid(subid, creds)
   
   url <- "http://www.followmee.com"

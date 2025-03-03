@@ -1,10 +1,9 @@
 var_score <- function(d, forward_items, reverse_items = NULL, item_range = NULL, prorate = TRUE, max_miss = .20)
 {
-  library(dplyr)
 
   # select relevant items
-  d <- d %>% 
-    select(all_of(forward_items), all_of(reverse_items))
+  d <- d |> 
+    dplyr::select(dplyr::all_of(forward_items), dplyr::all_of(reverse_items))
 
   # check for out of range
   if (!is.null(item_range)) {
@@ -21,22 +20,22 @@ var_score <- function(d, forward_items, reverse_items = NULL, item_range = NULL,
   # reverse score relevant items
   if (!is.null(reverse_items)) {
     for (v in reverse_items) {                  
-        d <- d %>% mutate({{v}} := (sum(item_range) - .data[[v]]))
+        d <- d |> dplyr::mutate({{v}} := (sum(item_range) - .data[[v]]))
     }   
   }
 
   max_missing_cols <- ncol(d) * max_miss
-  d <- d %>% 
-    rowwise() %>% 
-    mutate(total = if_else(prorate,
-                           mean(c_across(everything()), na.rm = TRUE) * ncol(.), # if true
-                           sum(c_across(everything()), na.rm = TRUE))) %>%       # if false
-    mutate(missing_cols = sum(is.na(c_across(!contains("total"))))) %>% # count miss cols excluding total
-    mutate(total = if_else(missing_cols > max_missing_cols,  # set total to NA if too many missing
+  d |> 
+    dplyr::rowwise() |> 
+    dplyr::mutate(total = dplyr::if_else(prorate,
+                           mean(dplyr::c_across(dplyr::everything()), na.rm = TRUE) * ncol(d), # if true
+                           sum(dplyr::c_across(dplyr::everything()), na.rm = TRUE))) |>       # if false
+    dplyr::mutate(missing_cols = sum(is.na(dplyr::c_across(!dplyr::contains("total"))))) |> # count miss cols excluding total
+    dplyr::mutate(total = dplyr::if_else(missing_cols > max_missing_cols,  # set total to NA if too many missing
                            NA_real_,
-                           total)) %>% 
-    ungroup()
-  return(d$total)
+                           total)) |> 
+    dplyr::ungroup() |> 
+    dplyr::pull(total)
 }
 
 
@@ -44,8 +43,6 @@ var_score <- function(d, forward_items, reverse_items = NULL, item_range = NULL,
 # RECREATE DEMO ON BASE R DATASET
 # 
 # library(ds4psy)
-# library(tidyverse)
-# library(lmSupport)
 # # Sample dataset with item scores
 # d <- posPsy_AHI_CESD
 # forward_items <- c("ahi01","ahi02","ahi03", "ahi04", "ahi05")
@@ -53,13 +50,5 @@ var_score <- function(d, forward_items, reverse_items = NULL, item_range = NULL,
 # item_range <- c(1,5)
 # 
 # 
-# # New var_score
-# a <- d %>% mutate(ahi_score = var_score(.,c("ahi01","ahi02","ahi03", "ahi04", "ahi05"), c("ahi06","ahi07","ahi08", "ahi09", "ahi10"), c(1,5)))
+# a <- d |> dplyr::mutate(ahi_score = var_score(_, c("ahi01","ahi02","ahi03", "ahi04", "ahi05"), c("ahi06","ahi07","ahi08", "ahi09", "ahi10"), c(1,5)))
 # glimpse(a)
-# 
-# # Old varScore
-# b <- a %>% mutate(ahi_score = varScore(.,c("ahi01","ahi02","ahi03", "ahi04", "ahi05"), c("ahi06","ahi07","ahi08", "ahi09", "ahi10"), c(1,5)))
-# glimpse(b)
-# 
-# # results are equal
-# all(a$ahi_score == b$ahi_score)

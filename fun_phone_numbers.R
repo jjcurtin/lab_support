@@ -662,6 +662,15 @@ extract_number <- function(number, print_warning = FALSE) {
 
   if (is.null(formatted_number)) {
     formatted_number <- orig_number
+    
+    # still remove +1 or 1 if there is 10 digit number after
+    # this would be case if there wasn't a "valid" area code
+    if (str_detect(formatted_number, "^1") && nchar(formatted_number) == 11) {
+      formatted_number <- str_remove(formatted_number, "1")
+    }
+    if (str_detect(formatted_number, "^\\+1") && nchar(formatted_number) == 12) {
+      formatted_number <- str_remove(formatted_number, "\\+1")
+    }
     # generate warning if number did not match any format
     if (print_warning) warning (orig_number, " did not match any pre-defined pattern")
   }

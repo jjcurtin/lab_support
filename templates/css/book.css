@@ -1,0 +1,40 @@
+h1 {
+    color: #c5050c;
+    }
+
+h2 {
+ color: #c5050c !important;
+}
+  
+h3 {
+ color: #c5050c !important;
+ } 
+
+.red {
+  color: red;
+}
+
+.uwred {
+  color: #c5050c !important;
+}
+
+.yellowb {
+  background-color: yellow;
+}
+
+.yellow {
+  color: yellow;
+}
+
+.green {
+  color: green;
+}
+
+.blue {
+  color: blue;
+}
+
+.cell-output {
+  background-color: honeydew;
+  border-radius: 4px;
+}

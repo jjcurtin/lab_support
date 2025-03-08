@@ -1,5 +1,6 @@
 # train.sub 
-container_image = train.sif
++SingularityImage = "osdf:///chtc/staging/groups/curtin_group/train.sif"
+container_image = osdf:///chtc/staging/groups/curtin_group/train.sif
 
 executable = train.sh
 arguments = $(job_num) $(config_start) $(config_end)

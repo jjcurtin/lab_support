@@ -1,8 +1,4 @@
-# Required packages
-library(tidyverse)  # bind_rows()
-library(jsonlite)   # fromJSON()
-library(httr)       # GET()
-library(lubridate)  # days(), as_datetime()
+
 
 
 get_followmee_devices <- function(creds) {
@@ -21,13 +17,13 @@ get_followmee_devices <- function(creds) {
                 "&function=", fn) %>% 
     str_c(url, path, .)
   
-  response <- GET(url = query)
+  response <- httr::GET(url = query)
   
   if (!response$status_code == 200) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+  devices <-  jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data
   
   return(devices)
@@ -54,7 +50,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
 # Use get_credentials() in lab_support to obtain creds.
   
   date_end <- Sys.Date()
-  date_start <- date_end - days(n_days - 1)
+  date_start <- date_end - lubridate::days(n_days - 1)
   device_id <- get_followmee_deviceid(subid, creds)
   
   url <- "http://www.followmee.com"
@@ -71,20 +67,20 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
                   "&deviceid=", device_id) %>% 
     str_c(url, path, .)
   
-  response <- GET(url = query)
+  response <- httr::GET(url = query)
   
   if (! (response$status_code == 200)) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+  data <- jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() 
  if (nrow(data) == 0) { 
    print(str_c("No new GPS for ", subid))
    return(data)
    }  else {
-  data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+  data <- jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
     as_tibble() %>% 
     rename(date_chr = Date, 
@@ -96,7 +92,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
            altitude_ft = `Altitude(ft)`, 
            accuracy = Accuracy) %>% 
     select(-`Speed(km/h)`, -`Altitude(m)`) %>% 
-    mutate(date = as_datetime(date_chr),
+    mutate(date = lubridate::as_datetime(date_chr),
            subid = subid) %>% 
     relocate(subid, date) %>% 
     relocate(date_chr, .after = last_col()) |>
@@ -135,13 +131,13 @@ current_devices_location <- function(creds) {
                  "&function=", fn) %>% 
     str_c(url, path, .)
   
-  response <- GET(url = query)
+  response <- httr::GET(url = query)
   
   if (!response$status_code == 200) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  cur_loc_devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+  cur_loc_devices <-  jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data |>
     select(DeviceName, Date) |>
     mutate(last_obs =lubridate::as.duration(lubridate::interval(Date, now()))) |>

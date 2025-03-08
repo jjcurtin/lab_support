@@ -46,7 +46,6 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     if (!str_detect(cv_inner_resample, "_x_")) {
       inner_split_num <- 1:cv_inner_resample
     }
-    
   }
   
   
@@ -160,7 +159,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     dir.create(file.path(path_batch, "input"))
     dir.create(file.path(path_batch, "output"))
   } else {
-    message("Batch folder already exists. No new folders created.")
+    stop("Batch folder already exists. No new folders created. Set overwrite_batch = TRUE to write over existing batch.")
   }
   
   # write jobs file to input folder
@@ -184,7 +183,6 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     write_csv(file.path(path_batch, "input", "job_nums.csv"), 
               col_names = FALSE)
   
-  
   # copy data to input folder as data_trn 
   # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
   if(!is.null(data_trn)){
@@ -203,9 +201,9 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   } else fn <- NULL # set to NULL because you do not want this written out in submit file (for chtc staging)
   
   # copy study specific training_controls to input folder 
-  check_copy <-file.copy(from = file.path(path_training_controls),
-                         to = file.path(path_batch, "input", "training_controls.R"),
-                         overwrite = overwrite_batch) 
+  check_copy <- file.copy(from = file.path(path_training_controls),
+                          to = file.path(path_batch, "input", "training_controls.R"),
+                          overwrite = overwrite_batch) 
   if (!check_copy) {
     stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
@@ -224,12 +222,12 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # update submit file from training controls -----------------
   # add files to transfer
-  transfer_files_str <- str_c("transfer_input_files = train.sif, fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv,", fn)
+  transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/groups/curtin_group/train.sif, osdf:///chtc/staging/groups/curtin_group/", study, "/", fn)
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add max idle jobs
-  max_idle_str <- str_c("materialize_max_idle = ", max_idle)
+  max_idle_str <- str_c("max_idle = ", max_idle)
   write(max_idle_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add cpus requested
@@ -245,16 +243,14 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   write(disk_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add flock
-  flock_str <- str_c("+wantFlocking = ", flock)
+  flock_str <- str_c("want_campus_pools = ", flock)
   write(flock_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add glide
-  glide_str <- str_c("+wantGlideIn = ", glide)
+  glide_str <- str_c("want_ospool = ", glide)
   write(glide_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add queue
   queue_str <- str_c("queue job_num,config_start,config_end from job_nums.csv")
   write(queue_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
-  
 }
-

@@ -521,6 +521,16 @@ extract_number <- function(number, print_warning = FALSE) {
       stop(number, " matches multiple pre-defined patterns")
     }
   }
+  
+  # pattern - *69 plus 10 digit US number plus country code 1
+  if (nchar(number) == 14 && str_detect(number, "\\*691") && check_area_code(str_sub(number, 5, 14))) {
+    if(is.null(formatted_number)) {
+      formatted_number <- str_remove(number, "\\*691")
+    } else {
+      stop(number, " matches multiple pre-defined patterns")
+    }
+  }
+
 
   # pattern - *67 plus 7 digit US phone number - blocks number
   if (nchar(number) == 10 && str_detect(number, "^\\*67")) {
@@ -662,6 +672,15 @@ extract_number <- function(number, print_warning = FALSE) {
 
   if (is.null(formatted_number)) {
     formatted_number <- orig_number
+    
+    # still remove +1 or 1 if there is 10 digit number after
+    # this would be case if there wasn't a "valid" area code
+    if (str_detect(formatted_number, "^1") && nchar(formatted_number) == 11) {
+      formatted_number <- str_remove(formatted_number, "1")
+    }
+    if (str_detect(formatted_number, "^\\+1") && nchar(formatted_number) == 12) {
+      formatted_number <- str_remove(formatted_number, "\\+1")
+    }
     # generate warning if number did not match any format
     if (print_warning) warning (orig_number, " did not match any pre-defined pattern")
   }

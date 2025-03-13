@@ -17,11 +17,13 @@ format_path <- function(the_path, resource = "standard"){
                                                 stringr::str_c("R:/", the_path))},        
   
           # IOS paths
-          Darwin = {the_path <- dplyr::if_else(stringr::str_c("/Volumes/standard/", the_path),
+          Darwin = {the_path <- dplyr::if_else(resource == "standard",
+                                               stringr::str_c("/Volumes/standard/", the_path),
                                                string::str_c("/Volumes/restricted/", the_path))},
           
           # Linux paths
-          Linux = {the_path <- dplyr::if_else(stringr::str_c("~/mnt/standard/", the_path),
+          Linux = {the_path <- dplyr::if_else(resource == "standard",
+                                              stringr::str_c("~/mnt/standard/", the_path),
                                               string::str_c("~/mnt/restricted/", the_path))},
   )
   return(the_path)

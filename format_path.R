@@ -27,4 +27,5 @@ format_path <- function(the_path, resource = "standard"){
                                               string::str_c("~/mnt/restricted/", the_path))},
   )
   return(the_path)
+  
 }

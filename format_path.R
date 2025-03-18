@@ -2,6 +2,7 @@
 
 format_path <- function(the_path, resource = "standard"){
 
+  # UDATE TO ONLY HAVE RESTRICTED MOUNTED FOR LINUX AND WINDOWS
   # standard is standard research drive (S drive for windows)
   # restricted is restricted research drive (R drive for windows)
   
@@ -18,7 +19,7 @@ format_path <- function(the_path, resource = "standard"){
   
           # IOS paths
           Darwin = {the_path <- dplyr::if_else(resource == "standard",
-                                               stringr::str_c("/Volumes/standard/", the_path),
+                                               stringr::str_c("/Volumes/jjcurtin/studydata/", the_path),
                                                stringr::str_c("/Volumes/restricted/", the_path))},
           
           # Linux paths

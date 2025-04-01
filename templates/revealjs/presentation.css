@@ -74,7 +74,11 @@ border-right: 4vw solid #c5050c;
     color: white !important;
 }
 
-
+.reveal .quarto-title-block .quarto-title-authors .quarto-title-author {
+  padding-left: 0em !important;
+  }
+  
+  
 .reveal .quarto-title-block .quarto-title-authors .quarto-title-author .quarto-title-author-name {
     text-align: left;
     color: white !important;

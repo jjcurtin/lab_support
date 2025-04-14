@@ -184,17 +184,19 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
               col_names = FALSE)
   
   # copy data to input folder as data_trn 
-    chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
-    if (length(chunks) == 2) {
-      fn <- str_c("data_trn.", chunks[[2]])
-
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_batch, "input", fn),
-                            overwrite = overwrite_batch)
-    if (!check_copy) {
-      stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
+  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
+  if (length(chunks) == 2) {
+    fn <- str_c("data_trn.", chunks[[2]])
+  } else {
+    fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+  }
+  check_copy <- file.copy(from = file.path(path_data, data_trn),
+                          to = file.path(path_batch, "input", fn),
+                          overwrite = overwrite_batch)
+  if (!check_copy) {
+    stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
-  
+
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),
                           to = file.path(path_batch, "input", "training_controls.R"),

@@ -227,7 +227,30 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     }
   }
   
-  # update submit file from training controls -----------------
+  # create submit file from training controls -----------------
+  
+  write("#train.sub", 
+        file.path(path_batch, "input", "train.sub"))
+  
+  # set staging directory
+  singularity <- str_c('"+SingularityImage = osdf:///chtc/staging/", username, "/train.sif"')
+  container <- str_c("container_image = osdf:///chtc/staging/", username, "/train.sif")
+  
+  write(c(singularity, 
+          container,
+          "executable = train.sh",
+          "arguments = $(job_num) $(config_start) $(config_end)",
+          "  ",
+          "log = $(Cluster).log",
+          "error = error/error_$(job_num).err", 
+          "  ",
+          "should_transfer_files = YES",
+          "when_to_transfer_output = ON_EXIT",
+          'transfer_output_remaps = "results_$(job_num).csv = results/results_$(job_num).csv"',
+          "on_exit_hold = exitcode != 0",
+          "max_retries = 1"), 
+        file.path(path_batch, "input", "train.sub"), append = TRUE)
+  
   # add files to transfer
   if(stage_data == FALSE) {
     transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)

@@ -184,8 +184,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
               col_names = FALSE)
   
   # copy data to input folder as data_trn 
-  # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
-  if(!is.null(data_trn)){
+  # will not copy over large data files to be used with staging (stage_data = TRUE in training controls)
+  if(stage_data == FALSE){
     chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
     if (length(chunks) == 2) {
       fn <- str_c("data_trn.", chunks[[2]])
@@ -198,7 +198,14 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     if (!check_copy) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
-  } else fn <- NULL # set to NULL because you do not want this written out in submit file (for chtc staging)
+  } else {
+    chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
+    if (length(chunks) == 2) {
+      fn <- str_c("data_trn.", chunks[[2]])
+    } else {
+      fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+    }
+  }
   
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),
@@ -222,7 +229,11 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # update submit file from training controls -----------------
   # add files to transfer
-  transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/groups/curtin_group/train.sif, osdf:///chtc/staging/groups/curtin_group/", study, "/", fn)
+  if(stage_data == FALSE) {
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
+  } else {
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
+  }
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   

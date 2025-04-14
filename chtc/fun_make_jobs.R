@@ -233,7 +233,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
         file.path(path_batch, "input", "train.sub"))
   
   # set staging directory
-  singularity <- str_c('"+SingularityImage = osdf:///chtc/staging/", username, "/train.sif"')
+  singularity <- str_c('"+SingularityImage = osdf:///chtc/staging/', username, '/train.sif"')
   container <- str_c("container_image = osdf:///chtc/staging/", username, "/train.sif")
   
   write(c(singularity, 

@@ -184,28 +184,16 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
               col_names = FALSE)
   
   # copy data to input folder as data_trn 
-  # will not copy over large data files to be used with staging (stage_data = TRUE in training controls)
-  if(stage_data == FALSE){
     chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
     if (length(chunks) == 2) {
       fn <- str_c("data_trn.", chunks[[2]])
-    } else {
-      fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
-    }
+
     check_copy <- file.copy(from = file.path(path_data, data_trn),
                             to = file.path(path_batch, "input", fn),
                             overwrite = overwrite_batch)
     if (!check_copy) {
       stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
-  } else {
-    chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
-    if (length(chunks) == 2) {
-      fn <- str_c("data_trn.", chunks[[2]])
-    } else {
-      fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
-    }
-  }
   
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),
@@ -228,7 +216,6 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   }
   
   # create submit file from training controls -----------------
-  
   write("#train.sub", 
         file.path(path_batch, "input", "train.sub"))
   

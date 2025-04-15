@@ -22,7 +22,7 @@ format_path <- function(the_path, resource = "standard"){
                                                 stringr::str_c("R:/", the_path))},        
   
           # IOS path
-          Darwin = {the_path <- stringr::str_c("/Volumes/jjcurtin/studydata/", the_path)},
+          Darwin = {the_path <- stringr::str_c("/Volumes/jjcurtin/", the_path)},
           
           # Linux paths
           Linux = {the_path <- dplyr::if_else(resource == "standard",

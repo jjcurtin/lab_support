@@ -104,10 +104,8 @@ get_lambdas <- function(x, y, len = 50, model = "LASSO") {
 
 
 # Nadeau and Bengio (2003) correlated t-test
-nb_correlated_t_test <- function(cv_fits_full, cv_fits_compact, k = 10){
+nb_correlated_t_test <- function(cv_metrics_full, cv_metrics_compact, k = 10){
 
-  cv_metrics_full <- tune::collect_metrics(cv_fits_full, summarize = FALSE)$.estimate
-  cv_metrics_compact <- tune::collect_metrics(cv_fits_compact, summarize = FALSE)$.estimate
   diffs <- cv_metrics_full - cv_metrics_compact
   n <- length(diffs)
   mean_diff <- mean(diffs)

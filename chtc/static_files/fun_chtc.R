@@ -1,11 +1,14 @@
-make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, cv_inner_resample = NULL, cv_group = NULL, the_seed = NULL) {
+make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, 
+                        cv_inner_resample = NULL, cv_group = NULL, cv_strat = NULL,
+                        the_seed = NULL) {
   
   # d: (training) dataset to be resampled 
   # cv_resample_type: can be boot, kfold, or nested
-  # resample: specifies for repeats and folds for CV (1_x_10; 10_x_10) or num splits for bootstrapping (100)
-  # inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
-  # outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
-  # group: specifies grouping variable for grouped cv and nested cv
+  # cv_resample: specifies for repeats and folds for CV (1_x_10; 10_x_10) or num splits for bootstrapping (100)
+  # cv_inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
+  # cv_outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
+  # cv_group: specifies grouping variable for grouped cv and nested cv
+  # cv_strat: TRUE to stratify on y_col_name set in training controls
   
   if(is.null(the_seed)) {
     error("make_splits() requires a seed")
@@ -24,10 +27,15 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
     n_repeats <- as.numeric(str_remove(cv_resample, "_x_\\d{1,2}"))
     n_folds <- as.numeric(str_remove(cv_resample, "\\d{1,3}_x_"))
     
-    if (!is.null(cv_group)) {
+    if (!is.null(cv_group) & is.null(cv_strat)) {
       splits <- d %>% 
-        group_vfold_cv(v = n_folds, repeats = n_repeats, group = all_of(cv_group)) 
-    } else {
+        group_vfold_cv(v = n_folds, repeats = n_repeats, 
+                       group = all_of(cv_group)) 
+    } else if (!is.null(cv_group) & !is.null(cv_strat)) {
+      splits <- d %>% 
+        group_vfold_cv(v = n_folds, repeats = n_repeats, 
+                       group = all_of(cv_group), strata = all_of(cv_strat)) 
+    } else if (is.null(cv_group & is.null(cv_strat))) {
       splits <- d %>% 
         vfold_cv(v = n_folds, repeats = n_repeats) 
     }
@@ -50,7 +58,21 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
 
     
     # create splits for grouped nested cv (requires inner and outer to be kfold)
-    if (!is.null(cv_group)) {
+    if (!is.null(cv_group) & !is.null(cv_strat)) {
+      # needed to create outer folds outside of nested_cv for some unknown reason!
+      outer_grouped_kfold <- d %>% 
+        group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, 
+                       group = all_of(cv_group), strata = all_of(cv_strat))
+      
+      splits <- d %>% 
+        nested_cv(outside = outer_grouped_kfold, 
+                  inside = group_vfold_cv(v = inner_n_folds, 
+                                          repeats = inner_n_repeats, 
+                                          group = all_of(cv_group),
+                                          strata = all_of(cv_strat)))
+    } 
+    
+    if (!is.null(cv_group) & is.null(cv_strat)) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
         group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, 
@@ -61,6 +83,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
                                           repeats = inner_n_repeats, 
                                           group = all_of(cv_group)))
     } 
+    
     
     # create splits for ungrouped nested cv with kfold inner
     if (is.null(cv_group) & str_detect(cv_inner_resample, "_x_")) {

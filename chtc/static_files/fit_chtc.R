@@ -52,7 +52,8 @@ d <- format_data(d)
 # Create nested outer splits object ---------------
 splits <- d %>% 
   make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
-              cv_inner_resample, cv_group, the_seed = seed_splits)
+              cv_inner_resample, cv_group, cv_strat,
+              the_seed = seed_splits)
 
 
 # function to fit and evaluate a model configuration from configs

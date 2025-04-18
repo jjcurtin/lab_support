@@ -27,6 +27,9 @@ ml_mode <- "classification"   # regression or classification
 y_col_name <- "lapse" 
 y_level_pos <- "yes" 
 y_level_neg <- "no"
+stratify <- "any_lapse" # set to NULL if not stratifying - this needs to be constant within grouping variable
+# for example it could be if a participant has any lapse on study vs no lapse on study
+# stratify variable can be added to format_data function in training_controls
 
 
 # CV SETTINGS---------------------------------
@@ -98,6 +101,8 @@ format_data <- function (df){
     mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), # set pos class first
            across(where(is.character), factor)) %>%
     select(-label_num, -dttm_label)
+  # for stratifying could add:
+  # mutate(any_lapse = if_else(subid %in% subset(df, lapse == "yes")$subid, "yes", "no"))
   # Now include additional mutates to change classes for columns as needed
   # see https://jjcurtin.github.io/dwt/file_and_path_management.html#using-a-separate-mutate
 }

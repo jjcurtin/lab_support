@@ -184,22 +184,19 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
               col_names = FALSE)
   
   # copy data to input folder as data_trn 
-  # will not copy over large data files to be used with staging (data_trn = NULL in training controls)
-  if(!is.null(data_trn)){
-    chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
-    if (length(chunks) == 2) {
-      fn <- str_c("data_trn.", chunks[[2]])
-    } else {
-      fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+  chunks <- str_split_fixed(data_trn, "\\.", n = Inf) # parse name from extensions
+  if (length(chunks) == 2) {
+    fn <- str_c("data_trn.", chunks[[2]])
+  } else {
+    fn <- str_c("data_trn.", chunks[[2]], ".", chunks[[3]])
+  }
+  check_copy <- file.copy(from = file.path(path_data, data_trn),
+                          to = file.path(path_batch, "input", fn),
+                          overwrite = overwrite_batch)
+  if (!check_copy) {
+    stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
     }
-    check_copy <- file.copy(from = file.path(path_data, data_trn),
-                            to = file.path(path_batch, "input", fn),
-                            overwrite = overwrite_batch)
-    if (!check_copy) {
-      stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
-    }
-  } else fn <- NULL # set to NULL because you do not want this written out in submit file (for chtc staging)
-  
+
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),
                           to = file.path(path_batch, "input", "training_controls.R"),
@@ -220,9 +217,35 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     }
   }
   
-  # update submit file from training controls -----------------
+  # create submit file from training controls -----------------
+  write("#train.sub", 
+        file.path(path_batch, "input", "train.sub"))
+  
+  # set staging directory
+  singularity <- str_c('+SingularityImage = "osdf:///chtc/staging/', username, '/train.sif"')
+  container <- str_c("container_image = osdf:///chtc/staging/", username, "/train.sif")
+  
+  write(c(singularity, 
+          container,
+          "executable = train.sh",
+          "arguments = $(job_num) $(config_start) $(config_end)",
+          "  ",
+          "log = $(Cluster).log",
+          "error = error/error_$(job_num).err", 
+          "  ",
+          "should_transfer_files = YES",
+          "when_to_transfer_output = ON_EXIT",
+          'transfer_output_remaps = "results_$(job_num).csv = results/results_$(job_num).csv"',
+          "on_exit_hold = exitcode != 0",
+          "max_retries = 1"), 
+        file.path(path_batch, "input", "train.sub"), append = TRUE)
+  
   # add files to transfer
-  transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/groups/curtin_group/train.sif, osdf:///chtc/staging/groups/curtin_group/", study, "/", fn)
+  if(stage_data == FALSE) {
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
+  } else {
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
+  }
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   

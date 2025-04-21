@@ -1,6 +1,9 @@
 # Training controls for EMA study
 
-# SET GLOBAL PARAMETERS--------------------
+# FORMAT PATH FUNCTION------
+source("https://github.com/jjcurtin/lab_support/blob/main/format_path.R?raw=true")
+
+# SET GLOBAL PARAMETERS------
 study <- "ema"
 window <- "1hour"
 lead <- 0
@@ -11,16 +14,16 @@ batch <- "batch5"
 configs_per_job <- 50  # number of model configurations that will be fit/evaluated within each CHTC
 
 
-# RESAMPLING FOR OUTCOME-----------------------------------
+# RESAMPLING FOR OUTCOME------
 # note that ratio is under_ratio, which is used by downsampling as is
 # It is converted to  overratio (1/ratio) for up and smote
 resample <- c("down_3") 
 # resample <- c("down_1", "up_1", "smote_1", "down_2", "up_.5", "smote_.5", down_3) 
 
 
-# DATA, SPLITS AND OUTCOME-------------------------------------
+# DATA, SPLITS AND OUTCOME------
 feature_set <- c("all") # EMA Features set names
-data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") 
+data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") # Set to NULL if staging
 seed_splits <- 102030
 
 ml_mode <- "classification"   # regression or classification
@@ -32,7 +35,7 @@ stratify <- NULL # set to NULL if not stratifying - this needs to be constant wi
 # stratify variable can be added to format_data function in training_controls, example shown below
 
 
-# CV SETTINGS---------------------------------
+# CV SETTINGS------
 cv_resample_type <- "nested" # can be boot, kfold, or nested
 cv_resample = NULL # can be repeats_x_folds (e.g., 1_x_10, 10_x_10) or number of bootstraps (e.g., 100)
 cv_inner_resample <- "3_x_10" # can also be a single number for bootstrapping (i.e., 100)
@@ -44,16 +47,16 @@ cv_name <- if_else(cv_resample_type == "nested",
                          cv_outer_resample),
                    str_c(cv_resample_type, "_", cv_resample))
 
-# STUDY PATHS----------------------------
+# STUDY PATHS------
 # the name of the batch of jobs to set folder name
 name_batch <- str_c("train_", algorithm, "_", window, "_", cv_name, "_", version, "_", batch) 
 # the path to the batch of jobs
-path_batch <- str_c("studydata/risk/chtc/", study, "/", name_batch) 
+path_batch <- format_path(str_c("studydata/risk/chtc/", study, "/", name_batch)) 
 # location of data set
-path_data <- str_c("studydata/risk/data_processed/", study) 
+path_data <- format_path(str_c("studydata/risk/data_processed/", study)) 
 
 
-# ALGORITHM-SPECIFIC HYPERPARAMETERS-----------
+# ALGORITHM-SPECIFIC HYPERPARAMETERS------
 hp1_glmnet <- c(0.05, seq(.1, 1, length.out = 10)) # alpha (mixture)
 hp2_glmnet_min <- -8 # min for penalty grid - will be passed into exp(seq(min, max, length.out = out))
 hp2_glmnet_max <- 2 # max for penalty grid
@@ -78,7 +81,9 @@ hp1_nnet <- seq(10, 100, length.out = 10)  # epochs
 hp2_nnet <- seq(0, 0.1, length.out = 100) # penalty
 hp3_nnet <- seq(5, 30, length.out = 5) # hidden units
 
-# CHTC SPECIFIC CONTROLS----------------------------
+# CHTC SPECIFIC CONTROLS------
+username <- "jjcurtin" # for setting staging directory (until we have group staging folder)
+stage_data <- TRUE
 max_idle <- 1000
 request_cpus <- 1 
 request_memory <- "25000MB"
@@ -93,7 +98,7 @@ glide <- FALSE
 # up_1: request_memory <- "30000MB", request_disk <- "1600MB" kendra (not complete)
 # down_3:
 
-# FORMAT DATA-----------------------------------------
+# FORMAT DATA------
 format_data <- function (df){
   
   df %>% 
@@ -109,7 +114,7 @@ format_data <- function (df){
 }
 
 
-# BUILD RECIPE---------------------------------------
+# BUILD RECIPE------
 # Script should have a single build_recipe function to be compatible with fit script. 
 build_recipe <- function(d, config) {
   # d: (training) dataset from which to build recipe
@@ -178,7 +183,7 @@ build_recipe <- function(d, config) {
   return(rec)
 }
 
-# Update paths for OS--------------------------------
+# Update paths for OS------
 # This does NOT need to be edited.  This will work for Windows, Mac and Linux OSs
 path_batch <- case_when(Sys.info()[["sysname"]] == "Windows" ~str_c("P:/", path_batch),
                         Sys.info()[["sysname"]] == "Linux" ~str_c("~/mnt/private/", path_batch),

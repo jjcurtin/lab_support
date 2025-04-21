@@ -1,0 +1,13 @@
+date-format: long
+format: 
+  revealjs:
+    scrollable: false
+    css: presentation.css
+    slide-number: false 
+    multiplex: false 
+    auto-stretch: false
+title-slide-attributes:
+  data-background-image: images/title_slide.png
+  data-background-size: cover
+  data-background-repeat: no
+  data-background-position: right top

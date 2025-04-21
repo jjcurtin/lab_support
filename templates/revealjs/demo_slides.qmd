@@ -4,19 +4,6 @@ subtitle: "https://jjcurtin.quarto.pub/revealjs-demonstration-slide-deck/"
 author: "John J. Curtin, Ph.D."
 institute: "University of Wisconsin-Madison"
 date: November 15, 2024
-format: 
-  revealjs:
-    css: presentation.css
-    logo: images/uwlogo.png
-    scrollable: true
-    slide-number: false 
-    multiplex: false 
-    auto-stretch: false
-title-slide-attributes:
-  data-background-image: images/title_slide.png
-  data-background-size: cover
-  data-background-repeat: no
-  data-background-position: right top
 editor_options: 
   chunk_output_type: console
 ---

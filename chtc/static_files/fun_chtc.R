@@ -8,7 +8,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   # cv_inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
   # cv_outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
   # cv_group: specifies grouping variable for grouped cv and nested cv
-  # cv_strat: TRUE to stratify on y_col_name set in training controls
+  # cv_strat: should be variable name to stratify on. If grouping must be between-subjects variable. 
   
   if(is.null(the_seed)) {
     error("make_splits() requires a seed")
@@ -31,11 +31,15 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
       splits <- d %>% 
         group_vfold_cv(v = n_folds, repeats = n_repeats, 
                        group = all_of(cv_group)) 
-    } else if (!is.null(cv_group) & !is.null(cv_strat)) {
+    } 
+    
+    if (!is.null(cv_group) & !is.null(cv_strat)) {
       splits <- d %>% 
         group_vfold_cv(v = n_folds, repeats = n_repeats, 
                        group = all_of(cv_group), strata = all_of(cv_strat)) 
-    } else if (is.null(cv_group & is.null(cv_strat))) {
+    } 
+    
+    if (is.null(cv_group & is.null(cv_strat))) {
       splits <- d %>% 
         vfold_cv(v = n_folds, repeats = n_repeats) 
     }

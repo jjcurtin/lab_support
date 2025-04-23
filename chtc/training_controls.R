@@ -83,13 +83,13 @@ hp3_nnet <- seq(5, 30, length.out = 5) # hidden units
 
 # CHTC SPECIFIC CONTROLS------
 username <- "jjcurtin" # for setting staging directory (until we have group staging folder)
-stage_data <- TRUE
+stage_data <- TRUE # If FALSE .sif will still be staged, just not data_trn
 max_idle <- 1000
 request_cpus <- 1 
 request_memory <- "25000MB"
 request_disk <- "1600MB"
-flock <- FALSE
-glide <- FALSE
+want_campus_pools <- FALSE # previously flock
+want_ospool <- FALSE # previously glide
 
 # Batches
 # down_1: request_memory <- "24000MB", request_disk <- "1600MB" john

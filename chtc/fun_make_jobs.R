@@ -266,11 +266,11 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   write(disk_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add flock
-  flock_str <- str_c("want_campus_pools = ", flock)
+  flock_str <- str_c("want_campus_pools = ", want_campus_pools)
   write(flock_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add glide
-  glide_str <- str_c("want_ospool = ", glide)
+  glide_str <- str_c("want_ospool = ", want_ospool)
   write(glide_str, file.path(path_batch, "input", "train.sub"), append = TRUE)
   
   # add queue

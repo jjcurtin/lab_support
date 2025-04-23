@@ -41,6 +41,13 @@ nrow(out1_test) # test is good (1/10)
 out1_train |> 
   filter(subid %in% out1_test) # no subids in test in training
 
+# stratify porportions
+out1_train |> 
+  janitor::tabyl(any_lapse)
+
+out1_test |> 
+  janitor::tabyl(any_lapse)
+
 # Inner tests------
 # get inner splits for outer loop fold 1
 out1_inners <- splits$inner_resamples[[1]] 
@@ -57,3 +64,10 @@ nrow(out1_inner1_test) # test is good (1/10)
 # check subids are grouped 
 out1_inner1_train |> 
   filter(subid %in% out1_inner1_test) # no subids in test in training
+
+# stratify porportions
+out1_inner1_train |> 
+  janitor::tabyl(any_lapse)
+
+out1_inner1_test |> 
+  janitor::tabyl(any_lapse)

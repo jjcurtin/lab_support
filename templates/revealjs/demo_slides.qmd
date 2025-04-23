@@ -395,6 +395,9 @@ fig_hist
 ::::
 :::
 
+You can also `embed` a generated plot made in another qmd file, in the same way we do with notebooks on project websites. 
+
+`{{< embed notebooks/another_qmd.qmd#plot2 >}}`
 -----------------------------------------------------------------------------
 
 ## Plot sizing
@@ -455,6 +458,9 @@ You can also use the following as a slide background:
 -   A video: `background-video`
 
 -   An iframe: `background-iframe`
+
+See "Media Backgrounds 2" slide below for more examples with respect to path specification.
+
 
 ::: footer
 Learn more: [Media Backgrounds](https://quarto.org/docs/presentations/revealjs/#image-backgrounds)
@@ -546,81 +552,147 @@ Learn more: [Themes](https://quarto.org/docs/presentations/revealjs/themes.html)
 :::
 
 
-## Acknowledgements (recent projects first){.smaller}
+
+## Paths and Image Handling {.scrollable}
+
+Consider the following folder layout inside your repository:
+
+`/my_proj_root/`  
+&nbsp;&nbsp;&nbsp;`/images1/`  
+&nbsp;&nbsp;&nbsp;`/presentations/`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`presentation.qmd `  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`/images2/ `  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`/images3/  `  
+
+In a layout such as this, I will be referring to images1 as a folder "above" your presentation and images2 & 3 as a folder "below" your presentation.
+
+### Image Handling Basics {.smaller}
+
+The best way to handle images and paths in quarto presentations is twofold:
+
+1. Create a quarto project in the root folder by adding a _quarto.yml file. All it needs to contain is:
+
+```
+  project:
+    type: default
+```
+  
+This works with OR without an rProj.
+
+2. Also add `embed-resources: true` in the qmd YAML. If you don't do this, most paths above the qmd give you get a 404 error. The html output file is created, but not able to be published.
+
+
+I tried numerous other permutations of rProj, quarto project, and yaml commands, but only this combination allowed me to reference images both above and below the level of my qmd. 
+
+NB: This only refers to revealJS presentations and the `default` type quarto project. Additional testing will be needed for other output types and other project types (I discovered, for instance, that project `type:website` behaves far differently)
+  
+
+### Example image paths  {.smaller}
+
+1. Start with a forward slash `/` if you wish to refer to image paths relative from the root of the project
+
+`![](/image.png)` would be an image at root folder
+`![](/images1/image.png)` inside root/images1/ 
+`![](/presentations/image.png)` inside presentations, but not in a subfolder
+
+`![](/presentations/images2/image.png)`  inside images2 below the qmd
+`![](/presentations/images2/images/image.png)` below the qmd in a nested folder
+
+2. Omit the starting forward slash if you wish to refer to paths starting from the qmd (this only allows you to call images below the qmd)
+
+These are the same 2 images as the last 2 above, but referenced relative to the qmd rather than the project root:  
+`![](images2/image.png)` inside images2 below the qmd
+`![](images2/images3/image.png)` below the qmd in a nested folder
+
+### Other rules
+
+You CANNOT use ../ in the **body** of the slideset qmd to go up a level. This breaks the publish with a 404 error.
+
+However, you CAN use these in the **YAML**. In fact, the background image on the title slide, which is specified in the YAML, CANNOT start with a slash, and you must use ../ to get to the project root. Remember that using ../ is defining a path relative to the slideset qmd.
+
+So, `data-background-image: ../../images1/image.png` in the YAML correctly gives you an image inside root/images1/ while `data-background-image: /images1/image.png` (even though it works for that image, in the qmd body) will break the publish.
+
+
+### Media Backgrounds 2
+
+Putting this after your slide title: `{background-image=../../images1/image.png}` will give you an image background to your slide.
+
+When using slide backgrounds, you must always specify the path **relative to the qmd**. So, as on the title slide, you should now use ../ to go up to a folder above the qmd
+
+This allows you to display a background image below the qmd: `background-image=images2/image.png`
+
+This background image will be broken - it can't start with a slash: `background-image=/images/image.png`
+
+
+### References for image path handling
+
+[Relative image paths in presentations](https://github.com/quarto-dev/quarto-cli/discussions/6028)  
+[Relative links for images outside of presentation folder](https://github.com/quarto-dev/quarto-r/issues/131)
+
+
+
+
+## Acknowledgements {.smaller}
+
 ::::: {.columns}
+
 :::: {.column width="48%"}
+
 :::{style="text-align: center;"}
+
 **Co-Investigators **
+
 :::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/gustafson.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/mohr.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/kornfield.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/vanswol.png){style="margin:0 !important;" width="23%"}  
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/ammerman.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/murphy.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/shah.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/zhu.png){style="margin:0 !important;" width="23%"}  
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/brown.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/huang.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/sethares.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/alagoz){style="margin:0 !important;" width="23%"}
+
+![](/images/people/alagoz){style="margin:0 !important;" width="18%"}
+![](/images/people/ammerman.png){style="margin:0 !important;" width="18%"}
+![](/images/people/brown.png){style="margin:0 !important;" width="18%"}
+![](/images/people/gustafson.png){style="margin:0 !important;" width="18%"}
+![](/images/people/huang.png){style="margin:0 !important;" width="18%"}
+![](/images/people/kornfield.png){style="margin:0 !important;" width="18%"}
+![](/images/people/mohr.png){style="margin:0 !important;" width="18%"}
+![](/images/people/murphy.png){style="margin:0 !important;" width="18%"}
+![](/images/people/sethares.png){style="margin:0 !important;" width="18%"}
+![](/images/people/shah.png){style="margin:0 !important;" width="18%"}
+![](/images/people/vanswol.png){style="margin:0 !important;" width="18%"}
+![](/images/people/zhu.png){style="margin:0 !important;" width="18%"}  
+
 ::::
+
 :::: {.column width="24%"}
+
 :::{style="text-align: center;"}
+
 **Graduate Students**
+
 :::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wyant.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/punturieri.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/yu.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/santana.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/fronk.png){style="margin:0 !important;" width="47%"}
+
+![](/images/people/fronk.png){style="margin:0 !important;" width="36%"}
+![](/images/people/punturieri.png){style="margin:0 !important;" width="36%"}
+
+![](/images/people/santana.png){style="margin:0 !important;" width="36%"}
+![](/images/people/wyant.png){style="margin:0 !important;" width="36%"}
+
+![](/images/people/yu.png){style="margin:0 !important;" width="36%"}
+
 ::::
+
 :::: {.column width="24%"}
+
 :::{style="text-align: center;"}
+
 **Staff**
+
 :::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wanta.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/papp.png){style="margin:0 !important;" width="47%"}  
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/colmenares.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/lightheart.png){style="margin:0 !important;" width="47%"}
+
+![](/images/people/colmenares.png){style="margin:0 !important;" width="36%"}
+![](/images/people/lightheart.png){style="margin:0 !important;" width="36%"}
+
+![](/images/people/papp.png){style="margin:0 !important;" width="36%"}
+![](/images/people/wanta.png){style="margin:0 !important;" width="36%"}
+
 ::::
+
 :::::
-## Acknowledgements (alphabetized) {.smaller}
-::::: {.columns}
-:::: {.column width="48%"}
-:::{style="text-align: center;"}
-**Co-Investigators **
-:::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/alagoz){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/ammerman.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/brown.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/gustafson.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/huang.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/kornfield.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/mohr.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/murphy.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/sethares.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/shah.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/vanswol.png){style="margin:0 !important;" width="23%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/zhu.png){style="margin:0 !important;" width="23%"}  
-::::
-:::: {.column width="24%"}
-:::{style="text-align: center;"}
-**Graduate Students**
-:::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/fronk.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/punturieri.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/santana.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wyant.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/yu.png){style="margin:0 !important;" width="47%"}
-::::
-:::: {.column width="24%"}
-:::{style="text-align: center;"}
-**Staff**
-:::
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/colmenares.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/lightheart.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/papp.png){style="margin:0 !important;" width="47%"}
-![](https://raw.githubusercontent.com/jjcurtin/slide_decks/refs/heads/main/images/people/wanta.png){style="margin:0 !important;" width="47%"}
-::::
-:::::
+
+

@@ -39,7 +39,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
                        group = all_of(cv_group), strata = all_of(cv_strat)) 
     } 
     
-    if (is.null(cv_group & is.null(cv_strat))) {
+    if (is.null(cv_group) & is.null(cv_strat)) {
       splits <- d %>% 
         vfold_cv(v = n_folds, repeats = n_repeats) 
     }

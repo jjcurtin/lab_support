@@ -11,33 +11,11 @@ source(here::here(path, "fun_chtc.R"))
 d <- read_csv(here::here(path, "data_trn.csv"),
               show_col_types = FALSE)
 
-n_lapses_10 <- d |> 
-  filter(lapse == "yes") |> 
-  group_by(subid) |> 
-  count() |> 
-  filter(n >= 10)
 
-n_lapses_1 <- d |> 
-  filter(lapse == "yes") |> 
-  group_by(subid) |> 
-  count() |> 
-  filter(n < 10)
-
-format_data <- function (df){
-  
-  df |> 
-    rename(y = !!y_col_name) |> 
-    mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), # set pos class first
-           across(where(is.character), factor)) |>
-    select(-c(dttm_label)) |> 
-    mutate(n_lapse = case_when(subid %in% n_lapses_10$subid ~ 3,
-                               subid %in% n_lapses_1$subid ~ 2,
-                               TRUE ~ 1))
-}
 
 d <- format_data(d)  
 
-janitor::tabyl(d$n_lapse)
+janitor::tabyl(d$any_lapse)
 
 
 # Create nested outer splits object
@@ -67,10 +45,10 @@ out1_train |>
 
 # stratify porportions
 out1_train |> 
-  janitor::tabyl(n_lapse)
+  janitor::tabyl(any_lapse)
 
 out1_test |> 
-  janitor::tabyl(n_lapse)
+  janitor::tabyl(any_lapse)
 
 # Inner tests------
 # get inner splits for outer loop fold 1
@@ -91,7 +69,7 @@ out1_inner1_train |>
 
 # stratify porportions
 out1_inner1_train |> 
-  janitor::tabyl(n_lapse)
+  janitor::tabyl(any_lapse)
 
 out1_inner1_test |> 
-  janitor::tabyl(n_lapse)
+  janitor::tabyl(any_lapse)

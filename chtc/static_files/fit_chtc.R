@@ -43,7 +43,7 @@ if (str_detect(fn, ".rds")) {
   d <- read_csv(fn, show_col_types = FALSE) # supports both csv and tsv formats
 }
 
-# Format data------------------------
+# Format data-----------------------
 # change column classes, rename Y, etc
 # This is a custom/study specific function that exists in training_controls
 d <- format_data(d)  
@@ -52,7 +52,7 @@ d <- format_data(d)
 # Create nested outer splits object ---------------
 splits <- d %>% 
   make_splits(cv_resample_type, cv_resample, cv_outer_resample, 
-              cv_inner_resample, cv_group, cv_strat = stratify,
+              cv_inner_resample, cv_group, cv_strat = cv_strat,
               the_seed = seed_splits)
 
 

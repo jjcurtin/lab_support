@@ -38,9 +38,10 @@ cv_resample = NULL # can be repeats_x_folds (e.g., 1_x_10, 10_x_10) or number of
 cv_inner_resample <- "3_x_10" # can also be a single number for bootstrapping (i.e., 100)
 cv_outer_resample <- "3_x_10" # outer resample will always be kfold
 cv_group <- "subid" # set to NULL if not grouping
-stratify <- NULL # set to NULL if not stratifying - this needs to be constant within grouping variable
+cv_strat <- NULL # set to NULL if not stratifying - this needs to be constant within grouping variable
 # for example it could be if a participant has any lapse on study vs no lapse on study
-# stratify variable can be added to format_data function in training_controls, example shown below
+# stratify variable can be added to format_data function in training_controls, example shown below in recipe
+# IMPORTANT - NEED TO REMOVE STRATIFY VARIABLE FROM DATA IN RECIPE
 
 cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_inner_resample, "_",

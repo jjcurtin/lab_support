@@ -67,21 +67,16 @@ splits <- d %>%
 #   out1_train <- training(splits$splits[[1]]) 
 #   out1_test <- testing(splits$splits[[1]])
 
-## Check sample sizes reflect 10-fold
-#  nrow(d)/10 # 1 fold of 10-fold should be roughly 1203
-#  nrow(out1_train) # train is good (9/10)
-#  nrow(out1_test) # test is good (1/10)
-
 ## check subids are grouped 
 #  out1_train |> 
 #    filter(subid %in% out1_test) # no subids in test in training
 
 ## check stratify porportions
-#  out1_train |> 
-#    janitor::tabyl(cv_strat)
+# out1_train |>
+#   janitor::tabyl(all_of(cv_strat))
 
-#  out1_test |> 
-#    janitor::tabyl(cv_strat)
+# out1_test |>
+#   janitor::tabyl(all_of(cv_strat))
 
 ## Inner tests------
 ## get inner splits for outer loop fold 1
@@ -91,21 +86,16 @@ splits <- d %>%
 #  out1_inner1_train <- training(out1_inners$splits[[1]]) 
 #  out1_inner1_test <- testing(out1_inners$splits[[1]]) 
 
-## Check sample sizes reflect 10-fold
-#  nrow(out1_train)/10 # 1 fold of 10-fold should be roughly 1077
-#  nrow(out1_inner1_train) # train is good (9/10)
-#  nrow(out1_inner1_test) # test is good (1/10)
-
 # check subids are grouped 
 #  out1_inner1_train |> 
 #    filter(subid %in% out1_inner1_test) # no subids in test in training
 
 # check stratify porportions
 #  out1_inner1_train |> 
-#    janitor::tabyl(cv_strat)
+#    janitor::tabyl(all_of(cv_strat))
 
 #  out1_inner1_test |> 
-#    janitor::tabyl(cv_strat)
+#    janitor::tabyl(all_of(cv_strat))
 
 
 # function to fit and evaluate a model configuration from configs

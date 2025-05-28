@@ -42,6 +42,8 @@ cv_strat <- NULL # set to NULL if not stratifying - this needs to be constant wi
 # for example it could be if a participant has any lapse on study vs no lapse on study
 # stratify variable can be added to format_data function in training_controls, example shown below in recipe
 # IMPORTANT - NEED TO REMOVE STRATIFY VARIABLE FROM DATA IN RECIPE
+cv_strat_file_name <- "lapse_strat_ema.csv" # assumes this is located in path_data defined below 
+# set to NULL if not stratifying
 
 cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_inner_resample, "_",
@@ -100,19 +102,29 @@ want_ospool <- FALSE # previously glide
 # down_3:
 
 # FORMAT DATA------
-format_data <- function (df){
+format_data <- function (df, lapse_strat = NULL){
   
-  df %>% 
-    rename(y = !!y_col_name) %>% 
-    mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), # set pos class first
-           across(where(is.character), factor)) %>%
-    select(-label_num, -dttm_label)
-  # for stratifying could add:
-  # mutate(any_lapse = if_else(subid %in% subset(df, lapse == "yes")$subid, "yes", "no"),
-  #        any_lapse = factor(any_lapse))
-  # Now include additional mutates to change classes for columns as needed
-  # see https://jjcurtin.github.io/dwt/file_and_path_management.html#using-a-separate-mutate
+  if(!is.null(lapse_strat)) {
+    df |> 
+      rename(y = !!y_col_name) |> 
+      # set pos class first
+      mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
+             across(where(is.character), factor)) |>
+      select(-c(dttm_label)) |> 
+      left_join(lapse_strat |> 
+                  select(subid, cv_strat), by = "subid")
+  }
+  
+  if(is.null(lapse_strat)) {
+    df |> 
+      rename(y = !!y_col_name) |> 
+      # set pos class first
+      mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
+             across(where(is.character), factor)) |>
+      select(-c(dttm_label)) 
+  }
 }
+
 
 
 # BUILD RECIPE------
@@ -134,7 +146,7 @@ build_recipe <- function(d, config) {
   
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) %>%
-    step_rm(subid) %>%
+    step_rm(subid, label_num, matches(cv_strat)) %>% # be sure to remove strat variable if stratifying
     step_zv(all_predictors()) %>% 
     step_impute_median(all_numeric_predictors()) %>% 
     step_impute_mode(all_nominal_predictors()) 

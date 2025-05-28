@@ -4,3 +4,5 @@
 .Ruserdata
 lab_support.Rproj
 templates/revealjs/revealjs.Rproj
+.DS_Store
+chtc/.DS_Store

@@ -195,7 +195,18 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                           overwrite = overwrite_batch)
   if (!check_copy) {
     stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
+  }
+  
+  # copy strat data file if stratifying
+  if(!is.null(cv_strat)) {
+    check_copy <- file.copy(from = file.path(path_data, cv_strat_file_name),
+                            to = file.path(path_batch, "input/lapse_strat.csv"),
+                            overwrite = overwrite_batch)
+    if (!check_copy) {
+      stop("lapse_strat.csv not copied to input folder. Check path_data and cv_strat_file_name in training controls.")
     }
+    
+  }
 
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),
@@ -242,9 +253,21 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # add files to transfer
   if(stage_data == FALSE) {
-    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
-  } else {
-    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
+    if(!is.null(cv_strat)) {
+      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn, ", lapse_strat.csv")
+    }
+    if(is.null(cv_strat)) {
+      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
+    }
+  } 
+  
+  if(stage_data == TRUE) {
+    if(!is.null(cv_strat)) {
+      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn, ", lapse_strat.csv")
+    }
+    if(is.null(cv_strat)) {
+      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
+    }
   }
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)

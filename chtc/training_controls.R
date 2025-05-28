@@ -42,8 +42,8 @@ cv_strat <- NULL # set to NULL if not stratifying - this needs to be constant wi
 # for example it could be if a participant has any lapse on study vs no lapse on study
 # stratify variable can be added to format_data function in training_controls, example shown below in recipe
 # IMPORTANT - NEED TO REMOVE STRATIFY VARIABLE FROM DATA IN RECIPE
-cv_strat_file_name <- "lapse_strat_ema.csv" # assumes this is located in path_data defined below 
-# set to NULL if not stratifying
+cv_strat_file_name <- "lapse_strat.csv" # This file is in the shared path_data and contains all EMA subids
+# we left join strat variables so all studies with smaller samples can still use it
 
 cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_inner_resample, "_",
@@ -105,26 +105,27 @@ want_ospool <- FALSE # previously glide
 format_data <- function (df, lapse_strat = NULL){
   
   if(!is.null(lapse_strat)) {
-    df |> 
+    df <- df |> 
       rename(y = !!y_col_name) |> 
       # set pos class first
       mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
              across(where(is.character), factor)) |>
       select(-c(dttm_label)) |> 
       left_join(lapse_strat |> 
-                  select(subid, cv_strat), by = "subid")
+                  select(subid, all_of(cv_strat)), by = "subid")
   }
   
   if(is.null(lapse_strat)) {
-    df |> 
+    df <- df |> 
       rename(y = !!y_col_name) |> 
       # set pos class first
       mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
              across(where(is.character), factor)) |>
       select(-c(dttm_label)) 
   }
+  
+  return(df)
 }
-
 
 
 # BUILD RECIPE------

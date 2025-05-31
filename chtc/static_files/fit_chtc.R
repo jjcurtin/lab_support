@@ -46,6 +46,8 @@ if (str_detect(fn, ".rds")) {
 # Read in lapse_strat.csv if stratifying
 if(!is.null(cv_strat)) {
   lapse_strat <- read_csv("lapse_strat.csv", show_col_types = FALSE)
+} else {
+  lapse_strat <- NULL
 }
 
 # Format data-----------------------

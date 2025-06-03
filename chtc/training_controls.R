@@ -146,8 +146,15 @@ build_recipe <- function(d, config) {
   }
   
   # Set recipe steps generalizable to all model configurations
-  rec <- recipe(y ~ ., data = d) %>%
-    step_rm(subid, label_num, matches(cv_strat)) %>% # be sure to remove strat variable if stratifying
+  rec <- recipe(y ~ ., data = d) |> 
+    step_rm(subid, label_num, matches(cv_strat)) # be sure to remove strat variable if stratifying
+  
+  if(!is.null(cv_strat)) {
+    rec <- rec |> 
+      step_rm(matches(cv_strat)) # remove strat variable
+  }
+  
+  rec <- rec %>%
     step_zv(all_predictors()) %>% 
     step_impute_median(all_numeric_predictors()) %>% 
     step_impute_mode(all_nominal_predictors()) 

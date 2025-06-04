@@ -1,6 +1,8 @@
 # Training controls for EMA study
 
 # FORMAT PATH FUNCTION------
+library(stringr)
+library(dplyr)
 source("https://github.com/jjcurtin/lab_support/blob/main/format_path.R?raw=true")
 
 # SET GLOBAL PARAMETERS------

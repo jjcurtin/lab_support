@@ -1,5 +1,5 @@
 make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resample = NULL, 
-                        cv_inner_resample = NULL, cv_group = NULL, cv_strat = NULL,
+                        cv_inner_resample = NULL, cv_group = NULL, cv_strat = FALSE,
                         the_seed = NULL) {
   
   # d: (training) dataset to be resampled 
@@ -27,19 +27,19 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
     n_repeats <- as.numeric(str_remove(cv_resample, "_x_\\d{1,2}"))
     n_folds <- as.numeric(str_remove(cv_resample, "\\d{1,3}_x_"))
     
-    if (!is.null(cv_group) & is.null(cv_strat)) {
+    if (!is.null(cv_group) & cv_strat == FALSE) {
       splits <- d %>% 
         group_vfold_cv(v = n_folds, repeats = n_repeats, 
                        group = all_of(cv_group)) 
     } 
     
-    if (!is.null(cv_group) & !is.null(cv_strat)) {
+    if (!is.null(cv_group) & cv_strat == TRUE) {
       splits <- d %>% 
         group_vfold_cv(v = n_folds, repeats = n_repeats, 
-                       group = all_of(cv_group), strata = all_of(cv_strat)) 
+                       group = all_of(cv_group), strata = strat) 
     } 
     
-    if (is.null(cv_group) & is.null(cv_strat)) {
+    if (is.null(cv_group) & cv_strat == FALSE) {
       splits <- d %>% 
         vfold_cv(v = n_folds, repeats = n_repeats) 
     }
@@ -62,21 +62,21 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
 
     
     # create splits for grouped nested cv (requires inner and outer to be kfold)
-    if (!is.null(cv_group) & !is.null(cv_strat)) {
+    if (!is.null(cv_group) & cv_strat == TRUE) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
         group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, 
-                       group = all_of(cv_group), strata = all_of(cv_strat))
+                       group = all_of(cv_group), strata = strat)
       
       splits <- d %>% 
         nested_cv(outside = outer_grouped_kfold, 
                   inside = group_vfold_cv(v = inner_n_folds, 
                                           repeats = inner_n_repeats, 
                                           group = all_of(cv_group),
-                                          strata = all_of(cv_strat)))
+                                          strata = strat))
     } 
     
-    if (!is.null(cv_group) & is.null(cv_strat)) {
+    if (!is.null(cv_group) & cv_strat == FALSE) {
       # needed to create outer folds outside of nested_cv for some unknown reason!
       outer_grouped_kfold <- d %>% 
         group_vfold_cv(v = outer_n_folds, repeats = outer_n_repeats, 

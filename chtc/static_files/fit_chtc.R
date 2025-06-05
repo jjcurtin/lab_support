@@ -43,17 +43,11 @@ if (str_detect(fn, ".rds")) {
   d <- read_csv(fn, show_col_types = FALSE) # supports both csv and tsv formats
 }
 
-# Read in lapse_strat.csv if stratifying
-if(!is.null(cv_strat)) {
-  lapse_strat <- read_csv("lapse_strat.csv", show_col_types = FALSE)
-} else {
-  lapse_strat <- NULL
-}
 
 # Format data-----------------------
 # change column classes, rename Y, etc
 # This is a custom/study specific function that exists in training_controls
-d <- format_data(d, lapse_strat)  
+d <- format_data(d)  
 
 
 # Create nested outer splits object ---------------

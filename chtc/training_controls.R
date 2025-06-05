@@ -25,7 +25,7 @@ resample <- c("down_3")
 
 # DATA, SPLITS AND OUTCOME------
 feature_set <- c("all") # EMA Features set names
-data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") # Set to NULL if staging
+data_trn <- str_c("features_",  window, "_", lead, "_", version, ".csv.xz") 
 seed_splits <- 102030
 
 ml_mode <- "classification"   # regression or classification
@@ -40,12 +40,8 @@ cv_resample = NULL # can be repeats_x_folds (e.g., 1_x_10, 10_x_10) or number of
 cv_inner_resample <- "3_x_10" # can also be a single number for bootstrapping (i.e., 100)
 cv_outer_resample <- "3_x_10" # outer resample will always be kfold
 cv_group <- "subid" # set to NULL if not grouping
-cv_strat <- NULL # set to NULL if not stratifying - this needs to be constant within grouping variable
-# for example it could be if a participant has any lapse on study vs no lapse on study
-# stratify variable can be added to format_data function in training_controls, example shown below in recipe
-# IMPORTANT - NEED TO REMOVE STRATIFY VARIABLE FROM DATA IN RECIPE
-cv_strat_file_name <- "lapse_strat.csv" # This file is in the shared path_data and contains all EMA subids
-# we left join strat variables so all studies with smaller samples can still use it
+cv_strat <- TRUE # set to FALSE if not stratifying - If TRUE you must have a strat variable in your data
+# IMPORTANT - NEED TO REMOVE STRATIFY VARIABLE FROM DATA IN RECIPE - See Recipe below for example code
 
 cv_name <- if_else(cv_resample_type == "nested",
                    str_c(cv_resample_type, "_", cv_inner_resample, "_",
@@ -106,25 +102,12 @@ want_ospool <- FALSE # previously glide
 # FORMAT DATA------
 format_data <- function (df, lapse_strat = NULL){
   
-  if(!is.null(lapse_strat)) {
-    df <- df |> 
-      rename(y = !!y_col_name) |> 
-      # set pos class first
-      mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
-             across(where(is.character), factor)) |>
-      select(-c(dttm_label)) |> 
-      left_join(lapse_strat |> 
-                  select(subid, all_of(cv_strat)), by = "subid")
-  }
-  
-  if(is.null(lapse_strat)) {
-    df <- df |> 
+  df <- df |> 
       rename(y = !!y_col_name) |> 
       # set pos class first
       mutate(y = factor(y, levels = c(!!y_level_pos, !!y_level_neg)), 
              across(where(is.character), factor)) |>
       select(-c(dttm_label)) 
-  }
   
   return(df)
 }
@@ -151,40 +134,40 @@ build_recipe <- function(d, config) {
   rec <- recipe(y ~ ., data = d) |> 
     step_rm(subid, label_num, matches(cv_strat)) # be sure to remove strat variable if stratifying
   
-  if(!is.null(cv_strat)) {
+  if(cv_strat) {
     rec <- rec |> 
-      step_rm(matches(cv_strat)) # remove strat variable
+      step_rm(strat) # remove strat variable
   }
   
-  rec <- rec %>%
-    step_zv(all_predictors()) %>% 
-    step_impute_median(all_numeric_predictors()) %>% 
+  rec <- rec |>
+    step_zv(all_predictors()) |> 
+    step_impute_median(all_numeric_predictors()) |> 
     step_impute_mode(all_nominal_predictors()) 
 
   
   # resampling options for unbalanced outcome variable
   if (resample == "down") {
     # under_ratio = ratio.  No conversion needed
-    rec <- rec %>% 
+    rec <- rec |> 
       themis::step_downsample(y, under_ratio = ratio, seed = 10) 
   }
   
   if (resample == "smote") {
     # correct ratio to over_ratio
-    rec <- rec %>% 
+    rec <- rec |> 
       themis::step_smote(y, over_ratio = 1 / ratio, seed = 10) 
   }
   
   if (resample == "up") {
     # correct ratio to over_ratio
-    rec <- rec %>% 
+    rec <- rec |> 
       themis::step_upsample(y, over_ratio = 1 / ratio, seed = 10)
   }
   
   # algorithm specific steps
   if (algorithm == "glmnet") {
-    rec <- rec  %>%
-      step_dummy(all_nominal_predictors()) %>%
+    rec <- rec  |>
+      step_dummy(all_nominal_predictors()) |>
       step_normalize(all_predictors())
   } 
   
@@ -193,14 +176,14 @@ build_recipe <- function(d, config) {
   } 
   
   if (algorithm == "xgboost") {
-    rec <- rec  %>% 
+    rec <- rec  |> 
       step_dummy(all_nominal_predictors())
   } 
   
   # final steps for all algorithms
-  rec <- rec %>%
+  rec <- rec |>
     # drop columns with NA values after imputation (100% NA)
-    step_select(where(~ !any(is.na(.)))) %>%
+    step_select(where(~ !any(is.na(.)))) |>
     step_nzv()
   
   return(rec)

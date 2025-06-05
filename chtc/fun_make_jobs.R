@@ -253,21 +253,11 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # add files to transfer
   if(stage_data == FALSE) {
-    if(!is.null(cv_strat)) {
-      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn, ", lapse_strat.csv")
-    }
-    if(is.null(cv_strat)) {
-      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
-    }
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif,", fn)
   } 
   
   if(stage_data == TRUE) {
-    if(!is.null(cv_strat)) {
-      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn, ", lapse_strat.csv")
-    }
-    if(is.null(cv_strat)) {
-      transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
-    }
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/train.sif, osdf:///chtc/staging/", username, "/", fn)
   }
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)

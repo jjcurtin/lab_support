@@ -69,10 +69,10 @@ splits <- d %>%
 
 ## check stratify porportions
 # out1_train |>
-#   janitor::tabyl(all_of(cv_strat))
+#   janitor::tabyl(strat)
 
 # out1_test |>
-#   janitor::tabyl(all_of(cv_strat))
+#   janitor::tabyl(strat)
 
 ## Inner tests------
 ## get inner splits for outer loop fold 1
@@ -87,11 +87,11 @@ splits <- d %>%
 #    filter(subid %in% out1_inner1_test) # no subids in test in training
 
 # check stratify porportions
-#  out1_inner1_train |> 
-#    janitor::tabyl(all_of(cv_strat))
+# out1_inner1_train |>
+#   janitor::tabyl(strat)
 
-#  out1_inner1_test |> 
-#    janitor::tabyl(all_of(cv_strat))
+# out1_inner1_test |>
+#   janitor::tabyl(strat)
 
 
 # function to fit and evaluate a model configuration from configs

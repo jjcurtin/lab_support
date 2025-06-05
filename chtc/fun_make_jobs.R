@@ -196,17 +196,7 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   if (!check_copy) {
     stop("data_trn not copied to input folder. Check path_data and data_trn (file name) in training controls.")
   }
-  
-  # copy strat data file if stratifying
-  if(!is.null(cv_strat)) {
-    check_copy <- file.copy(from = file.path(path_data, cv_strat_file_name),
-                            to = file.path(path_batch, "input/lapse_strat.csv"),
-                            overwrite = overwrite_batch)
-    if (!check_copy) {
-      stop("lapse_strat.csv not copied to input folder. Check path_data and cv_strat_file_name in training controls.")
-    }
-    
-  }
+
 
   # copy study specific training_controls to input folder 
   check_copy <- file.copy(from = file.path(path_training_controls),

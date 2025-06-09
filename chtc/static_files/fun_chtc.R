@@ -508,7 +508,7 @@ make_config_features <- function(config, splits, rec, cv_resample_type) {
   
   # make prepped recipe
   rec_prepped <- rec |> 
-    prep(training = d_in, strings_as_factors = FALSE)
+    prep(training = d_in)
   
   # make feature matrices
   feat_in <- rec_prepped %>% 

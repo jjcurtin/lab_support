@@ -132,7 +132,7 @@ build_recipe <- function(d, config) {
   
   # Set recipe steps generalizable to all model configurations
   rec <- recipe(y ~ ., data = d) |> 
-    step_rm(subid, label_num, matches(cv_strat)) # be sure to remove strat variable if stratifying
+    step_rm(subid, label_num)
   
   if(cv_strat) {
     rec <- rec |> 

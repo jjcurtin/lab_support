@@ -183,7 +183,7 @@ build_recipe <- function(d, config) {
   # final steps for all algorithms
   rec <- rec |>
     # drop columns with NA values after imputation (100% NA)
-    step_select(where(~ !any(is.na(.)))) |>
+    step_rm(where(~any(is.na(.)))) |>
     step_nzv()
   
   return(rec)

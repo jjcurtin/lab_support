@@ -215,24 +215,20 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     stop("train.sh not copied to input folder.")
   }
 
-  # copy train.sh to input folder 
+  # copy fun_chtc.R to input folder 
   check_copy <- file.copy(from = here::here(path_chtc, "fun_chtc.R"),
                           to = file.path(path_batch, "input", "fun_chtc.R"),
                           overwrite = overwrite_batch) 
   if (!check_copy) {
-    stop("train.sh not copied to input folder.")
+    stop("fun_cthc.R not copied to input folder.")
   }
 
-  # copy static R and unix chtc files to input folder 
-  check_copy <- file.copy(from = here::here(path_chtc, "static_files", 
-                                           c(list.files(here::here(path_chtc, "static_files")))),
-                          to = here::here(path_batch, "input"),
-                          recursive = TRUE,
+  # copy fit_chtc.R to input folder 
+  check_copy <- file.copy(from = here::here(path_chtc, "fit_chtc.R"),
+                          to = file.path(path_batch, "input", "fit_chtc.R"),
                           overwrite = overwrite_batch) 
-  for (i in 1:length(check_copy)) {
-    if (check_copy[i] == FALSE) {
-      stop("Not all static files copied to input folder. Make sure you are running mak_jobs in an R project.")
-    }
+  if (!check_copy) {
+    stop("fit_cthc.R not copied to input folder.")
   }
   
   # create submit file from training controls -----------------

@@ -140,7 +140,6 @@ build_recipe <- function(d, config) {
   }
   
   rec <- rec |>
-    step_zv(all_predictors()) |> 
     step_impute_median(all_numeric_predictors()) |> 
     step_impute_mode(all_nominal_predictors()) 
 
@@ -168,6 +167,7 @@ build_recipe <- function(d, config) {
   if (algorithm == "glmnet") {
     rec <- rec  |>
       step_dummy(all_nominal_predictors()) |>
+      step_zv(all_predictors()) |> 
       step_normalize(all_predictors())
   } 
   

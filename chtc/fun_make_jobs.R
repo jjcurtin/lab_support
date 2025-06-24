@@ -1,9 +1,10 @@
 make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
+
   # read in study specific controls
   source(path_training_controls)
   
   # relative paths should work from any repo project if a local copy of lab_support exists
-  path_chtc <- "../lab_support/chtc"
+  path_chtc <- "../lab_support/chtc/static_files"
   
   
   # Get split indices from cv resample parameters
@@ -206,10 +207,26 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
     stop("Training controls not copied to input folder. Check path_training_controls in mak_jobs.")
   }
   
+  # copy train.sh to input folder 
+  check_copy <- file.copy(from = here::here(path_chtc, "train.sh"),
+                          to = file.path(path_batch, "input", "train.sh"),
+                          overwrite = overwrite_batch) 
+  if (!check_copy) {
+    stop("train.sh not copied to input folder.")
+  }
+
+  # copy train.sh to input folder 
+  check_copy <- file.copy(from = here::here(path_chtc, "fun_chtc.R"),
+                          to = file.path(path_batch, "input", "fun_chtc.R"),
+                          overwrite = overwrite_batch) 
+  if (!check_copy) {
+    stop("train.sh not copied to input folder.")
+  }
+
   # copy static R and unix chtc files to input folder 
-  check_copy <- file.copy(from = file.path(path_chtc, "static_files", 
-                                           c(list.files(file.path(path_chtc, "static_files")))),
-                          to = file.path(path_batch, "input"),
+  check_copy <- file.copy(from = here::here(path_chtc, "static_files", 
+                                           c(list.files(here::here(path_chtc, "static_files")))),
+                          to = here::here(path_batch, "input"),
                           recursive = TRUE,
                           overwrite = overwrite_batch) 
   for (i in 1:length(check_copy)) {

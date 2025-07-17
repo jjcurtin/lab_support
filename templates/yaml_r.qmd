@@ -16,23 +16,18 @@ editor_options:
 
 # Setup 
 ```{r}
-#| messages: false
-#| warnings: false
+#| output: false
 
 # packages
-options(conflicts.policy = "depends.ok")
 library(tidyverse)
+options(conflicts.policy = "depends.ok")
 
 # source  
-devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/
-                     format_path.R?raw=true",
-                     sha1 = "a58e57da996d1b70bb9a5b58241325d6fd78890f")
-devtools::source_url("https://github.com/jjcurtin/lab_support/blob/main/
-                     my_skim.R?raw=true",
-                     sha1 = "839a13530805f9d28f407483a18b7e3368389fe7")
+source("https://github.com/jjcurtin/lab_support/blob/main/format_path.R?raw=true")
+source("https://github.com/jjcurtin/lab_support/blob/main/my_skim.R?raw=true")
 
 # paths
-path_data <- format_path("studydata/")
+path_data <- format_path("optimize")
 
 # options
 theme_set(theme_classic()) 

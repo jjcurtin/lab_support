@@ -25,10 +25,16 @@ options(conflicts.policy = "depends.ok")
 # source  
 source("https://github.com/jjcurtin/lab_support/blob/main/format_path.R?raw=true")
 source("https://github.com/jjcurtin/lab_support/blob/main/my_skim.R?raw=true")
+source("https://github.com/jjcurtin/lab_support/blob/main/fun_eda.R?raw=true")
 
 # paths
-path_data <- format_path("optimize")
+path_data <- format_path("concepts_exam")
 
 # options
 theme_set(theme_classic()) 
 ```
+
+```{r}
+d <- read_csv(format_path(path_data, "data.csv"))
+```
+

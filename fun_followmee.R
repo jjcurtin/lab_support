@@ -79,7 +79,10 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   
   data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
     .$Data %>% 
-    as_tibble() %>% 
+    as_tibble() 
+  
+  if (nrow(data) > 0){
+    data <- data |>
     rename(date_chr = Date, lat = Latitude, lon = Longitude, type = Type,
            speed_mph = `Speed(mph)`, direction = Direction,
            altitude_ft = `Altitude(ft)`, accuracy = Accuracy) %>% 
@@ -91,6 +94,9 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     mutate(subid = as.numeric(subid), DeviceName = as.numeric(DeviceName), DeviceID = as.numeric(DeviceID))
   
   return(data)
+  } else {
+      print(str_c("No GPS for ", subid))
+    }
 }
 
 update_followmee_data <- function(past_data, creds) {

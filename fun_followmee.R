@@ -85,7 +85,9 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     
     print(str_c("No GPS for ", subid))
     
-    data = tibble()
+    data <- tibble()
+    
+    return(data)
     
   } else {
      
@@ -101,12 +103,10 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
       relocate(date_chr, .after = last_col()) |>
       mutate(subid = as.numeric(subid), DeviceName = as.numeric(DeviceName), DeviceID = as.numeric(DeviceID))
     
-
+    return(data)
     
     }
-  return(data)
-  
-  }
+}
 
 update_followmee_data <- function(past_data, creds) {
 # Binds up to past 14 days of new location data to an existing tibble of 

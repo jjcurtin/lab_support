@@ -340,9 +340,34 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 #   return(dTarget)
 # }
 
+# 2025_0515: Susan modified this from the draft code and John's lookup_address() function 
+lookup_coords <- function(housenumber, street, city, state, zip, country, provider = "photon", api = NULL) {
 
-lookup_coords <- function() {
-
+  
+  #check inputs
+  if (missing(housenumber)) stop("Must provide housenumber")
+  if (missing(street)) stop("Must provide street")
+  if (missing(city)) stop("Must provide city")
+  if (missing(state)) stop("Must provide state")
+  if (missing(zip)) stop("Must provide zip")
+  if (missing(country)) stop("Must provide country")
+  
+  provider <- tolower(provider)
+  if (!(provider %in% c("photon", "google"))) stop("provider must be photon or google")
+  if (provider == "google" && is.null(api)) stop("Must provide api if provider == google")
+  
+  # functions
+  get_response <- function(url, provider){
+    response <- httr::GET(url)
+    
+    if (response$status_code != 200L) {
+      stop("Error: status_code = ", response$status_code)
+    } else {
+      response <- httr::content(response)
+    }
+  }
+  
+  
 # JJC grabbed from web as model
 
   # Geocoding script for large list of addresses.

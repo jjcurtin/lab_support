@@ -87,7 +87,8 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     mutate(date = as_datetime(date_chr),
            subid = subid) %>% 
     relocate(subid, date) %>% 
-    relocate(date_chr, .after = last_col())
+    relocate(date_chr, .after = last_col()) |>
+    mutate(subid = as.numeric(subid))
   
   return(data)
 }

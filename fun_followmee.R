@@ -100,7 +100,7 @@ update_followmee_data <- function(past_data, creds) {
   subid <- past_data$subid[[1]]
   
   data <- get_followmee_data(subid = subid, creds = creds, n_days = 7) %>% 
-    bind_rows(past_data %>% mutate(date_chr = as.character(date_chr), subid = as.character(subid))) %>% 
+    bind_rows(past_data) %>% 
     distinct(subid, date, lat, lon, .keep_all = TRUE) %>% 
     arrange(date)
 }

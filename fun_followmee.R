@@ -88,7 +88,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
            subid = subid) %>% 
     relocate(subid, date) %>% 
     relocate(date_chr, .after = last_col()) |>
-    mutate(subid = as.numeric(subid), device_name = as.numeric(device_name))
+    mutate(subid = as.numeric(subid), DeviceName = as.numeric(DeviceName), DeviceID = as.numeric(DeviceID))
   
   return(data)
 }

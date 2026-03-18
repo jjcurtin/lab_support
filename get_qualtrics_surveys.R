@@ -12,11 +12,9 @@ get_qualtrics_surveys <- function(api_token,
                            "API/v3/surveys/",
                            "/API/v3/surveys/"))
 
-
-  
     
   #construct headers
-    this_header = c(
+    this_header  <-  c(
       "X-API-TOKEN" = api_token,
       "Content-Type" = "application/octet-stream",
       "Accept" = "application/json",
@@ -25,13 +23,11 @@ get_qualtrics_surveys <- function(api_token,
 
     
   # Send request to qualtrics API (httr functions)
-  res = httr::VERB("GET",
+  res <-  httr::VERB("GET",
                url = root_url,
                add_headers(this_header),
                body = NULL)
   
-  next_page <- content(res)$result$next_page
-    
   results <- content(res)$result$elements |>
     enframe()
  
@@ -41,8 +37,33 @@ get_qualtrics_surveys <- function(api_token,
    unnest_wider(value, names_sep = "_") |> 
    select(value_id, value_name, creation_date = value_creationDate)
   
-
-  this_survey <- str_c(subid, survey_name)  
+ # it can only get 100 surveys at a time, so to get them all we'll need to run a loop based on what next page offset is returned
+ next_offset <- content(res)$result$nextPage |> str_extract("\\d{3}")
  
-   return(id)
+ while (length(next_offset) != 0) {
+   
+  print(str_c("looping for offset: ", next_offset)) 
+  temp_res <-  httr::VERB("GET",
+                         url = str_c(root_url, "?offset=", next_offset),
+                         add_headers(this_header),
+                         body = NULL)
+   
+  temp_results <- content(temp_res)$result$elements |>
+     enframe()
+   
+   temp_list <-  temp_results$value |> 
+     enframe() |> 
+     unnest_wider(value, names_sep = "_") |> 
+     select(value_id, value_name, creation_date = value_creationDate)
+   
+   surveylist <- rbind(temp_list, surveylist)
+  
+   next_offset <- content(temp_res)$result$nextPage |> str_extract("\\d{3}")
+   
+    
+ }
+ 
+ 
+ 
+   return(surveylist)
 }

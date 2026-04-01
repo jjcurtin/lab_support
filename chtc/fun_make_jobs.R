@@ -254,11 +254,11 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
   
   # add files to transfer
   if(stage_data == FALSE) {
-    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, fn)
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, ", fn)
   } 
   
   if(stage_data == TRUE) {
-    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/", fn)
+    transfer_files_str <- str_c("transfer_input_files = fun_chtc.R, fit_chtc.R, training_controls.R, configs.csv, job_nums.csv, osdf:///chtc/staging/", username, "/, ", fn)
   }
   
   write(transfer_files_str, file.path(path_batch, "input", "train.sub"), append = TRUE)

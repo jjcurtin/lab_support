@@ -172,8 +172,8 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   
   
   if (config$algorithm == "glmnet") {
-    grid_penalty <- expand_grid(penalty = exp(seq(hp2_glmnet_min, hp2_glmnet_max, 
-                                                  length.out = hp2_glmnet_out)))
+    grid_penalty <- expand_grid(penalty = c(0, exp(seq(hp2_glmnet_min, hp2_glmnet_max, 
+                                                  length.out = hp2_glmnet_out))))
     
     # make rset for single held-in/held_out split
     # does not work for bootstrapping

@@ -54,7 +54,7 @@ get_qualtrics_surveys <- function(api_token,
    temp_list <-  temp_results$value |> 
      enframe() |> 
      unnest_wider(value, names_sep = "_") |> 
-     select(survey_id = value_id, survey_name = value_name, creation_date = value_creationDate)
+     select(value_id, value_name, creation_date = value_creationDate)
    
    surveylist <- rbind(temp_list, surveylist)
   
@@ -63,7 +63,7 @@ get_qualtrics_surveys <- function(api_token,
     
  }
  
-
+  surveylist <- surveylist |> select(survey_id = value_id, survey_name = value_name, creation_date)
  
    return(surveylist)
 }

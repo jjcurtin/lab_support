@@ -8,24 +8,9 @@ update_qualtrics <- function(survey_id,
   # from Jasper Ginn's qualtRics package.  We use this because we had some problems
   # with the implementation of some of the more complex
   # aspects of his code that were unnecessary for our usage.
-  # 
-  # # format input variables for API use
-  # if (survey_type == "daily") {
-  #   template_id <- "SV_bdpR4B7K7Bc7nHE"
-  #   # template <- jsonlite::read_json("S:/optimize/administration/qualtrics/6_ema_opt_template.qsf")
-  #   
-  # } else if (survey_type == "bimonthly") {
-  #   template_id <- "SV_3w3BqdZl0fPfMa2"
-  # 
-  # } else if (survey_type == "feedback") {
-  #   template_id <- "SV_084MbCN54RfNrrU"
-  #   # template <- jsonlite::read_json("S:/optimize/administration/qualtrics/7_feedback_opt_template.qsf")
-  # }
-
+ 
   library(httr)
 
-  
-  
   # add endpoint to root_url
   root_url <- str_c(root_url,
                     ifelse(substr(root_url, nchar(root_url),
@@ -34,9 +19,7 @@ update_qualtrics <- function(survey_id,
                            str_c("/API/v3/surveys/", survey_id, "/import")))
   
 
-  
-  # # Create raw JSON payload
-  template_path <- file.path(path_data_raw, sub, "created_surveys", str_c("ema_", today(), ".qsf"))
+
   
   # Construct headers
   headers = constructHeader(api_token)
@@ -49,8 +32,27 @@ update_qualtrics <- function(survey_id,
   # 
   # 
   
-  # POST request for download
-  result <- qualtrics_api_request(api_token, "PUT", URL = root_url, body = payload)
+  # PUT request for replacing existing survey with new template
+  
+  
+  response <- POST(
+    url = root_url,
+    headers,
+    body = list(
+      file = upload_file(template_path, type = "application/json"),
+      overwrite = "true"
+    ),
+    encode = "multipart"
+  )
+  
+  payload = list(
+    file = upload_file(template_path, type = "application/json"),
+    overwrite = "true")
+  
+  
+  
+  
+  result <- qualtrics_api_request(api_token, "POST", URL = root_url, body = payload)
   
   # Get ID
   if (is.null(result$result)) {

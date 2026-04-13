@@ -1,8 +1,5 @@
-# Required packages
-library(tidyverse)  # bind_rows()
-library(jsonlite)   # fromJSON()
-library(httr)       # GET()
-library(lubridate)  # days(), as_datetime()
+# Required packages (should be loaded by calling script)
+# - tidyverse
 
 
 get_followmee_devices <- function(creds) {
@@ -18,16 +15,16 @@ get_followmee_devices <- function(creds) {
   query <- str_c("?key=", creds$key,
                 "&username=", creds$username,
                 "&output=",output_type,
-                "&function=", fn) %>% 
-    str_c(url, path, .)
+                "&function=", fn) |> 
+    str_c(url, path, _)
   
-  response <- GET(url = query)
+  response <- httr::GET(url = query)
   
   if (!response$status_code == 200) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
+  devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
     .$Data
   
   return(devices)
@@ -42,8 +39,8 @@ get_followmee_deviceid <- function(subid, creds) {
     subid <- as.character(subid)
   }
 
-  device_id <- get_followmee_devices(creds) %>% 
-    filter(DeviceName == subid) %>% 
+  device_id <- get_followmee_devices(creds) |> 
+    filter(DeviceName == subid) |> 
     pull(DeviceID)
   
   return(device_id)
@@ -68,17 +65,17 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
                   "&function=", fn,
                   "&from=", date_start,
                   "&to=", date_end,
-                  "&deviceid=", device_id) %>% 
-    str_c(url, path, .)
+                  "&deviceid=", device_id) |> 
+    str_c(url, path, _)
   
-  response <- GET(url = query)
+  response <- httr::GET(url = query)
   
   if (! (response$status_code == 200)) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  data <- fromJSON(content(response, "text"), simplifyVector = TRUE) %>% 
-    .$Data %>% 
+  data <- jsonlite::fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
+    .$Data |> 
     as_tibble() 
   
   if (nrow(data) == 0){
@@ -95,11 +92,11 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     data <- data |>
       rename(date_chr = Date, lat = Latitude, lon = Longitude, type = Type,
              speed_mph = `Speed(mph)`, direction = Direction,
-             altitude_ft = `Altitude(ft)`, accuracy = Accuracy) %>% 
-      select(-`Speed(km/h)`, -`Altitude(m)`) %>% 
+             altitude_ft = `Altitude(ft)`, accuracy = Accuracy) |> 
+      select(-`Speed(km/h)`, -`Altitude(m)`) |> 
       mutate(date = as_datetime(date_chr),
-             subid = subid) %>% 
-      relocate(subid, date) %>% 
+             subid = subid) |> 
+      relocate(subid, date) |> 
       relocate(date_chr, .after = last_col()) |>
       mutate(subid = as.numeric(subid), DeviceName = as.numeric(DeviceName), DeviceID = as.numeric(DeviceID))
     
@@ -115,8 +112,8 @@ update_followmee_data <- function(past_data, creds) {
 
   subid <- past_data$subid[[1]]
   
-  data <- get_followmee_data(subid = subid, creds = creds, n_days = 7) %>% 
-    bind_rows(past_data) %>% 
-    distinct(subid, date, lat, lon, .keep_all = TRUE) %>% 
+  data <- get_followmee_data(subid = subid, creds = creds, n_days = 7) |> 
+    bind_rows(past_data) |> 
+    distinct(subid, date, lat, lon, .keep_all = TRUE) |> 
     arrange(date)
 }

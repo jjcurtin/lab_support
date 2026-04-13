@@ -1,12 +1,12 @@
 # Functions to support working with location data
 
+# These packages must be loaded by calling script
+# - tidyverse
+
 # Required packages
 library(leaflet) # leaflet() and other related functions
 library(geosphere)   # distGeo(), distmean()
-library(stringr)
 library(httr)
-library(tidyr)
-library(dplyr)
 
 plot_places <- function(places, label_column, color_column) {
 # places is a tibble that has two required and one optional column:
@@ -17,24 +17,24 @@ plot_places <- function(places, label_column, color_column) {
   if (missing(label_column)) {
     labels <- as.character(1:nrow(places))
   } else {
-    labels <- places %>% 
+    labels <- places |> 
       pull ({{ label_column }})
   }
 
   if (missing(color_column)) {
     colors <- "red"
   } else {
-    colors <- places %>%
+    colors <- places |>
       pull({{ color_column }})
   }
   
-  map <-  leaflet() %>%
-    addTiles() %>%
-    addCircleMarkers(data = places,
-                     lng = ~lon, lat = ~lat,
-                     radius = 1.5, color = colors, opacity = 1,
-                     popup = labels) %>%
-    addMeasure(position = "bottomleft",
+  map <-  leaflet::leaflet() |>
+    leaflet::addTiles() |>
+    leaflet::addCircleMarkers(data = places,
+                              lng = ~lon, lat = ~lat,
+                              radius = 1.5, color = colors, opacity = 1,
+                              popup = labels) |>
+    leaflet::addMeasure(position = "bottomleft",
                primaryLengthUnit = "meters",
                primaryAreaUnit = "sqmeters")
 
@@ -47,36 +47,36 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
 # gap is max mins between points before track is broken into different segments
 # overlay_points allows for points to be plotted on top of tracks
 # see https://rstudio.github.io/leaflet/ for more info on leaflet
-  locs <- locs %>%
-    arrange(time) %>%
+  locs <- locs |>
+    arrange(time) |>
     mutate(time_next = difftime(lead(time), time, units = "mins"),
            label = as.character(row_number()))
 
-  map <-  leaflet() %>%
-    addTiles() # Add default OpenStreetMap map tiles
+  map <-  leaflet::leaflet() |>
+    leaflet::addTiles() # Add default OpenStreetMap map tiles
 
     # more options and use of groups
-    # addTiles(group = 'Color') %>% # Add default OpenStreetMap map tiles
-    # addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = 'B&W') #B&W OSM tiles
+    # leaflet::addTiles(group = 'Color') |> # Add default OpenStreetMap map tiles
+    # leaflet::addProviderTiles(providers$OpenStreetMap.BlackAndWhite, group = 'B&W') #B&W OSM tiles
 
   i <- 1
   while(i < nrow(locs)) { # need at least two points (current and next) for a new track
     track <- tibble(lat = double(), lon = double())  # make new empty track
 
-    track <- track %>%
+    track <- track |>
       add_row(lat = locs$lat[i], lon = locs$lon[i])
 
     while(i < nrow(locs) &&
           !is.na(locs$time_next[i]) &&
           locs$time_next[i] <= minutes(gap)) {
       i <- i + 1
-      track <- track %>%
+      track <- track |>
         add_row(lat = locs$lat[i], lon = locs$lon[i])
     }
 
 
-    map <- map %>%
-      addPolylines(data = track,
+    map <- map |>
+      leaflet::addPolylines(data = track,
                       lng = ~lon, lat = ~lat,
                       color = "red", weight = 2,
                       opacity = 1) # , group = 'tracks'
@@ -85,26 +85,26 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
   }
 
   # use of controls for overlaps and measurement
-  # map <- map %>%
-  #   addLayersControl(baseGroups = c('color', 'B&W'),
+  # map <- map |>
+  #   leaflet::addLayersControl(baseGroups = c('color', 'B&W'),
   #                    overlayGroups = c('places', 'tracks'),
-  #                    options = layersControlOptions(collapsed = FALSE)) %>%
-  #   addMeasure(position = "bottomleft",
+  #                    options = layersControlOptions(collapsed = FALSE)) |>
+  #   leaflet::addMeasure(position = "bottomleft",
   #              primaryLengthUnit = "meters",
   #              primaryAreaUnit = "sqmeters")
 
   if (overlay_points) {
-    map <- map %>%
-      addCircleMarkers(data = locs,
-                     lng = ~lon, lat = ~lat,
-                     radius = .1, color = "blue", opacity = .5,
-                     popup = ~label)
+    map <- map |>
+      leaflet::addCircleMarkers(data = locs,
+                                lng = ~lon, lat = ~lat,
+                                radius = .1, color = "blue", opacity = .5,
+                                popup = ~label)
   }
 
-  map <-  map %>%
-    addMeasure(position = "bottomleft",
-               primaryLengthUnit = "meters",
-               primaryAreaUnit = "sqmeters")
+  map <-  map |>
+    leaflet::addMeasure(position = "bottomleft",
+                        primaryLengthUnit = "meters",
+                        primaryAreaUnit = "sqmeters")
 
   return(map)
 }
@@ -116,7 +116,8 @@ count_places <- function(places, max_dist = 50) {
 
   for (i in 1:nrow(places)) {
     for (j in 1:nrow(places)) {
-      dist <- distGeo(c(places$lon[i], places$lat[i]), c(places$lon[j], places$lat[j]))
+      dist <- geosphere::distGeo(c(places$lon[i], places$lat[i]), 
+                                 c(places$lon[j], places$lat[j]))
       if (dist <= max_dist) places$visits[i] <- places$visits[i] + 1
     }
   }
@@ -131,7 +132,7 @@ geomean_places <- function(places, max_dist = 50){
 # a weighted mean of the the location for each group
 # It assumes columns named subid, date, lat, lon, cnt_pts, duration
 
-  places <- places %>%
+  places <- places |>
     mutate(duration = as.numeric(duration))
 
   if (nrow(places) > 1) {
@@ -151,25 +152,26 @@ geomean_places <- function(places, max_dist = 50){
       # check i place against later rows if exist
       if (i < nrow(places)) {
         for (j in (i + 1):nrow(places)){
-          if(distGeo(c(places$lon[i], places$lat[i]),
-                     c(places$lon[j], places$lat[j])) <= max_dist){
+          if(geosphere::distGeo(c(places$lon[i], places$lat[i]),
+                                c(places$lon[j], places$lat[j])) <= max_dist){
             places$place_grp[j] <- current_grp
           }
         }
       }
     }
 
-    avg_place <- tibble(date = Date(), lat = double(), lon = double(), cnt_pts = double(), duration = double())
+    avg_place <- tibble(date = Date(), lat = double(), lon = double(), 
+                        cnt_pts = double(), duration = double())
     for (i in 1:max_grp) {
-      places_grouped <- places %>%
+      places_grouped <- places |>
         dplyr::filter(place_grp == i)
 
       if (nrow(places_grouped) > 1) {
-        xy <- places_grouped %>%
+        xy <- places_grouped |>
           select(lon, lat)
         w <- places_grouped$cnt_pts
         xy_new <- geomean(xy, w)
-        avg_place <- avg_place %>%
+        avg_place <- avg_place |>
           add_row(date = max(places_grouped$date),  # most recent date
                   lat = xy_new[1,2],
                   lon = xy_new[1,1],
@@ -177,16 +179,16 @@ geomean_places <- function(places, max_dist = 50){
                   duration = sum(places_grouped$duration))
 
       } else {
-        avg_place <- avg_place %>%
+        avg_place <- avg_place |>
           add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
       }
     }
 
     # add subid
-    avg_place <- avg_place %>%
-      mutate(subid = places$subid[[1]]) %>%
+    avg_place <- avg_place |>
+      mutate(subid = places$subid[[1]]) |>
       relocate(subid)
-  } else  avg_place <- places %>% select(subid, date, lat, lon, cnt_pts, duration)
+  } else  avg_place <- places |> select(subid, date, lat, lon, cnt_pts, duration)
 
   return(avg_place)
 }
@@ -200,18 +202,18 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 # https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0219890
 # https://www.androidcentral.com/location-services-whats-difference-between-choices-and-which-should-i-pick
 
-  locations <- locations %>%
+  locations <- locations |>
     mutate(cnt_pts = 1,
            time_next = difftime(lead(time), time, units = "mins"),
            lon_next = dplyr::lead(lon),
            lat_next = dplyr::lead(lat),
            lon_prev = dplyr::lag(lon),
-           lat_prev = dplyr::lag(lat)) %>%
-    rowwise() %>%
-    mutate(dist_next = distGeo(c(lon, lat),   # in meters
-                               c(lon_next, lat_next)),
-           dist_prev = distGeo(c(lon, lat),
-                               c(lon_prev, lat_prev))) %>%
+           lat_prev = dplyr::lag(lat)) |>
+    rowwise() |>
+    mutate(dist_next = geosphere::distGeo(c(lon, lat),   # in meters
+                                          c(lon_next, lat_next)),
+           dist_prev = geosphere::distGeo(c(lon, lat),
+                               c(lon_prev, lat_prev))) |>
     ungroup()
 
 
@@ -255,8 +257,8 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
                                           locations$lat[(row_i - 1):row_i]),
                                     nrow = 2, ncol = 2)
       # take the weighted mean
-      new_points <- geomean(xy = points_to_aggregate,
-                            w = locations$cnt_pts[(row_i - 1):row_i])
+      new_points <- geosphere::geomean(xy = points_to_aggregate,
+                                       w = locations$cnt_pts[(row_i - 1):row_i])
       # update focal observation with new location
       locations$lon[row_i] <- new_points[1,1]
       locations$lat[row_i] <- new_points[1,2]
@@ -295,14 +297,14 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
       row_i <- row_i + 1
     } else {
       # calculate new dists for updated point
-      locations <- locations %>%
+      locations <- locations |>
         mutate(lon_next = dplyr::lead(lon),
                lat_next = dplyr::lead(lat),
                lon_prev = dplyr::lag(lon),
-               lat_prev = dplyr::lag(lat)) %>%
-        rowwise() %>%
-        mutate(dist_next = distGeo(c(lon, lat), c(lon_next, lat_next)),
-               dist_prev = distGeo(c(lon, lat), c(lon_prev, lat_prev))) %>%
+               lat_prev = dplyr::lag(lat)) |>
+        rowwise() |>
+        mutate(dist_next = geosphere::distGeo(c(lon, lat), c(lon_next, lat_next)),
+               dist_prev = geosphere::distGeo(c(lon, lat), c(lon_prev, lat_prev))) |>
         ungroup()
     }
 
@@ -312,8 +314,8 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
     skip <- FALSE
   }
 
-  locations <- locations %>%
-    select(-lon_next, -lat_next, -lon_prev, -lat_prev, -dist_prev) %>%
+  locations <- locations |>
+    select(-lon_next, -lat_next, -lon_prev, -lat_prev, -dist_prev) |>
     mutate(time_next = difftime(lead(time), time, units = "mins"))
 
   return(locations)
@@ -499,8 +501,9 @@ lookup_address <- function(longitude, latitude, provider = "photon", api = NULL)
       if (is.null(country)) country <- NA_character_
 
       df <- tibble(housenumber, street, city, state, zip, country)
-      df <- df %>%
-        mutate(formatted_address = paste0(housenumber, " ", street, ", ", city, ", ", state, " ", zip, ', ', country),
+      df <- df |>
+        mutate(formatted_address = str_c(housenumber, " ", street, ", ", city, 
+                                         ", ", state, " ", zip, ', ', country),
                formatted_address = str_remove_all(formatted_address, "NA, "),
                formatted_address = str_remove_all(formatted_address, "NA "))
     }
@@ -549,8 +552,8 @@ lookup_address <- function(longitude, latitude, provider = "photon", api = NULL)
                  latitude, ",", longitude, "&key=", api)
   }
 
-  df <- url %>%
-    get_response(provider) %>%
+  df <- url |>
+    get_response(provider) |>
     format_response(provider)
 
   return(df)
@@ -567,22 +570,22 @@ find_nearest_context <- function(lon_target, lat_target, context){
                        lon_target, lat_target){
     p1 <- c(lon_context, lat_context)
     p2 <- c(lon_target, lat_target)
-    distGeo(p1, p2)
+    geosphere::distGeo(p1, p2)
   }
 
-  context <- context %>%
-    rename(lon_context = lon, lat_context =  lat) %>%
+  context <- context |>
+    rename(lon_context = lon, lat_context =  lat) |>
     mutate(dist_context = map2_dbl(.$lon_context, .$lat_context,
                                    get_dist,
-                                   lon_target = lon_target, lat_target = lat_target)) %>%
-    arrange(dist_context) %>%
+                                   lon_target = lon_target, lat_target = lat_target)) |>
+    arrange(dist_context) |>
     slice(1)
   
   if ("context_id" %in% names(context)) {
-    context <- context %>% 
+    context <- context |> 
       select(context_id, lat_context, lon_context, dist_context)
   } else {
-    context <- context %>% 
+    context <- context |> 
       select(lat_context, lon_context, dist_context)
   }
   

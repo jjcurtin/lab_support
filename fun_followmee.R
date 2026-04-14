@@ -25,11 +25,10 @@ get_followmee_devices <- function(creds) {
   }
   
   devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
-    .$Data
+    pluck("Data")
   
   return(devices)
 }
-
 
 get_followmee_deviceid <- function(subid, creds) {
 # Returns a device id for a specific subid

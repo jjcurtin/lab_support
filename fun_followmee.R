@@ -12,11 +12,11 @@ get_followmee_devices <- function(creds) {
   output_type <- "json"
   fn <- "devicelist"
   
-  query <- str_c("?key=", creds$key,
+  query <- str_c(url, path,
+                "?key=", creds$key,
                 "&username=", creds$username,
-                "&output=",output_type,
-                "&function=", fn) |> 
-    str_c(url, path, _)
+                "&output=", output_type,
+                "&function=", fn)
   
   response <- httr::GET(url = query)
   

@@ -74,7 +74,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   }
   
   data <- jsonlite::fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
-    .$Data |> 
+    pluck("Data") |> 
     as_tibble() 
   
   if (nrow(data) == 0){

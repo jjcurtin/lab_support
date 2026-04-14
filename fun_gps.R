@@ -3,10 +3,6 @@
 # These packages must be loaded by calling script
 # - tidyverse
 
-# Required packages
-library(leaflet) # leaflet() and other related functions
-library(geosphere)   # distGeo(), distmean()
-library(httr)
 
 plot_places <- function(places, label_column, color_column) {
 # places is a tibble that has two required and one optional column:

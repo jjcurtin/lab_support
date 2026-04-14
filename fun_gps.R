@@ -571,7 +571,7 @@ find_nearest_context <- function(lon_target, lat_target, context){
 
   context <- context |>
     rename(lon_context = lon, lat_context =  lat) |>
-    mutate(dist_context = map2_dbl(.$lon_context, .$lat_context,
+    mutate(dist_context = map2_dbl(lon_context, lat_context,
                                    get_dist,
                                    lon_target = lon_target, lat_target = lat_target)) |>
     arrange(dist_context) |>

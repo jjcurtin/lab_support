@@ -58,14 +58,14 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
   output_type <- "json"
   fn = "daterangefordevice"
   
-  query <-  str_c("?key=", creds$key,
-                  "&username=", creds$username,
-                  "&output=", output_type,
-                  "&function=", fn,
-                  "&from=", date_start,
-                  "&to=", date_end,
-                  "&deviceid=", device_id) |> 
-    str_c(url, path, _)
+ query <-  str_c(url, path, 
+                 "?key=", creds$key,
+                 "&username=", creds$username,
+                 "&output=", output_type,
+                 "&function=", fn,
+                 "&from=", date_start,
+                 "&to=", date_end,
+                 "&deviceid=", device_id)
   
   response <- httr::GET(url = query)
   

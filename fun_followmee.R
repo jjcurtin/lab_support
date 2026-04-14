@@ -24,7 +24,7 @@ get_followmee_devices <- function(creds) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  devices <-  fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
+  devices <-  jsonlite::fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
     pluck("Data")
   
   return(devices)

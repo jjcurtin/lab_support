@@ -24,7 +24,7 @@ get_followmee_devices <- function(creds) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  devices <-  jsonlite::fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
+  devices <-  jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) |> 
     pluck("Data")
   
   return(devices)
@@ -73,7 +73,7 @@ get_followmee_data <- function(subid, creds, n_days = 7) {
     stop("FollowMee API GET Status Code: ", response$status_code)
   }
   
-  data <- jsonlite::fromJSON(content(response, "text"), simplifyVector = TRUE) |> 
+  data <- jsonlite::fromJSON(httr::content(response, "text"), simplifyVector = TRUE) |> 
     pluck("Data") |> 
     as_tibble() 
   

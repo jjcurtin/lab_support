@@ -2,9 +2,9 @@ manage_qualtrics_contacts <- function(api_token,
                              root_url = "https://uwmadison.co1.qualtrics.com/API/v3/directories/",
                              pool = "optimize",
                              encode = "json",
-                             action, 
-                             payload,
-                             contact_id) {
+                             action, # list, create, update, or delete
+                             payload, # participant contact info for create or update
+                             contact_id) { # participant contact ID for update or delete
   # Functions to List, Create, Update, or Delete directory contacts which 
   # allows us to manage participants and their embedded data for EMA
 

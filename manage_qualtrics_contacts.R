@@ -17,7 +17,17 @@ manage_qualtrics_contacts <- function(api_token,
     list_id <- "CG_3Grm1bKdFpBoMlO"
   }
   
-## works
+## helper function
+  # Remove NULL and empty string fields
+  clean_body <- function(x) {
+    if (is.list(x)) {
+      x <- lapply(x, clean_body)          # recursively clean embeddedData too
+      x <- Filter(\(v) !is.null(v) && !identical(v, ""), x)
+    }
+    x
+  }
+  
+  
   #list the contacts in our contact list
   if (action == "list") {
     contact_url <- str_c(root_url, 

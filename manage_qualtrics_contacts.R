@@ -84,7 +84,7 @@ manage_qualtrics_contacts <- function(api_token,
    payload <- Filter(Negate(is.null), payload)
    
    
-   req <- httr2::request(contact_url) |>
+   req <- httr2::request(create_url) |>
      httr2::req_headers(
        "X-API-TOKEN" = api_token,
        "Content-Type" = "application/json"

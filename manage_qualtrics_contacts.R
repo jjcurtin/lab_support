@@ -5,13 +5,11 @@ manage_qualtrics_contacts <- function(api_token,
                              action, 
                              payload,
                              contact_id) {
-  # Functions to Create, Get, Update, or Delete directory contacts
-  # Will be used in scripts to add and update participants and their embedded data for EMA
+  # Functions to List, Create, Update, or Delete directory contacts which 
+  # allows us to manage participants and their embedded data for EMA
 
-  # API Toolkit: https://api.qualtrics.com/25a039fd84d32-contacts
-  # NB list_contacts and search_contacts functions are not available in UW Qualtrics
-  
-  #??? https://api.qualtrics.com/0b9b0d24a7a18-mailing-lists
+  # API Toolkit: https://api.qualtrics.com/83b3836dfc351-mailing-list-contacts
+
   
   # choose contact poolID & listID
   if (pool == "optimize") {
@@ -21,8 +19,12 @@ manage_qualtrics_contacts <- function(api_token,
   
 ## works
   #list the contacts in our contact list
-  if (action == "contacts") {
-    contact_url <- str_c(root_url, pool_id, "/mailinglists/", list_id, "/contacts")
+  if (action == "list") {
+    contact_url <- str_c(root_url, 
+                         pool_id, 
+                         "/mailinglists/", 
+                         list_id, 
+                         "/contacts")
     
     all_contacts <- list()
     next_page_url <- contact_url
@@ -40,7 +42,8 @@ manage_qualtrics_contacts <- function(api_token,
       contacts_page <- parsed$result$elements
       
       # Unnest embeddedData column if present
-      if (!is.null(contacts_page$embeddedData) && is.data.frame(contacts_page$embeddedData)) {
+      if (!is.null(contacts_page$embeddedData) && 
+          is.data.frame(contacts_page$embeddedData)) {
         contacts_page <- cbind(
           contacts_page[, setdiff(names(contacts_page), "embeddedData")],
           contacts_page$embeddedData
@@ -61,7 +64,11 @@ manage_qualtrics_contacts <- function(api_token,
   
  # works
  if (action == "create") {
-   create_url <- str_c(root_url, pool_id, "/mailinglists/", list_id, "/contacts")
+   create_url <- str_c(root_url, 
+                       pool_id, 
+                       "/mailinglists/", 
+                       list_id, 
+                       "/contacts")
    
    # Remove any NULL optional fields before sending
    payload <- Filter(Negate(is.null), payload)
@@ -84,7 +91,12 @@ manage_qualtrics_contacts <- function(api_token,
  }
   
   if (action == "update") {
-    update_url <- str_c(root_url, pool_id, "/mailinglists/", list_id, "/contacts/", contact_id)
+    update_url <- str_c(root_url, 
+                        pool_id, 
+                        "/mailinglists/", 
+                        list_id, 
+                        "/contacts/", 
+                        contact_id)
     
    
     payload <- clean_body(payload)
@@ -108,7 +120,12 @@ manage_qualtrics_contacts <- function(api_token,
   }
   
   if (action == "delete") {
-    delete_url <- str_c(root_url, pool_id, "/mailinglists/", list_id, "/contacts/", contact_id)
+    delete_url <- str_c(root_url, 
+                        pool_id, 
+                        "/mailinglists/", 
+                        list_id, 
+                        "/contacts/", 
+                        contact_id)
     
     req <- httr2::request(delete_url) |>
       httr2::req_headers(

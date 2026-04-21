@@ -1,389 +1,427 @@
-# Description: Main and support functions to export a survey and download into R
-
-# Packages
-library(httr)
 
 
-
-download_qualtrics <- function(survey_id, use_labels = TRUE,
-                        api_token,
-                        root_url = "https://uwmadison.co1.qualtrics.com",
-                        display_progress = TRUE) {
-# download_qualtrics() exports a qualtrics survey you own and imports the survey
-# directly into R.
-# NOTE:  This function is a simplified version of code
-# from Jasper Ginn's qualtRics package.  We use this because we had some problems
-# with the implementation of some of the more complex
-# aspects of his code that were unnecessary for our usage.
-
-
+download_qualtrics <- function(survey_id, 
+                               use_labels = TRUE,
+                               api_token,
+                               root_url = "https://uwmadison.co1.qualtrics.com",
+                               display_progress = TRUE) {
+  # download_qualtrics() exports a qualtrics survey you own and imports the survey
+  # directly into R.
+  # NOTE:  This function is a simplified version of code
+  # from Jasper Ginn's qualtRics package.  We use this because we had some problems
+  # with the implementation of some of the more complex
+  # aspects of his code that were unnecessary for our usage.
+  # This code has been updated to use httr2 and the newest API survey endpoint
+  
   # add endpoint to root_url
-  root_url <- str_c(root_url,
-                  ifelse(substr(root_url, nchar(root_url),
-                                nchar(root_url)) == "/",
-                         "API/v3/responseexports/",
-                         "/API/v3/responseexports/"))
-
-
-  # Create raw JSON payload
-  raw_payload <- create_raw_payload(survey_id = survey_id, use_labels = use_labels)
-
-  # POST request for download
-  result <- qualtrics_api_request(api_token, "POST", URL = root_url, body = raw_payload)
-
-  # Get ID
-  if (is.null(result$result$id)) {
-    if (is.null(result$content[[1]]$id)) {
-      stop("Something went wrong. Please re-run your query.")
-    } else {
-      id <- result$content[[1]]$id
+  base_url  <- str_c(root_url, "/API/v3/surveys/", survey_id, "/export-responses")
+  
+  # create simple header
+  headers <- list(
+    "X-API-TOKEN"  = api_token,
+    "Content-Type" = "application/json"
+  )
+  
+  # Step 1: Initiate the export
+  export_body <- list(
+    format     = "csv",
+    useLabels  = use_labels
+  )
+  
+  req <- httr2::request(base_url) |>
+    httr2::req_headers(!!!headers) |>
+    httr2::req_method("POST") |>
+    httr2::req_body_json(export_body) |>
+    httr2::req_error(is_error = \(resp) httr2::resp_status(resp) >= 400)
+  
+  response <- httr2::req_perform(req)
+  parsed   <- httr2::resp_body_json(response, simplifyVector = TRUE)
+  export_progress_id <- parsed$result$progressId
+  
+  if (is.null(export_progress_id)) stop("Export initiation failed - no progressId returned")
+  
+  # Step 2: Poll until export is complete
+  progress_url <- str_c(base_url, "/", export_progress_id)
+  
+  repeat {
+    req_check <- httr2::request(progress_url) |>
+      httr2::req_headers(!!!headers) |>
+      httr2::req_error(is_error = \(resp) httr2::resp_status(resp) >= 400)
+    
+    response_check <- httr2::req_perform(req_check)
+    parsed_check   <- httr2::resp_body_json(response_check, simplifyVector = TRUE)
+    
+    status   <- parsed_check$result$status
+    progress <- parsed_check$result$percentComplete
+    
+    if (display_progress) message("Export progress: ", progress, "%")
+    
+    if (status == "complete") {
+      file_id <- parsed_check$result$fileId
+      break
+    } else if (status == "failed") {
+      stop("Export failed")
     }
-  } else {
-    id <- result$result$id
-  } # NOTE This is not fail safe because ID can still be NULL
-
-  # This is the url to use when checking the ID
-  check_url <- str_c(root_url, id)
-
-  # Download, unzip and return file path
-  survey_path <- download_qualtrics_export(check_url, api_token, display_progress)
-
-  # Read data
-  survey_data <- read_survey_data(survey_path) %>%
+    
+    Sys.sleep(1)
+  }
+  
+  # Step 3: Download the file
+  file_url <- str_c(base_url, "/", file_id, "/file")
+  
+  temp_zip <- tempfile(fileext = ".zip")
+  temp_dir <- tempdir()
+  
+  req_file <- httr2::request(file_url) |>
+    httr2::req_headers("X-API-TOKEN" = api_token) |>
+    httr2::req_error(is_error = \(resp) httr2::resp_status(resp) >= 400)
+  
+  response_file <- httr2::req_perform(req_file, path = temp_zip)
+  
+  # Unzip and read
+  unzip(temp_zip, exdir = temp_dir)
+  csv_file <- list.files(temp_dir, pattern = "\\.csv$", full.names = TRUE)
+  
+  survey_data <- read_csv(csv_file, show_col_types = FALSE) |>
     as_tibble()
-
-  p <- file.remove(survey_path)
-
+  
+  # Clean up temp files
+  file.remove(temp_zip)
+  file.remove(csv_file)
+  
   return(survey_data)
 }
 
-# All functions beyond this point are helper functions.  Not called directly-----
+## Commenting out helper functions as download_qualtrics() is now self-contained
+## Can restore if this breaks other functionality
 
-read_survey_data <- function(FileName) {
-# Reads comma separated csv data files generated by Qualtrics
-# software. This is a support function for download_qualtrics.
-# It is not intended to be called directly
-
-  #first row contains header, which are the variable names we want
-  VarNames <- read.csv(FileName, nrows = 1)
-  VarNames <- names(VarNames)
-
-  #read data but skip first 3 rows of header info
-  survey_data <- read.csv(FileName,header = FALSE,
-                         skip = 3,
-                         as.is = TRUE)
-  names(survey_data) <- VarNames
-
-
-  #HANDLE Surveys with No data?
-
-  # # If Qualtrics adds an empty column at the end, remove it
-  # if(grepl(",$", readLines(file_name, n = 1))) {
-  #   header = header[, 1:(ncol(header)-1)]
-  #   rawdata = rawdata[, 1:(ncol(rawdata)-1)]
-  # }
-
-  # # clean variable labels (row 2)
-  #
-  # if(stripHTML) {
-  #   # weird regex to strip HTML tags, leaving only content
-  #   # https://www.r-bloggers.com/htmltotext-extracting-text-from-html-via-xpath/ # nolint
-  #   pattern = "</?\\w+((\\s+\\w+(\\s*=\\s*(?:\".*?\"|".*?"|[^"\">\\s]+))?)+\\s*|\\s*)/?>" # nolint
-  #   secondrow = gsub(pattern, "\\4", secondrow)
-  # }
-  # # Scale Question with subquestion:
-  # # If it matches one of ".?!" followed by "-", take subsequent part
-  # subquestions = stringr::str_match(secondrow, ".*[:punct:]\\s*-(.*)")[,2]
-  # # Else if subquestion returns NA, use whole string
-  # subquestions[is.na(subquestions)] = unlist(secondrow[is.na(subquestions)])
-  # # Remaining NAs default to "empty string"
-  # subquestions[is.na(subquestions)] = ""
-  return(survey_data)
-}
-
-
-
-create_raw_payload <- function(survey_id,
-                            use_labels=TRUE,
-                            lastResponseId=NULL,
-                            startDate=NULL,
-                            endDate=NULL,
-                            limit=NULL,
-                            useLocalTime=FALSE,
-                            seenUnansweredRecode=NULL,
-                            includedQuestionIds = NULL) {
-# Create raw JSON payload to post response exports request
-# Returns json file with options to send to API. This is a support function for
-# download_qualtrics. It is not intended to be called directly.
-
-
-  str_c(
-    '{"format": ', '"', 'csv', '"' ,
-    ', "surveyId": ', '"', survey_id, '"',
-    ifelse(
-      is.null(lastResponseId),
-      "",
-      str_c(
-        ', "lastResponseId": ',
-        '"',
-        lastResponseId,
-        '"')
-    ) ,
-    ifelse(
-      is.null(startDate),
-      "",
-      str_c(
-        ', "startDate": ',
-        '"',
-        str_c(startDate,"T00:00:00Z"),
-        '"')
-    ) ,
-    ifelse(
-      is.null(endDate),
-      "",
-      str_c(
-        ', "endDate": ',
-        '"',
-        str_c(endDate,"T00:00:00Z"),
-        '"')
-    ) ,
-    ifelse(
-      is.null(seenUnansweredRecode),
-      "",
-      str_c(
-        ', "seenUnansweredRecode": ',
-        '"',
-        seenUnansweredRecode,
-        '"')
-    ),
-    ifelse(
-      !useLocalTime,
-      "",
-      str_c(
-        ', "useLocalTime": ',
-        tolower(useLocalTime)
-      )
-    ),
-    ifelse(
-      is.null(includedQuestionIds),
-      "",
-      str_c(
-        ', "includedQuestionIds": ',
-        '[', paste0('"',includedQuestionIds, '"', collapse=", "), ']'
-      )
-    ),
-    ifelse(
-      is.null(limit),
-      "",
-      str_c(
-        ', "limit": ',
-        limit
-      )
-    ),
-    ', ',
-    '"useLabels": ', tolower(use_labels),
-    '}'
-  )
-}
-
-
-
-qualtrics_api_request <- function(api_token, verb = c("GET", "POST"), URL,
-                               body = NULL) {
-# Send httr requests to qualtrics API
-#
-# @param verb type of request to be sent (@seealso ?httr::VERB)
-# @param url qualtrics endpoint url created by appendroot_url() function
-# @param body options created by create_raw_payload() function.
-# This is a support function for download_qualtrics.
-# It is not intended to be called directly.
-
-  # Match arg
-  verb = match.arg(verb)
-
-  # Construct header
-  headers = constructHeader(api_token)
-
-  # Send request to qualtrics API (httr functions)
-  res = VERB(verb,
-             url = URL,
-             add_headers(
-               headers
-             ),
-             body = body)
-
-  # Check if response type is OK
-  cnt = qualtRicsResponseCodes(res)
-
-  # Check if OK
-  if(cnt$OK) {
-    # If notice occurs, raise warning
-    w = checkForWarnings(cnt)
-
-    # return content
-    return(cnt$content)
-  }
-}
-
-
-constructHeader <- function(api_token) {
-# Construct a header to send to qualtrics API
-# This is a support function for download_qualtrics.
-# It is not intended to be called directly.
-
-  # Construct and return
-  headers = c(
-    "X-API-TOKEN" = api_token,
-    "Content-Type" = "application/json",
-    "Accept" = "*/*",
-    "accept-encoding" = "gzip, deflate"
-  )
-  return(headers)
-}
-
-
-qualtRicsResponseCodes <- function(res, raw=FALSE) {
-# Checks responses against qualtrics response codes and returns error message.
-#
-# res response from httr::GET
-# raw if TRUE, add "raw" flag to httr::content() function.
-# This is a support function for download_qualtrics.
-# It is not intended to be called directly.
-
-  # Check status code and raise error/warning
-  if(res$status_code == 200) {
-    if(raw) {
-      result = content(res, "raw")
-    } else {
-      result = content(res)
-    }
-    return(list(
-      "content" = result,
-      "OK" = TRUE
-    )
-    )
-  } else if(res$status_code == 401) {
-    stop("Qualtrics API raised an authentication (401) error - you may not have the required authorization. Please check your API key and root url.") # nolint
-  } else if(res$status_code == 400) {
-    stop("Qualtrics API raised a bad request (400) error - Please report this on https://github.com/JasperHG90/qualtRics/issues") # nolint
-  } else if(res$status_code == 404) {
-    stop("Qualtrics API complains that the requested resource cannot be found (404 error). Please check if you are using the correct survey ID.") # nolint
-  } else if(res$status_code == 500) {
-    stop(paste0("Qualtrics API reports an internal server (500) error. Please contact Qualtrics Support (https://www.qualtrics.com/contact/) and provide the instanceId and errorCode below.", "\n", # nolint
-                "\n",
-                "instanceId:", " ",
-                content(res)$meta$error$instanceId,
-                "\n",
-                "errorCode: ",
-                content(res)$meta$error$errorCode))
-    return(list(
-      "content" = content(res),
-      "OK"= FALSE
-    ))
-  } else if(res$status_code == 503) {
-    stop(paste0("Qualtrics API reports a temporary internal server (500) error. Please contact Qualtrics Support (https://www.qualtrics.com/contact/) with the instanceId and errorCode below or retry your query.", "\n", # nolint
-                "\n",
-                "instanceId:", " ", content(res)$meta$error$instanceId,
-                "\n",
-                "errorCode: ", content(res)$meta$error$errorCode))
-    return(list(
-      "content" = content(res),
-      "OK"= FALSE
-    )
-    )
-  } else if(res$status_code == 413) {
-    stop("The request body was too large. This can also happen in cases where a multipart/form-data request is malformed.") # nolint
-  } else if(res$status_code == 429) {
-    stop("You have reached the concurrent request limit.")
-  }
-}
-
-
-checkForWarnings <- function(resp) {
-# Check if httr GET result contains a warning
-# resp object returned by "qualtRicsResponseCodes()"
-# This is a support function for download_qualtrics.
-# It is not intended to be called directly.
-
-  # Raise warning if resp contains notice
-  if(!is.null(resp$content$meta)) {
-    if(!is.null(resp$content$meta$notice)) {
-      warning(resp$content$meta$notice)
-    }
-  }
-  NULL
-}
-
-
-
-download_qualtrics_export <- function(check_url, api_token, display_progress) {
-# Download response export
-# check_url url provided by qualtrics API that shows the download percentage completneness
-# This is a support function for download_qualtrics.
-# It is not intended to be called directly.
-
-  # Construct header
-  headers = constructHeader(api_token)
-
-  if (display_progress) {
-    # Create a progress bar and monitor when export is ready
-    pbar = utils::txtProgressBar(min=0,max=100,style = 3)
-
-    # While download is in progress
-    progress = 0
-    while(progress < 100) {
-      # Get percentage complete
-      CU = qualtrics_api_request(api_token,"GET", URL = check_url)
-      progress = CU$result$percentComplete
-
-      # Set progress
-      utils::setTxtProgressBar(pbar, progress)
-    }
-
-    # Kill progress bar
-    close(pbar)
-  }
-
-  # Download file
-  f = tryCatch({
-    GET(str_c(check_url, "/file"), add_headers(headers))
-  }, error = function(e) {
-    # Retry if first attempt fails
-    GET(str_c(check_url, "/file"), add_headers(headers))
-  })
-
-  # # If content is test request, then load temp file (this is purely for testing)
-  # # httptest library didn"t work the way it needed and somehow still called the API
-  # # leading to errors
-  # if(f$request$url == "t.qualtrics.com/API/v3/responseexports/T_123/file"){
-  #   if(f$request$headers["X-API-TOKEN"] == "1234") {
-  #     ct = readRDS("files/file_getSurvey.rds")
-  #     f$content = ct
-  #   }
-  # }
-  # #browser()
-
-  # Load raw zip file
-  ty = qualtRicsResponseCodes(f, raw=TRUE)
-
-  # To zip file
-  tf = file.path(tempdir(), "temp.zip")
-
-  # Write to temporary file
-  writeBin(ty$content, tf)
-
-  # Try to unzip
-  u = tryCatch({
-    utils::unzip(tf, exdir = tempdir())
-  }, error = function(e) {
-    stop(str_c("Error extracting ",
-               "csv",
-               " from zip file. Please re-run your query."))
-  })
-
-  # Remove zipfile
-  p = file.remove(tf)
-
-  # Return file location
-  return(u)
-}
+# All functions beyond this point are helper functions.  Not called directly----
+# 
+# read_survey_data <- function(FileName) {
+# # Reads comma separated csv data files generated by Qualtrics
+# # software. This is a support function for download_qualtrics.
+# # It is not intended to be called directly
+# 
+#   #first row contains header, which are the variable names we want
+#   VarNames <- read.csv(FileName, nrows = 1)
+#   VarNames <- names(VarNames)
+# 
+#   #read data but skip first 3 rows of header info
+#   survey_data <- read.csv(FileName,header = FALSE,
+#                          skip = 3,
+#                          as.is = TRUE)
+#   names(survey_data) <- VarNames
+# 
+# 
+#   #HANDLE Surveys with No data?
+# 
+#   # # If Qualtrics adds an empty column at the end, remove it
+#   # if(grepl(",$", readLines(file_name, n = 1))) {
+#   #   header = header[, 1:(ncol(header)-1)]
+#   #   rawdata = rawdata[, 1:(ncol(rawdata)-1)]
+#   # }
+# 
+#   # # clean variable labels (row 2)
+#   #
+#   # if(stripHTML) {
+#   #   # weird regex to strip HTML tags, leaving only content
+#   #   # https://www.r-bloggers.com/htmltotext-extracting-text-from-html-via-xpath/ # nolint
+#   #   pattern = "</?\\w+((\\s+\\w+(\\s*=\\s*(?:\".*?\"|".*?"|[^"\">\\s]+))?)+\\s*|\\s*)/?>" # nolint
+#   #   secondrow = gsub(pattern, "\\4", secondrow)
+#   # }
+#   # # Scale Question with subquestion:
+#   # # If it matches one of ".?!" followed by "-", take subsequent part
+#   # subquestions = stringr::str_match(secondrow, ".*[:punct:]\\s*-(.*)")[,2]
+#   # # Else if subquestion returns NA, use whole string
+#   # subquestions[is.na(subquestions)] = unlist(secondrow[is.na(subquestions)])
+#   # # Remaining NAs default to "empty string"
+#   # subquestions[is.na(subquestions)] = ""
+#   return(survey_data)
+# }
+# 
+# 
+# 
+# create_raw_payload <- function(survey_id,
+#                             use_labels=TRUE,
+#                             lastResponseId=NULL,
+#                             startDate=NULL,
+#                             endDate=NULL,
+#                             limit=NULL,
+#                             useLocalTime=FALSE,
+#                             seenUnansweredRecode=NULL,
+#                             includedQuestionIds = NULL) {
+# # Create raw JSON payload to post response exports request
+# # Returns json file with options to send to API. This is a support function for
+# # download_qualtrics. It is not intended to be called directly.
+# 
+# 
+#   str_c(
+#     '{"format": ', '"', 'csv', '"' ,
+#     ', "surveyId": ', '"', survey_id, '"',
+#     ifelse(
+#       is.null(lastResponseId),
+#       "",
+#       str_c(
+#         ', "lastResponseId": ',
+#         '"',
+#         lastResponseId,
+#         '"')
+#     ) ,
+#     ifelse(
+#       is.null(startDate),
+#       "",
+#       str_c(
+#         ', "startDate": ',
+#         '"',
+#         str_c(startDate,"T00:00:00Z"),
+#         '"')
+#     ) ,
+#     ifelse(
+#       is.null(endDate),
+#       "",
+#       str_c(
+#         ', "endDate": ',
+#         '"',
+#         str_c(endDate,"T00:00:00Z"),
+#         '"')
+#     ) ,
+#     ifelse(
+#       is.null(seenUnansweredRecode),
+#       "",
+#       str_c(
+#         ', "seenUnansweredRecode": ',
+#         '"',
+#         seenUnansweredRecode,
+#         '"')
+#     ),
+#     ifelse(
+#       !useLocalTime,
+#       "",
+#       str_c(
+#         ', "useLocalTime": ',
+#         tolower(useLocalTime)
+#       )
+#     ),
+#     ifelse(
+#       is.null(includedQuestionIds),
+#       "",
+#       str_c(
+#         ', "includedQuestionIds": ',
+#         '[', paste0('"',includedQuestionIds, '"', collapse=", "), ']'
+#       )
+#     ),
+#     ifelse(
+#       is.null(limit),
+#       "",
+#       str_c(
+#         ', "limit": ',
+#         limit
+#       )
+#     ),
+#     ', ',
+#     '"useLabels": ', tolower(use_labels),
+#     '}'
+#   )
+# }
+# 
+# 
+# 
+# qualtrics_api_request <- function(api_token, verb = c("GET", "POST"), URL,
+#                                body = NULL) {
+# # Send httr requests to qualtrics API
+# #
+# # @param verb type of request to be sent (@seealso ?httr::VERB)
+# # @param url qualtrics endpoint url created by appendroot_url() function
+# # @param body options created by create_raw_payload() function.
+# # This is a support function for download_qualtrics.
+# # It is not intended to be called directly.
+# 
+#   # Match arg
+#   verb = match.arg(verb)
+# 
+#   # Construct header
+#   headers = constructHeader(api_token)
+# 
+#   # Send request to qualtrics API (httr functions)
+#   res = VERB(verb,
+#              url = URL,
+#              add_headers(
+#                headers
+#              ),
+#              body = body)
+# 
+#   # Check if response type is OK
+#   cnt = qualtRicsResponseCodes(res)
+# 
+#   # Check if OK
+#   if(cnt$OK) {
+#     # If notice occurs, raise warning
+#     w = checkForWarnings(cnt)
+# 
+#     # return content
+#     return(cnt$content)
+#   }
+# }
+# 
+# 
+# constructHeader <- function(api_token) {
+# # Construct a header to send to qualtrics API
+# # This is a support function for download_qualtrics.
+# # It is not intended to be called directly.
+# 
+#   # Construct and return
+#   headers = c(
+#     "X-API-TOKEN" = api_token,
+#     "Content-Type" = "application/json",
+#     "Accept" = "*/*",
+#     "accept-encoding" = "gzip, deflate"
+#   )
+#   return(headers)
+# }
+# 
+# 
+# qualtRicsResponseCodes <- function(res, raw=FALSE) {
+# # Checks responses against qualtrics response codes and returns error message.
+# #
+# # res response from httr::GET
+# # raw if TRUE, add "raw" flag to httr::content() function.
+# # This is a support function for download_qualtrics.
+# # It is not intended to be called directly.
+# 
+#   # Check status code and raise error/warning
+#   if(res$status_code == 200) {
+#     if(raw) {
+#       result = content(res, "raw")
+#     } else {
+#       result = content(res)
+#     }
+#     return(list(
+#       "content" = result,
+#       "OK" = TRUE
+#     )
+#     )
+#   } else if(res$status_code == 401) {
+#     stop("Qualtrics API raised an authentication (401) error - you may not have the required authorization. Please check your API key and root url.") # nolint
+#   } else if(res$status_code == 400) {
+#     stop("Qualtrics API raised a bad request (400) error - Please report this on https://github.com/JasperHG90/qualtRics/issues") # nolint
+#   } else if(res$status_code == 404) {
+#     stop("Qualtrics API complains that the requested resource cannot be found (404 error). Please check if you are using the correct survey ID.") # nolint
+#   } else if(res$status_code == 500) {
+#     stop(paste0("Qualtrics API reports an internal server (500) error. Please contact Qualtrics Support (https://www.qualtrics.com/contact/) and provide the instanceId and errorCode below.", "\n", # nolint
+#                 "\n",
+#                 "instanceId:", " ",
+#                 content(res)$meta$error$instanceId,
+#                 "\n",
+#                 "errorCode: ",
+#                 content(res)$meta$error$errorCode))
+#     return(list(
+#       "content" = content(res),
+#       "OK"= FALSE
+#     ))
+#   } else if(res$status_code == 503) {
+#     stop(paste0("Qualtrics API reports a temporary internal server (500) error. Please contact Qualtrics Support (https://www.qualtrics.com/contact/) with the instanceId and errorCode below or retry your query.", "\n", # nolint
+#                 "\n",
+#                 "instanceId:", " ", content(res)$meta$error$instanceId,
+#                 "\n",
+#                 "errorCode: ", content(res)$meta$error$errorCode))
+#     return(list(
+#       "content" = content(res),
+#       "OK"= FALSE
+#     )
+#     )
+#   } else if(res$status_code == 413) {
+#     stop("The request body was too large. This can also happen in cases where a multipart/form-data request is malformed.") # nolint
+#   } else if(res$status_code == 429) {
+#     stop("You have reached the concurrent request limit.")
+#   }
+# }
+# 
+# 
+# checkForWarnings <- function(resp) {
+# # Check if httr GET result contains a warning
+# # resp object returned by "qualtRicsResponseCodes()"
+# # This is a support function for download_qualtrics.
+# # It is not intended to be called directly.
+# 
+#   # Raise warning if resp contains notice
+#   if(!is.null(resp$content$meta)) {
+#     if(!is.null(resp$content$meta$notice)) {
+#       warning(resp$content$meta$notice)
+#     }
+#   }
+#   NULL
+# }
+# 
+# 
+# 
+# download_qualtrics_export <- function(check_url, api_token, display_progress) {
+# # Download response export
+# # check_url url provided by qualtrics API that shows the download percentage completneness
+# # This is a support function for download_qualtrics.
+# # It is not intended to be called directly.
+# 
+#   # Construct header
+#   headers = constructHeader(api_token)
+# 
+#   if (display_progress) {
+#     # Create a progress bar and monitor when export is ready
+#     pbar = utils::txtProgressBar(min=0,max=100,style = 3)
+# 
+#     # While download is in progress
+#     progress = 0
+#     while(progress < 100) {
+#       # Get percentage complete
+#       CU = qualtrics_api_request(api_token,"GET", URL = check_url)
+#       progress = CU$result$percentComplete
+# 
+#       # Set progress
+#       utils::setTxtProgressBar(pbar, progress)
+#     }
+# 
+#     # Kill progress bar
+#     close(pbar)
+#   }
+# 
+#   # Download file
+#   f = tryCatch({
+#     GET(str_c(check_url, "/file"), add_headers(headers))
+#   }, error = function(e) {
+#     # Retry if first attempt fails
+#     GET(str_c(check_url, "/file"), add_headers(headers))
+#   })
+# 
+#   # # If content is test request, then load temp file (this is purely for testing)
+#   # # httptest library didn"t work the way it needed and somehow still called the API
+#   # # leading to errors
+#   # if(f$request$url == "t.qualtrics.com/API/v3/responseexports/T_123/file"){
+#   #   if(f$request$headers["X-API-TOKEN"] == "1234") {
+#   #     ct = readRDS("files/file_getSurvey.rds")
+#   #     f$content = ct
+#   #   }
+#   # }
+#   # #browser()
+# 
+#   # Load raw zip file
+#   ty = qualtRicsResponseCodes(f, raw=TRUE)
+# 
+#   # To zip file
+#   tf = file.path(tempdir(), "temp.zip")
+# 
+#   # Write to temporary file
+#   writeBin(ty$content, tf)
+# 
+#   # Try to unzip
+#   u = tryCatch({
+#     utils::unzip(tf, exdir = tempdir())
+#   }, error = function(e) {
+#     stop(str_c("Error extracting ",
+#                "csv",
+#                " from zip file. Please re-run your query."))
+#   })
+# 
+#   # Remove zipfile
+#   p = file.remove(tf)
+# 
+#   # Return file location
+#   return(u)
+# }

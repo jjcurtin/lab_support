@@ -166,7 +166,7 @@ geomean_places <- function(places, max_dist = 50){
         xy <- places_grouped |>
           select(lon, lat)
         w <- places_grouped$cnt_pts
-        xy_new <- geomean(xy, w)
+        xy_new <- geosphere::geomean(xy, w)
         avg_place <- avg_place |>
           add_row(date = max(places_grouped$date),  # most recent date
                   lat = xy_new[1,2],
@@ -275,7 +275,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
       points_to_aggregate <- matrix(cbind(locations$lon[row_i:(row_i + 1)],
                                           locations$lat[row_i:(row_i + 1)]),
                                     nrow = 2, ncol = 2)
-      new_points <- geomean(xy = points_to_aggregate,
+      new_points <- geosphere::geomean(xy = points_to_aggregate,
                             w = locations$cnt_pts[row_i:(row_i + 1)])
       # update focal observation
       locations$lon[row_i] <- new_points[1,1]

@@ -560,7 +560,7 @@ find_nearest_context <- function(lon_target, lat_target, context){
 # context match
 # context is a tibble with lon and lat columns for places for which we have context
 # returns a tibble with context_lon, context_lat, and context_dist, for subsequent
-# can call function within ~map2_dfr() to get context for a vector of places
+# can call function within ~map2() to get context for a vector of places
 
   get_dist <- function(lon_context, lat_context,
                        lon_target, lat_target){

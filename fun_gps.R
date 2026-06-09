@@ -556,7 +556,7 @@ lookup_address <- function(longitude, latitude, provider = "photon", api = NULL)
 }
 
 find_nearest_context <- function(lon_target, lat_target, context){
-# target_lon, target_lat are coords of the place for which we are seeking a
+# lon_target, lat_target are coords of the place for which we are seeking a
 # context match
 # context is a tibble with lon and lat columns for places for which we have context
 # returns a tibble with context_lon, context_lat, and context_dist, for subsequent

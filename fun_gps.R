@@ -190,7 +190,7 @@ geomean_places <- function(places, max_dist = 50){
 }
 
 
-geomean_seq_pts <- function(locations, max_dist = 50) {
+geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
 # Use with single subid at a time
 
 # https://www.gps.gov/systems/gps/performance/accuracy/
@@ -221,7 +221,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
 
   while (row_i < nrow(locations)) { # iterate through each row, except the last
 
-    # message(str_c("Checking row ", row_i, " of ", nrow(locations)))
+    if (messages) message(str_c("Checking row ", row_i, " of ", nrow(locations)))
 
     # evaluate the row as:
     # point to be aggregated with previous row
@@ -229,7 +229,7 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
         locations$dist_prev[row_i] < locations$dist_next[row_i] &&
         locations$dist_prev[row_i] <= max_dist) {
       agg_previous <- TRUE
-      # message("...aggregating row with PREVIOUS")
+      if (messages) message("...aggregating row with PREVIOUS")
     }
 
     # point to be aggregated with next row
@@ -237,13 +237,13 @@ geomean_seq_pts <- function(locations, max_dist = 50) {
         locations$dist_next[row_i] <= locations$dist_prev[row_i] &&
         locations$dist_next[row_i] <= max_dist) {
       agg_next <- TRUE
-      #  message("...aggregating row with NEXT")
+      if (messages) message("...aggregating row with NEXT")
     }
 
     # neither
     if (!agg_previous && !agg_next) {
       skip <- TRUE
-      # message("...SKIP")
+      if (messages) message("...SKIP")
     }
 
     # then operate on the observation accordingly...

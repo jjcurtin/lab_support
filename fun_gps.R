@@ -201,10 +201,10 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
   locations <- locations |>
     mutate(cnt_pts = 1,
            time_next = difftime(lead(time), time, units = "mins"),
-           lon_next = dplyr::lead(lon),
-           lat_next = dplyr::lead(lat),
-           lon_prev = dplyr::lag(lon),
-           lat_prev = dplyr::lag(lat)) |>
+           lon_next = lead(lon),
+           lat_next = lead(lat),
+           lon_prev = lag(lon),
+           lat_prev = lag(lat)) |>
     rowwise() |>
     mutate(dist_next = geosphere::distGeo(c(lon, lat),   # in meters
                                           c(lon_next, lat_next)),
@@ -259,7 +259,7 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
       locations$lon[row_i] <- new_points[1,1]
       locations$lat[row_i] <- new_points[1,2]
       # update the count (required for future weighted averages)
-      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i - 1] # correction: was + 1
+      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i - 1]
       # update the time of the focal observation to the previous time
       locations$time[row_i] <- locations$time[row_i - 1]
       # update time_next
@@ -281,7 +281,7 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
       locations$lon[row_i] <- new_points[1,1]
       locations$lat[row_i] <- new_points[1,2]
       # update the count (required for weighted averages)
-      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i + 1]   # correction: was + 1
+      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i + 1] 
       # update time_next
       locations$time_next[row_i] <- sum(locations$time_next[row_i],
                                         locations$time_next[row_i + 1])
@@ -294,10 +294,10 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
     } else {
       # calculate new dists for updated point
       locations <- locations |>
-        mutate(lon_next = dplyr::lead(lon),
-               lat_next = dplyr::lead(lat),
-               lon_prev = dplyr::lag(lon),
-               lat_prev = dplyr::lag(lat)) |>
+        mutate(lon_next = lead(lon),
+               lat_next = lead(lat),
+               lon_prev = lag(lon),
+               lat_prev = lag(lat)) |>
         rowwise() |>
         mutate(dist_next = geosphere::distGeo(c(lon, lat), c(lon_next, lat_next)),
                dist_prev = geosphere::distGeo(c(lon, lat), c(lon_prev, lat_prev))) |>

@@ -19,7 +19,7 @@ format_path <- function(the_path, resource = "standard"){
           # PC paths
           Windows = {the_path <- dplyr::if_else(resource == "standard", 
                                                 stringr::str_c("S:/", the_path),
-                                                stringr::str_c("R:/", the_path))},        
+                                                stringr::str_c("P:/", the_path))},        
   
           # IOS path
           Darwin = {the_path <- stringr::str_c("/Volumes/studydata/", the_path)},
@@ -27,7 +27,7 @@ format_path <- function(the_path, resource = "standard"){
           # Linux paths
           Linux = {the_path <- dplyr::if_else(resource == "standard",
                                               stringr::str_c("~/mnt/standard/", the_path),
-                                              stringr::str_c("~/mnt/restricted/", the_path))},
+                                              stringr::str_c("~/mnt/private/", the_path))},
   )
   return(the_path)
 }

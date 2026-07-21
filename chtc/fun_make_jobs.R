@@ -100,6 +100,18 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            resample)      
   }
   
+  if (algorithm == "xgboost2") {
+    configs <- expand_grid(split_num = split_num,
+                           outer_split_num = outer_split_num,
+                           inner_split_num = inner_split_num,
+                           algorithm = algorithm,
+                           feature_set,
+                           hp1 = hp1_xgboost2,
+                           hp2 = hp2_xgboost2,
+                           hp3 = hp3_xgboost2,
+                           resample)      
+  }
+  
   if (algorithm == "glm") { 
     configs <- expand_grid(split_num = split_num,
                            outer_split_num = outer_split_num,

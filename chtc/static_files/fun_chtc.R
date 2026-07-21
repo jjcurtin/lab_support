@@ -165,7 +165,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   }
   
   if (ml_mode == "classification") {
-    mode_metrics <- metric_set(log_loss, roc_auc,  # our primary metrics
+    mode_metrics <- metric_set(mn_log_loss, roc_auc,  # our primary metrics
                                accuracy, bal_accuracy, 
                                sens, yardstick::spec, ppv, npv)
   }
@@ -598,7 +598,7 @@ get_metrics <- function(model, feat_out, ml_mode, y_level_pos = NULL) {
     
     model_metrics <- bind_rows(model_metrics, 
                                tibble(metric = "roc_auc", estimate = roc),
-                               tibble(metric = "log_loss", estimate = log_loss))
+                               tibble(metric = "mn_log_loss", estimate = log_loss))
   }
   
   if (ml_mode == "regression") {
@@ -630,7 +630,7 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
   }
   
   if (ml_mode == "classification") {
-    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+    mode_metrics <- metric_set(mn_log_loss, accuracy, bal_accuracy, roc_auc,
                                sens, yardstick::spec, ppv, npv)
     # control grid to save predictions
     ctrl <- control_resamples(save_pred = TRUE, 

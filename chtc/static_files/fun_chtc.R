@@ -165,7 +165,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   }
   
   if (ml_mode == "classification") {
-    mode_metrics <- metric_set(mn_log_loss, roc_auc,  # our primary metrics
+    mode_metrics <- metric_set(log_loss, roc_auc,  # our primary metrics
                                accuracy, bal_accuracy, 
                                sens, yardstick::spec, ppv, npv)
   }
@@ -320,7 +320,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                              y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
-        relocate(mn_log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
+        relocate(log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
         bind_cols(config, .) 
     } else {
       results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
@@ -578,14 +578,27 @@ get_metrics <- function(model, feat_out, ml_mode, y_level_pos = NULL) {
       filter(metric %in% c("sens", "spec", "ppv", "npv", "accuracy", "bal_accuracy")) %>% 
       suppressWarnings() # warning not about metrics we are returning
     
-    roc <- tibble(truth = feat_out$y,
-                  prob = predict(model, feat_out,
-                                type = "prob")[[str_c(".pred_", y_level_pos)]]) %>% 
-      roc_auc(prob, truth = truth, event_level = "first") %>% 
-      select(metric = .metric, 
-             estimate = .estimate)
+    # roc <- tibble(truth = feat_out$y,
+    #               prob = predict(model, feat_out,
+    #                             type = "prob")[[str_c(".pred_", y_level_pos)]]) %>% 
+    #   roc_auc(prob, truth = truth, event_level = "first") %>% 
+    #   select(metric = .metric, 
+    #          estimate = .estimate)
+    # update using vec
+    truth <- feat_out$y 
+    prob <- predict(model, feat_out,
+                    type = "prob")[[str_c(".pred_", y_level_pos)]]
+    roc <- roc_auc_vec(truth = truth,
+                       estimate = prob, 
+                       event_level = "first")
     
-    model_metrics <- bind_rows(model_metrics, roc)
+    log_loss <- mn_log_loss_vec(truth = truth,
+                                estimate = prob, 
+                                event_level = "first")
+    
+    model_metrics <- bind_rows(model_metrics, 
+                               tibble(metric = "roc_auc", estimate = roc),
+                               tibble(metric = "log_loss", estimate = log_loss))
   }
   
   if (ml_mode == "regression") {

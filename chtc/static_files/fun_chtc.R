@@ -165,7 +165,8 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
   }
   
   if (ml_mode == "classification") {
-    mode_metrics <- metric_set(accuracy, bal_accuracy, roc_auc,
+    mode_metrics <- metric_set(mn_log_loss, roc_auc,  # our primary metrics
+                               accuracy, bal_accuracy, 
                                sens, yardstick::spec, ppv, npv)
   }
   
@@ -293,7 +294,42 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
     
     return(results)
   }
+
+  # different set of hyperparameters for this algorithm 
+  if (config$algorithm == "xgboost2") {
+    
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                              cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    # fit model on feat_in with config hyperparameter values 
+    model <- boost_tree(trees = config$hp1,
+                        tree_depth = config$hp2,
+                        mtry = config$hp3,
+                        learn_rate = 0.03 # set low but not crazy low  
+                        ) %>% 
+      set_engine("xgboost") %>% 
+      set_mode(ml_mode) %>%
+      fit(y ~ ., data = feat_in)
+        # use get_metrics function to get a tibble that shows performance metrics
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(mn_log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(config, .) 
+    }
+        return(results)
+  }
   
+    
   if (config$algorithm == "rda") {
     # extract fold associated with this config - 1 held in and 1 held out set and make 1 
     # set of features for the held in and held out set 

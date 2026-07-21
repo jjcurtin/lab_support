@@ -320,7 +320,7 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                              y_level_pos) %>% 
         pivot_wider(., names_from = "metric",
                     values_from = "estimate") %>%   
-        relocate(log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
+        relocate(mn_log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
         bind_cols(config, .) 
     } else {
       results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 

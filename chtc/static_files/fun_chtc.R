@@ -272,8 +272,8 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
     model <- boost_tree(learn_rate = config$hp1,
                         tree_depth = config$hp2,
                         mtry = config$hp3,
-                        trees = 500,  # set high but use early stopping
-                        stop_iter = 20) %>% 
+                        trees = 5000,  # set high but use early stopping
+                        stop_iter = 100) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%
@@ -693,8 +693,8 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
     models <- boost_tree(learn_rate = config_best$hp1,
                         tree_depth = config_best$hp2,
                         mtry = config_best$hp3,
-                        trees = 500,  # set high but use early stopping
-                        stop_iter = 20) %>% 
+                        trees = 5000,  # set high but use early stopping
+                        stop_iter = 100) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%
@@ -734,11 +734,10 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
 }
 
 fit_best_model <- function(best_model, feat, ml_mode) {
-
   
   if (str_detect(best_model$algorithm, "glmnet")) {
     
-    # backward compatible for tune controls that didnt set family 
+    # backward compatible for tune controls that didn't set family 
     if (!exists("glm_family")) glm_family <- if_else(ml_mode == "regression", "gaussian", "binomial")
     
     if (ml_mode == "classification") {
@@ -780,8 +779,8 @@ fit_best_model <- function(best_model, feat, ml_mode) {
     fit_best <- boost_tree(learn_rate = best_model$hp1,
                            tree_depth = best_model$hp2,
                            mtry = best_model$hp3,
-                           trees = 500,  # set high but use early stopping
-                           stop_iter = 20) %>% 
+                           trees = 5000,  # set high but use early stopping
+                           stop_iter = 100) %>% 
       set_engine("xgboost",
                  validation = 0.2) %>% 
       set_mode(ml_mode) %>%
@@ -790,15 +789,13 @@ fit_best_model <- function(best_model, feat, ml_mode) {
     return(fit_best)
   }
   
-  if (best_model$algorithm == "xgboost") {
+  if (best_model$algorithm == "xgboost2") {
     
-    fit_best <- boost_tree(learn_rate = best_model$hp1,
+    fit_best <- boost_tree(trees = best_model$hp1,
                            tree_depth = best_model$hp2,
                            mtry = best_model$hp3,
-                           trees = 500,  # set high but use early stopping
-                           stop_iter = 20) %>% 
-      set_engine("xgboost",
-                 validation = 0.2) %>% 
+                           learn_rate = 0.03) %>% 
+      set_engine("xgboost") %>% 
       set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     

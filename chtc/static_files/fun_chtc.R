@@ -8,7 +8,7 @@ make_splits <- function(d, cv_resample_type, cv_resample = NULL, cv_outer_resamp
   # cv_inner_resample: specifies repeats/folds or num bootstrap splits for nested cv inner loop - same format as above
   # cv_outer_resample: specifies repeats/folds for outer nested cv loop - cannot use bootstrapping here
   # cv_group: specifies grouping variable for grouped cv and nested cv
-  # cv_strat: should be variable name to stratify on. If grouping must be between-subjects variable. 
+  # cv_strat: should be variable name to s/ratify on. If grouping must be between-subjects variable. 
   
   if(is.null(the_seed)) {
     error("make_splits() requires a seed")
@@ -311,7 +311,8 @@ tune_model <- function(config, rec, splits, ml_mode, cv_resample_type, hp2_glmne
                         mtry = config$hp3,
                         learn_rate = 0.03 # set low but not crazy low  
                         ) %>% 
-      set_engine("xgboost") %>% 
+      set_engine("xgboost",
+                 scale_pos_weight = config$hp4) %>% 
       set_mode(ml_mode) %>%
       fit(y ~ ., data = feat_in)
         # use get_metrics function to get a tibble that shows performance metrics
@@ -620,7 +621,7 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
   
   # specific setup for regression or classification
   if (ml_mode == "regression") {
-    mode_metrics <- metric_set(mae,rmse, rsq)
+    mode_metrics <- metric_set(mae, rmse, rsq)
     # control grid to save predictions
     ctrl <- control_resamples(save_pred = TRUE, 
                               extract = function (x) extract_fit_parsnip(x) %>% tidy())
@@ -637,7 +638,6 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
                               event_level = "first",
                               extract = function (x) extract_fit_parsnip(x) %>% tidy())
   }
-  
   
   if (config_best$algorithm == "glmnet") {
     
@@ -704,6 +704,22 @@ eval_best_model <- function(config_best, rec, splits, ml_mode) {
                     control = ctrl)
   }
   
+  if (config_best$algorithm == "xgboost2") {
+    
+    # fit model on feat_in with config_best hyperparameter values 
+    models <- boost_tree(trees = config_best$hp1,
+                         tree_depth = config_best$hp2,
+                         mtry = config_best$hp3,
+                         learn_rate = .03
+                        ) %>% 
+      set_engine("xgboost",
+                 scale_pos_weight = config_best$hp4) %>% 
+      set_mode(ml_mode) %>%
+      fit_resamples(preprocessor = rec,
+                    resamples = splits,
+                    metrics = mode_metrics,
+                    control = ctrl)
+  }
   
   if (config_best$algorithm == "knn") {
     
@@ -795,7 +811,8 @@ fit_best_model <- function(best_model, feat, ml_mode) {
                            tree_depth = best_model$hp2,
                            mtry = best_model$hp3,
                            learn_rate = 0.03) %>% 
-      set_engine("xgboost") %>% 
+      set_engine("xgboost",
+                 best_model$hp4) %>% 
       set_mode(ml_mode) %>%
       fit(y ~ ., data = feat)
     

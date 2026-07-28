@@ -61,6 +61,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            # hp2 will be tuned in fit script and written over in results csv
                            hp2 = NA_integer_, 
                            hp3 = NA_integer_,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)
   } 
   
@@ -73,6 +75,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_rf,
                            hp2 = hp2_rf,
                            hp3 = hp3_rf,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)
   } 
   
@@ -85,6 +89,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_knn,
                            hp2 = NA_integer_,
                            hp3 = NA_integer_,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)      
   }  
   
@@ -97,6 +103,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_xgboost,
                            hp2 = hp2_xgboost,
                            hp3 = hp3_xgboost,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)      
   }
   
@@ -109,6 +117,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_xgboost2,
                            hp2 = hp2_xgboost2,
                            hp3 = hp3_xgboost2,
+                           hp4 = hp4_xgboost2,
+                           hp5 = NA_integer_,
                            resample)      
   }
   
@@ -118,9 +128,11 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            inner_split_num = inner_split_num,
                            algorithm = algorithm,
                            feature_set,
-                           hp1 = NA,
-                           hp2 = NA,
-                           hp3 = NA,
+                           hp1 = NA_integer_,
+                           hp2 = NA_integer_,
+                           hp3 = NA_integer_,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)
   } 
   
@@ -133,6 +145,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_glmnet_manual,
                            hp2 = hp2_glmnet_manual, 
                            hp3 = NA_integer_,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)
   } 
   
@@ -145,6 +159,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_rda,
                            hp2 = hp2_rda,
                            hp3 = NA_integer_,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)      
   }  
   
@@ -157,6 +173,8 @@ make_jobs <- function(path_training_controls, overwrite_batch = TRUE) {
                            hp1 = hp1_nnet,
                            hp2 = hp2_nnet,
                            hp3 = hp3_nnet,
+                           hp4 = NA_integer_,
+                           hp5 = NA_integer_,
                            resample)      
   }  
   

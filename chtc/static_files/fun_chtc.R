@@ -805,6 +805,42 @@ fit_best_model <- function(best_model, feat, ml_mode) {
     return(fit_best)
   }
   
+  # different set of hyperparameters for this algorithm 
+  if (config$algorithm == "xgboost2") {
+    
+    # extract fold associated with this config - 1 held in and 1 held out set and make 1 
+    # set of features for the held in and held out set 
+    features <- make_config_features(config = config, splits = splits, rec = rec, 
+                                     cv_resample_type = cv_resample_type)
+    feat_in <- features$feat_in
+    feat_out <- features$feat_out
+    
+    # fit model on feat_in with config hyperparameter values 
+    model <- boost_tree(trees = config$hp1,
+                        tree_depth = config$hp2,
+                        mtry = config$hp3,
+                        learn_rate = 0.03 # set low but not crazy low  
+    ) %>% 
+      set_engine("xgboost",
+                 scale_pos_weight = config$hp4) %>% 
+      set_mode(ml_mode) %>%
+      fit(y ~ ., data = feat_in)
+    # use get_metrics function to get a tibble that shows performance metrics
+    if (ml_mode == "classification") {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode,
+                             y_level_pos) %>% 
+        pivot_wider(., names_from = "metric",
+                    values_from = "estimate") %>%   
+        relocate(mn_log_loss, roc_auc, sens, spec, ppv, npv, accuracy, bal_accuracy) %>% 
+        bind_cols(config, .) 
+    } else {
+      results <- get_metrics(model = model, feat_out = feat_out, ml_mode) %>% 
+        bind_cols(config, .) 
+    }
+    return(results)
+  }
+  
+  
   if (best_model$algorithm == "xgboost2") {
     
     fit_best <- boost_tree(trees = best_model$hp1,

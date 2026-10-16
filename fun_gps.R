@@ -121,74 +121,174 @@ count_places <- function(places, max_dist = 50) {
 }
 
 
-geomean_places <- function(places, max_dist = 50){
-# Takes a tibble of places from a single subject and groups them sequentially into
-# into groups that differ by no more than max_dist meters
-# from the previous points in the group.  It then returns
-# a weighted mean of the the location for each group
-# It assumes columns named subid, date, lat, lon, cnt_pts, duration
+# geomean_places <- function(places, max_dist = 50){
+# # Takes a tibble of places from a single subject and groups them sequentially into
+# # into groups that differ by no more than max_dist meters
+# # from the previous points in the group.  It then returns
+# # a weighted mean of the the location for each group
+# # It assumes columns named subid, date, lat, lon, cnt_pts, duration
+# 
+#   places <- places |>
+#     mutate(duration = as.numeric(duration))
+# 
+#   if (nrow(places) > 1) {
+#     places <- mutate(places, place_grp = NA)
+#     max_grp <- 0
+# 
+#     for(i in 1:(nrow(places))){
+# 
+#       if (is.na(places$place_grp[i])) {
+#         max_grp <- max_grp + 1
+#         current_grp <- max_grp
+#         places$place_grp[i] <- current_grp
+#       } else {
+#         current_grp <- places$place_grp[i]
+#       }
+# 
+#       # check i place against later rows if exist
+#       if (i < nrow(places)) {
+#         for (j in (i + 1):nrow(places)){
+#           if(geosphere::distGeo(c(places$lon[i], places$lat[i]),
+#                                 c(places$lon[j], places$lat[j])) <= max_dist){
+#             places$place_grp[j] <- current_grp
+#           }
+#         }
+#       }
+#     }
+# 
+#     avg_place <- tibble(date = Date(), lat = double(), lon = double(), 
+#                         cnt_pts = double(), duration = double())
+#     for (i in 1:max_grp) {
+#       places_grouped <- places |>
+#         dplyr::filter(place_grp == i)
+# 
+#       if (nrow(places_grouped) > 1) {
+#         xy <- places_grouped |>
+#           select(lon, lat)
+#         w <- places_grouped$cnt_pts
+#         xy_new <- geosphere::geomean(xy, w)
+#         avg_place <- avg_place |>
+#           add_row(date = max(places_grouped$date),  # most recent date
+#                   lat = xy_new[1,2],
+#                   lon = xy_new[1,1],
+#                   cnt_pts = sum(places_grouped$cnt_pts),
+#                   duration = sum(places_grouped$duration))
+# 
+#       } else {
+#         avg_place <- avg_place |>
+#           add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
+#       }
+#     }
+# 
+#     # add subid
+#     avg_place <- avg_place |>
+#       mutate(subid = places$subid[[1]]) |>
+#       relocate(subid)
+#   } else  avg_place <- places |> select(subid, date, lat, lon, cnt_pts, duration)
+# 
+#   return(avg_place)
+# }
 
-  places <- places |>
-    mutate(duration = as.numeric(duration))
 
-  if (nrow(places) > 1) {
-    places <- mutate(places, place_grp = NA)
-    max_grp <- 0
 
-    for(i in 1:(nrow(places))){
+geomean_places <- function(data, max_dist = 50) {
+# Combine repeated visits to the same place. (new version)
+#
+# Two rows are treated as the same place when their locations are within
+# `max_dist` meters of each other (geodesic distance via geosphere::distGeo).
+# Nearness is transitive here: if A is near B and B is near C, then A, B, and C
+# form one place (single-linkage / connected components). Durations and point
+# counts are summed across the combined visits.
+#
+# a `place_id` column is added and calculated in  `data`. The output uses
+# `combined_id` for each merged place and keeps `members`, a list column holding
+# the full original rows (place_id, lat, lon, and every other input column) that
+# were combined into it. 
+  
+# Unnesting `members` returns the original rows alongside
+# their combined_id and the combined centroid.
+#   places_crosswalk <- places_combined |>
+#    unnest(members) |>
+#    relocate(combined_id, place_id, lat, lon)
 
-      if (is.na(places$place_grp[i])) {
-        max_grp <- max_grp + 1
-        current_grp <- max_grp
-        places$place_grp[i] <- current_grp
-      } else {
-        current_grp <- places$place_grp[i]
-      }
-
-      # check i place against later rows if exist
-      if (i < nrow(places)) {
-        for (j in (i + 1):nrow(places)){
-          if(geosphere::distGeo(c(places$lon[i], places$lat[i]),
-                                c(places$lon[j], places$lat[j])) <= max_dist){
-            places$place_grp[j] <- current_grp
-          }
-        }
-      }
+  data <- data |> 
+    mutate(place_id = row_number())
+  
+  n <- nrow(data)
+   
+  if (n <= 1) {
+    return(
+      data |>
+        summarise(
+          # Full original rows that make up this combined place (captured first
+          # so it does not pick up the summary columns created below).
+          members = list(pick(everything())),
+          # Duration-weighted geographic mean (handles longitude wrapping).
+          center = list(geosphere::geomean(cbind(lon, lat), duration)),
+          total_duration = sum(duration),
+          total_cnt_pts = sum(cnt_pts),
+          n_visits = n()
+        ) |>
+        mutate(
+          center_lon = map_dbl(center, 1),
+          center_lat = map_dbl(center, 2),
+          center = NULL,
+          combined_id = row_number(),
+          .before = 1
+        ) |>
+        relocate(combined_id, center_lat, center_lon)
+    )
+  }
+  
+  # Pairwise geodesic distances (meters) between every visit.
+  dist_m <- geosphere::distm(
+    cbind(data$lon, data$lat),
+    fun = geosphere::distGeo
+  )
+  
+  # Union-find to group visits that are within the threshold of each other.
+  parent <- seq_len(n)
+  find_root <- function(i) {
+    while (parent[i] != i) {
+      parent[i] <<- parent[parent[i]]
+      i <- parent[i]
     }
-
-    avg_place <- tibble(date = Date(), lat = double(), lon = double(), 
-                        cnt_pts = double(), duration = double())
-    for (i in 1:max_grp) {
-      places_grouped <- places |>
-        dplyr::filter(place_grp == i)
-
-      if (nrow(places_grouped) > 1) {
-        xy <- places_grouped |>
-          select(lon, lat)
-        w <- places_grouped$cnt_pts
-        xy_new <- geosphere::geomean(xy, w)
-        avg_place <- avg_place |>
-          add_row(date = max(places_grouped$date),  # most recent date
-                  lat = xy_new[1,2],
-                  lon = xy_new[1,1],
-                  cnt_pts = sum(places_grouped$cnt_pts),
-                  duration = sum(places_grouped$duration))
-
-      } else {
-        avg_place <- avg_place |>
-          add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
-      }
-    }
-
-    # add subid
-    avg_place <- avg_place |>
-      mutate(subid = places$subid[[1]]) |>
-      relocate(subid)
-  } else  avg_place <- places |> select(subid, date, lat, lon, cnt_pts, duration)
-
-  return(avg_place)
+    i
+  }
+  union_pair <- function(i, j) {
+    ri <- find_root(i)
+    rj <- find_root(j)
+    if (ri != rj) parent[ri] <<- rj
+  }
+  
+  near <- which(dist_m <= max_dist & upper.tri(dist_m), arr.ind = TRUE)
+  for (k in seq_len(nrow(near))) {
+    union_pair(near[k, "row"], near[k, "col"])
+  }
+  
+  data |>
+    mutate(.grp = map_int(row_number(), find_root)) |>
+    summarise(
+      # Full original rows merged into this combined place (captured first so it
+      # does not pick up the summary columns created below).
+      members = list(pick(everything())),
+      # Duration-weighted geographic mean (handles longitude wrapping).
+      center = list(geosphere::geomean(cbind(lon, lat), duration)),
+      total_duration = sum(duration),
+      total_cnt_pts = sum(cnt_pts),
+      n_visits = n(),
+      .by = .grp
+    ) |>
+    mutate(
+      center_lon = map_dbl(center, 1),
+      center_lat = map_dbl(center, 2),
+      center = NULL,
+      .grp = NULL,
+      # Sequential id for each combined place.
+      combined_id = row_number()
+    ) |>
+    relocate(combined_id, center_lat, center_lon)
 }
-
 
 geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
 # Use with single subid at a time

@@ -13,7 +13,7 @@ plot_places <- function(places, label_column, color_column) {
   if (missing(label_column)) {
     labels <- as.character(1:nrow(places))
   } else {
-    labels <- places |> 
+    labels <- places |>
       pull ({{ label_column }})
   }
 
@@ -23,7 +23,7 @@ plot_places <- function(places, label_column, color_column) {
     colors <- places |>
       pull({{ color_column }})
   }
-  
+
   map <-  leaflet::leaflet() |>
     leaflet::addTiles() |>
     leaflet::addCircleMarkers(data = places,
@@ -112,14 +112,13 @@ count_places <- function(places, max_dist = 50) {
 
   for (i in 1:nrow(places)) {
     for (j in 1:nrow(places)) {
-      dist <- geosphere::distGeo(c(places$lon[i], places$lat[i]), 
+      dist <- geosphere::distGeo(c(places$lon[i], places$lat[i]),
                                  c(places$lon[j], places$lat[j]))
       if (dist <= max_dist) places$visits[i] <- places$visits[i] + 1
     }
   }
   return(places)
 }
-
 
 
 geomean_places <- function(data, max_dist = 50) {
@@ -134,19 +133,27 @@ geomean_places <- function(data, max_dist = 50) {
 # a `place_id` column is added and calculated in  `data`. The output uses
 # `combined_id` for each merged place and keeps `members`, a list column holding
 # the full original rows (place_id, lat, lon, and every other input column) that
-# were combined into it. 
-  
+# were combined into it.
+
 # Unnesting `members` returns the original rows alongside
 # their combined_id and the combined centroid.
 #   places_crosswalk <- places_combined |>
 #    unnest(members) |>
 #    relocate(combined_id, place_id, lat, lon)
 
-  data <- data |> 
-    mutate(place_id = row_number())
-  
+  # define function to handle the first use of geomean_places; when some groups have only 1 row.
+  safe_geomean <- function(xy, w) {
+    if (nrow(xy) == 1) xy else geosphere::geomean(xy, w)
+  }
+
+
+
+  data <- data |>
+    mutate(place_id = row_number(),
+           duration = as.numeric(duration))
+
   n <- nrow(data)
-   
+
   if (n <= 1) {
     return(
       data |>
@@ -154,8 +161,10 @@ geomean_places <- function(data, max_dist = 50) {
           # Full original rows that make up this combined place (captured first
           # so it does not pick up the summary columns created below).
           members = list(pick(everything())),
+          subid = first(subid),
+          date = max(date),  # most recent date, as in the old version
           # Duration-weighted geographic mean (handles longitude wrapping).
-          center = list(geosphere::geomean(cbind(lon, lat), duration)),
+          center = list(safe_geomean(cbind(lon, lat), duration)),
           total_duration = sum(duration),
           total_cnt_pts = sum(cnt_pts),
           n_visits = n()
@@ -167,16 +176,18 @@ geomean_places <- function(data, max_dist = 50) {
           combined_id = row_number(),
           .before = 1
         ) |>
-        relocate(combined_id, center_lat, center_lon)
+        relocate(subid,, date, combined_id, center_lat, center_lon) |>
+        rename(lat = center_lat, lon = center_lon,
+               duration = total_duration, cnt_pts = total_cnt_pts)
     )
   }
-  
+
   # Pairwise geodesic distances (meters) between every visit.
   dist_m <- geosphere::distm(
     cbind(data$lon, data$lat),
     fun = geosphere::distGeo
   )
-  
+
   # Union-find to group visits that are within the threshold of each other.
   parent <- seq_len(n)
   find_root <- function(i) {
@@ -191,20 +202,22 @@ geomean_places <- function(data, max_dist = 50) {
     rj <- find_root(j)
     if (ri != rj) parent[ri] <<- rj
   }
-  
+
   near <- which(dist_m <= max_dist & upper.tri(dist_m), arr.ind = TRUE)
   for (k in seq_len(nrow(near))) {
     union_pair(near[k, "row"], near[k, "col"])
   }
-  
+
   data |>
     mutate(.grp = map_int(row_number(), find_root)) |>
     summarise(
       # Full original rows merged into this combined place (captured first so it
       # does not pick up the summary columns created below).
       members = list(pick(everything())),
+      subid = first(subid),
+      date = max(date),  # most recent date, as in the old version
       # Duration-weighted geographic mean (handles longitude wrapping).
-      center = list(geosphere::geomean(cbind(lon, lat), duration)),
+      center = list(safe_geomean(cbind(lon, lat), duration)),
       total_duration = sum(duration),
       total_cnt_pts = sum(cnt_pts),
       n_visits = n(),
@@ -218,7 +231,9 @@ geomean_places <- function(data, max_dist = 50) {
       # Sequential id for each combined place.
       combined_id = row_number()
     ) |>
-    relocate(combined_id, center_lat, center_lon)
+    relocate(subid, date,combined_id, center_lat, center_lon) |>
+    rename(lat = center_lat, lon = center_lon,
+           duration = total_duration, cnt_pts = total_cnt_pts)
 }
 
 geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
@@ -312,7 +327,7 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
       locations$lon[row_i] <- new_points[1,1]
       locations$lat[row_i] <- new_points[1,2]
       # update the count (required for weighted averages)
-      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i + 1] 
+      locations$cnt_pts[row_i] <- locations$cnt_pts[row_i] + locations$cnt_pts[row_i + 1]
       # update time_next
       locations$time_next[row_i] <- sum(locations$time_next[row_i],
                                         locations$time_next[row_i + 1])
@@ -369,10 +384,10 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
 #   return(dTarget)
 # }
 
-# 2025_0515: Susan modified this from the draft code and John's lookup_address() function 
+# 2025_0515: Susan modified this from the draft code and John's lookup_address() function
 lookup_coords <- function(housenumber, street, city, state, zip, country, provider = "photon", api = NULL) {
 
-  
+
   #check inputs
   if (missing(housenumber)) stop("Must provide housenumber")
   if (missing(street)) stop("Must provide street")
@@ -380,23 +395,23 @@ lookup_coords <- function(housenumber, street, city, state, zip, country, provid
   if (missing(state)) stop("Must provide state")
   if (missing(zip)) stop("Must provide zip")
   if (missing(country)) stop("Must provide country")
-  
+
   provider <- tolower(provider)
   if (!(provider %in% c("photon", "google"))) stop("provider must be photon or google")
   if (provider == "google" && is.null(api)) stop("Must provide api if provider == google")
-  
+
   # functions
   get_response <- function(url, provider){
     response <- httr::GET(url)
-    
+
     if (response$status_code != 200L) {
       stop("Error: status_code = ", response$status_code)
     } else {
       response <- httr::content(response)
     }
   }
-  
-  
+
+
 # JJC grabbed from web as model
 
   # Geocoding script for large list of addresses.
@@ -529,7 +544,7 @@ lookup_address <- function(longitude, latitude, provider = "photon", api = NULL)
 
       df <- tibble(housenumber, street, city, state, zip, country)
       df <- df |>
-        mutate(formatted_address = str_c(housenumber, " ", street, ", ", city, 
+        mutate(formatted_address = str_c(housenumber, " ", street, ", ", city,
                                          ", ", state, " ", zip, ', ', country),
                formatted_address = str_remove_all(formatted_address, "NA, "),
                formatted_address = str_remove_all(formatted_address, "NA "))
@@ -607,14 +622,14 @@ find_nearest_context <- function(lon_target, lat_target, context){
                                    lon_target = lon_target, lat_target = lat_target)) |>
     arrange(dist_context) |>
     slice(1)
-  
+
   if ("context_id" %in% names(context)) {
-    context <- context |> 
+    context <- context |>
       select(context_id, lat_context, lon_context, dist_context)
   } else {
-    context <- context |> 
+    context <- context |>
       select(lat_context, lon_context, dist_context)
   }
-  
+
   return(context)
 }

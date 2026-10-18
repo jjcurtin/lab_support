@@ -121,8 +121,77 @@ count_places <- function(places, max_dist = 50) {
 }
 
 
-geomean_places <- function(data, max_dist = 50) {
-# Combine repeated visits to the same place. (new version)
+geomean_places <- function(places, max_dist = 50){
+# DEPRECATED: see average_places
+# Takes a tibble of places from a single subject and groups them sequentially into
+# into groups that differ by no more than max_dist meters
+# from the previous points in the group.  It then returns
+# a weighted mean of the the location for each group
+# It assumes columns named subid, date, lat, lon, cnt_pts, duration
+
+  places <- places |>
+    mutate(duration = as.numeric(duration))
+
+  if (nrow(places) > 1) {
+    places <- mutate(places, place_grp = NA)
+    max_grp <- 0
+
+    for(i in 1:(nrow(places))){
+
+      if (is.na(places$place_grp[i])) {
+        max_grp <- max_grp + 1
+        current_grp <- max_grp
+        places$place_grp[i] <- current_grp
+      } else {
+        current_grp <- places$place_grp[i]
+      }
+
+      # check i place against later rows if exist
+      if (i < nrow(places)) {
+        for (j in (i + 1):nrow(places)){
+          if(geosphere::distGeo(c(places$lon[i], places$lat[i]),
+                                c(places$lon[j], places$lat[j])) <= max_dist){
+            places$place_grp[j] <- current_grp
+          }
+        }
+      }
+    }
+
+    avg_place <- tibble(date = Date(), lat = double(), lon = double(),
+                        cnt_pts = double(), duration = double())
+    for (i in 1:max_grp) {
+      places_grouped <- places |>
+        dplyr::filter(place_grp == i)
+
+      if (nrow(places_grouped) > 1) {
+        xy <- places_grouped |>
+          select(lon, lat)
+        w <- places_grouped$cnt_pts
+        xy_new <- geosphere::geomean(xy, w)
+        avg_place <- avg_place |>
+          add_row(date = max(places_grouped$date),  # most recent date
+                  lat = xy_new[1,2],
+                  lon = xy_new[1,1],
+                  cnt_pts = sum(places_grouped$cnt_pts),
+                  duration = sum(places_grouped$duration))
+
+      } else {
+        avg_place <- avg_place |>
+          add_row(select(places_grouped, date, lat, lon, cnt_pts, duration))
+      }
+    }
+
+    # add subid
+    avg_place <- avg_place |>
+      mutate(subid = places$subid[[1]]) |>
+      relocate(subid)
+  } else  avg_place <- places |> select(subid, date, lat, lon, cnt_pts, duration)
+
+  return(avg_place)
+}
+
+average_places <- function(data, max_dist = 50) {
+# Combine repeated visits to the same place. (replaces geomean_places)
 #
 # Two rows are treated as the same place when their locations are within
 # `max_dist` meters of each other (geodesic distance via geosphere::distGeo).
@@ -237,6 +306,7 @@ geomean_places <- function(data, max_dist = 50) {
 }
 
 geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
+# DEPRECATED: see extract_places
 # Use with single subid at a time
 
 # https://www.gps.gov/systems/gps/performance/accuracy/
@@ -364,6 +434,115 @@ geomean_seq_pts <- function(locations, max_dist = 50, messages = FALSE) {
 }
 
 
+extract_places <- function(locations,
+                           max_dist = 50,
+                           min_time = lubridate::minutes(5),
+                           excursion_tol = lubridate::minutes(3)) {
+# Stay-point (stop) detection for a SINGLE subid's GPS stream.
+#
+# A run grows point-by-point around its RUNNING CENTROID: a point joins the run
+# when it lies within `max_dist` meters of the current centroid (geosphere::
+# distGeo), and the centroid is recomputed as points are added. Using a running
+# centroid instead of a fixed first-fix anchor keeps the reference stable when
+# the opening fix happens to sit on the edge of the location's GPS scatter.
+#
+# EXCURSION TOLERANCE: a single fix (or short burst) that leaves `max_dist` does
+# NOT end the run. The run ends only when fixes stay outside the radius for
+# longer than `excursion_tol`; a brief excursion that returns within the radius
+# in time is absorbed into the run (kept as members and counted toward duration,
+# but NOT used to move the centroid). This prevents GPS jitter spikes from
+# shattering a long stationary period into many short pieces.
+#
+# A run is a "place" only if it spans at least `min_time`; otherwise its points
+# are treated as in-transit. The place location is the DURATION-WEIGHTED
+# geographic mean of its in-radius ("core") fixes, weighted by forward
+# difference (time until the next core fix; the last core fix gets weight 0).
+# The duration is the time from the run's first to last member fix (long
+# sampling gaps and brief excursions inside a run count as time at the place).
+#
+# Returns one row per place. `cnt_pts` counts all member fixes and `cnt_core`
+# the in-radius fixes used for the location. The `members` list column holds the
+# original input rows (with an `in_place` flag marking the core fixes) so the
+# output can be checked; unnest it to recover points alongside their place.
+#
+# Reference:
+# Li, Q.; Zheng, Y.; Xie, X.; Chen, Y.; Liu, W.; Ma, W.-Y. Mining user
+# similarity based on location history. In Proceedings of the 16th ACM
+# SIGSPATIAL International Conference on Advances in Geographic Information
+# Systems, Irvine, CA, USA, 5-7 November 2008; ACM: New York, NY, USA, 2008.
+
+  locations <- locations |> arrange(time)
+  n <- nrow(locations)
+
+  min_secs <- as.numeric(lubridate::as.duration(min_time), "seconds")
+  tol_secs <- as.numeric(lubridate::as.duration(excursion_tol), "seconds")
+
+  lon  <- locations$lon
+  lat  <- locations$lat
+  tsec <- as.numeric(locations$time)
+
+  places <- list()
+  start <- 1L
+  while (start <= n) {
+    core     <- start            # in-radius fixes (define the centroid)
+    members  <- start            # all fixes within the run's time span
+    pending  <- integer(0)       # consecutive out-of-radius fixes
+    centroid <- c(lon[start], lat[start])
+    next_start <- NA_integer_
+
+    q <- start + 1L
+    while (q <= n) {
+      if (geosphere::distGeo(centroid, c(lon[q], lat[q])) <= max_dist) {
+        if (length(pending)) {   # brief excursion returned -> absorb it
+          members <- c(members, pending)
+          pending <- integer(0)
+        }
+        core    <- c(core, q)
+        members <- c(members, q)
+        cen     <- geosphere::geomean(cbind(lon[core], lat[core]))
+        centroid <- c(cen[1, 1], cen[1, 2])
+        q <- q + 1L
+      } else {
+        pending <- c(pending, q)
+        if (tsec[q] - tsec[pending[1]] > tol_secs) {
+          next_start <- pending[1]   # sustained departure -> run ends
+          break
+        }
+        q <- q + 1L
+      }
+    }
+    # ran off the end of the data: trailing out-of-radius fixes start next run
+    if (is.na(next_start)) next_start <- if (length(pending)) pending[1] else q
+
+    members   <- sort(members)
+    span_secs <- tsec[members[length(members)]] - tsec[members[1]]
+
+    if (length(members) > 1 && span_secs >= min_secs) {
+      seg <- locations[members, ]
+      seg$in_place <- members %in% core
+      ct <- tsec[core]
+      # forward-difference weights over the core fixes (last gets 0)
+      w <- c(diff(ct), 0)
+      center <- geosphere::geomean(cbind(lon[core], lat[core]), w = w)
+      places[[length(places) + 1L]] <- tibble(
+        subid          = locations$subid[members[1]],
+        start_time     = locations$time[members[1]],
+        end_time       = locations$time[members[length(members)]],
+        center_lat     = center[1, 2],
+        center_lon     = center[1, 1],
+        total_duration = difftime(locations$time[members[length(members)]],
+                                  locations$time[members[1]], units = "mins"),
+        cnt_pts        = length(members),
+        cnt_core       = length(core),
+        members        = list(seg)
+      )
+    }
+
+    start <- max(next_start, start + 1L)
+  }
+
+  bind_rows(places)
+}
 
 # gpsNearestReference = function(dTarget, dReference, MaxDistanceForMatch=0)
 # {
@@ -633,3 +812,5 @@ find_nearest_context <- function(lon_target, lat_target, context){
 
   return(context)
 }
+
+

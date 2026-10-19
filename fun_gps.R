@@ -108,15 +108,13 @@ plot_tracks <- function(locs, gap = 2, overlay_points = TRUE) {
 
 
 count_places <- function(places, max_dist = 50) {
-  places$visits <- 0
-
-  for (i in 1:nrow(places)) {
-    for (j in 1:nrow(places)) {
-      dist <- geosphere::distGeo(c(places$lon[i], places$lat[i]),
-                                 c(places$lon[j], places$lat[j]))
-      if (dist <= max_dist) places$visits[i] <- places$visits[i] + 1
-    }
-  }
+  # For each place, count how many places (including itself) fall within
+  # `max_dist` meters. Vectorized via a single pairwise distance matrix
+  # (geosphere::distm) rather than a nested R loop over distGeo, which is far
+  # faster for the same result.
+  dist_m <- geosphere::distm(cbind(places$lon, places$lat),
+                             fun = geosphere::distGeo)
+  places$visits <- rowSums(dist_m <= max_dist)
   return(places)
 }
 

@@ -1,5 +1,6 @@
 ## Coding Style & Standards
 - **Preferred Style:** Follow the [tidyverse style guide](https://tidyverse.org). Use `snake_case` for variable and function names.
+- **Naming:** Use `snake_case` (underscores) across the board — objects, functions, files, folders, and Quarto chunk labels (e.g., `data_raw/`, `mak_mendota_ice.R`, `load_data`). Use hyphens only where a tool requires them (e.g., Quarto cross-reference prefixes `fig-`/`tbl-`/`sec-`, as in `fig-ice_days`).
 - **Pipe Operator:** Use the native pipe `|>` (R 4.1+) whenever possible
 
 ## Technical Preferences

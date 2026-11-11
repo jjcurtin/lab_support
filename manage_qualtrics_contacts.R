@@ -40,7 +40,10 @@ manage_qualtrics_contacts <- function(api_token,
     next_page_url <- contact_url
     
     repeat {
+      # includeEmbedded = true returns each contact's embeddedData
+      # (subid, onstudy, gps0_ll, ...); without it only top-level fields come back
       req <- httr2::request(next_page_url) |>
+        httr2::req_url_query(includeEmbedded = "true") |>
         httr2::req_headers(
           "X-API-TOKEN" = api_token,
           "Content-Type" = "application/json"

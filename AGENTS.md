@@ -11,12 +11,14 @@
 - Generally prioritize the `tidyverse` and `tidymodels` ecosystem
 - If you use functions from packages outside of base R and the `tidyverse` and `tidymodels` ecosystems, include their namespace in the function call
 - In the hopefully rare instances that you choose to use a function from base R or another package over an existing `tidyverse` or `tidymodels` function, provide a comment to justify that choice
-* I typically work with `.R` and `.qmd` (Quarto) files for coding and reports
-* I typically save data in the comma-separated values (with `.csv` ) format
+- I typically work with `.R` and `.qmd` (Quarto) files for coding and reports
+- I typically save data in the comma-separated values (with `.csv` ) format
+
 
 ## Safety
-* Never suggest code that deletes files (`unlink`, `file.remove`) unless explicitly asked
-* Only save/write data files to `~/tmp` unless explicitly asked
-* Only save  `.R` and `.qmd` (Quarto) files to folders within the current project unless explicitly asked
-* Never save/write over an existing file unless explicitly asked
-* Always ask before you save/write files
+- Never suggest code that deletes files (`unlink`, `file.remove`) unless explicitly asked.
+- Only save/write data files to `~/tmp` unless explicitly asked by me or approved in our session.  Ask for permission if you want to do this.
+- Only save  `.R` and `.qmd` (Quarto) files to folders within the current project unless explicitly asked or approved by me.  Ask for permission if you want to do this.
+- Never save/write over an existing file unless explicitly asked or approved by me.  Ask for permission if you want to do this.
+- Never, never create, write to, or replace data files on our mounted external drives (e.g., ~/mnt/* on Linux machines).
+- Always ask before you save/write files.
